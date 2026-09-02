@@ -10,7 +10,7 @@
 6. [Protótipos do Sistema](#6-protótipos-do-sistema)
    - [6.1 Protótipo do Sistema Mobile](#61-protótipo-do-sistema-mobile)
    - [6.2 Protótipo do Sistema Web](#62-protótipo-do-sistema-web)
-   - [6.3 Perguntas que podem ser respondidas pelo sistema](#63-perguntas-que-podem-ser-respondidas-pelo-sistema)
+   - [6.3 Perguntas que podem ser respondidas pelo sistema?](#63-perguntas-que-podem-ser-respondidas-pelo-sistema)
 7. [Modelo Conceitual](#7-modelo-conceitual)
 8. [Descrição dos Dados](#8-descrição-dos-dados)
 9. [Rastreabilidade dos Artefatos](#9-rastreabilidade-dos-artefatos)
@@ -21,11 +21,11 @@
 
 ### Integrantes do grupo
 
-- **Ana Klara Jardim** — [email]
-- **Estela do nascimento** — [email]
+- **Ana Klara Jardim** — anaklaraifesjd@gmail.com
+- **Estela do nascimento** — estela.nv2025@gmail.com
 - **Gustavo Meneis** — [email]
 - **Isabela Pereira** — isabela.pbarreto.av@gmail.com
-- **Vanderci Lucas** — [email]
+- **Vanderci Lucas** — vandercilucas76@gmail.com
 
 ---
 
@@ -39,16 +39,16 @@ duas principais ideias consideradas pelo grupo.
 
 ### Ideia 1
 
-**Título:** Gerenciamento de checklists
+**Título:** Gerenciador de checklists
 **Descrição:**  
-[Descreva brevemente a ideia.]
+O sistema de gerenciamento de checklists seria destinado a empresas dos setores industrial e de transportes que precisam realizar vistorias periódicas em veículos, equipamentos, máquinas e demais itens que exigem acompanhamento. A proposta busca facilitar a criação, organização e execução dessas vistorias, permitindo que checklists de diferentes frequências sejam gerenciados de forma mais prática e padronizada.
 
 ### Ideia 2
 
 **Título:** Software para fichas medicas
 
 **Descrição:**  
-Nesse software todas as pessoas que tem alguma condição precisa de atenção, como, idosos, pessoas deficientes, transtorno mental.
+Nesse software todas as pessoas que tem alguma condição precisa de atenção, como, idosos, pessoas deficientes, transtorno mental que precisão de um acompanhamento especializado e os servidores da saúde e cuidadores que precisão de uma ficha para melhor direcionamento do cuidados com a pessoa.
 
 ---
 
@@ -62,28 +62,28 @@ Nesse software todas as pessoas que tem alguma condição precisa de atenção, 
 
 #### Ideia 1 — [Título da ideia]
 
-- Afinidade: [ ]
-- Processo: [ ]
-- Problema: [ ]
-- Valor do software: [ ]
-- Viabilidade: [ ]
-- **Nota final:** [ ]
+- Afinidade: [2]
+- Processo: [2]
+- Problema: [1]
+- Valor do software: [1]
+- Viabilidade: [2]
+- **Nota final:** [8]
 
 #### Ideia 2 — [Título da ideia]
 
-- Afinidade: [ ]
-- Processo: [ ]
-- Problema: [ ]
-- Valor do software: [ ]
-- Viabilidade: [ ]
-- **Nota final:** [ ]
+- Afinidade: [1]
+- Processo: [0]
+- Problema: [2]
+- Valor do software: [1]
+- Viabilidade: [0]
+- **Nota final:** [4]
 
 ### Ideia selecionada
 
-**[Título da ideia selecionada]**
+**Gerenciador de Checklist**
 
 **Justificativa:**  
-[Explique por que essa ideia foi selecionada.]
+Essa ideia foi selecionada por sua fácil viabilidade dentro do tempo que temos, por não envolver dados sensíveis e também porque temos um integrante do grupo que trabalha em um local que precisa de um sistema de checklist melhor.
 
 ---
 
@@ -98,43 +98,43 @@ Opportunity Card da ideia selecionada.
 
 ### 1. Área de afinidade/contexto
 
-[Descrição]
+Empresas que funcionam em turno ininterrupto de revezamento, com equipamentos que precisam de monitoramento periódico (correias transportadoras, geradores, bombas, veículos, etc…) 
 
 ### 2. Problema percebido
 
-[Descrição]
+Perda de informações coletadas em papel. Necessidade de pranchetas na área operacional, problemas com caligrafia. 
 
 ### 3. Quem possui o problema
 
-[Descrição]
+Os usuários finais (trabalhadores do “chão de fábrica”, motoristas, vigilantes). 
 
 ### 4. Como é resolvido hoje
 
-[Descrição]
+ Formulários de checklists em papel ou eu software genérico, com limitações de espaço na tela e excesso de toques para responder uma pergunta do checklist (UX). 
 
 ### 5. Soluções semelhantes
 
-[Descrição]
+Intelatrac 
 
 ### 6. Lacuna inicial
 
-[Descrição]
+Software otimizado para rodar em celular, onde todas as perguntas aparecem completamente legíveis para o usuário, com opções de resposta logo abaixo da pergunta (em modo rádio). 
 
 ### 7. Pessoas acessíveis
 
-[Descrição]
+Motoristas, vigilantes, operadores do Terminal Aquaviário da Barra do Riacho (Transpetro). 
 
 ### 8. Hipótese de oportunidade
 
-[Descrição]
+Otimização do tempo e da qualidade das respostas dos checklists operacionais (para uma unidade como a do TABR, por exemplo, com 237 perguntas no checklist, são necessários 3 a 4 toques no celular por pergunta). 
 
 ### 9. Fomento/oportunidade
 
-[Descrição]
+Considerando que um dos integrantes do grupo é funcionário da Transpetro, pelo contrato de trabalho assinado, se a Transpetro achar interessante a solução apresentada pelo funcionário, ele não será remunerado pela aplicação desenvolvida. 
 
 ### 10. Principal incerteza/desafio
 
-[Descrição]
+Apresentar aos órgãos decisórios das potenciais clientes. 
 
 ---
 
@@ -159,7 +159,7 @@ Opportunity Card da ideia selecionada.
 
 ### 4.1 Formulário
 
-[Link para o formulário desenvolvido]
+https://docs.google.com/forms/d/e/1FAIpQLSfhAbcdeDb946Aj8rsI9r5QmwfeYjps1cm14KZ6DWnaAxJ94Q/viewform
 
 ## 4.2 Resultados da validação
 
