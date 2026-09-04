@@ -23,7 +23,8 @@
 
 - **Ana Klara Jardim** — anaklaraifesjd@gmail.com
 - **Estela do nascimento** — estela.nv2025@gmail.com
-- **Gustavo Meneis** — [email]
+- **Gustavo Meneis** —
+ifesmeneis277@gmail.com
 - **Isabela Pereira** — isabela.pbarreto.av@gmail.com
 - **Vanderci Lucas** — vandercilucas76@gmail.com
 
