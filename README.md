@@ -10,7 +10,7 @@
 6. [Protótipos do Sistema](#6-protótipos-do-sistema)
    - [6.1 Protótipo do Sistema Mobile](#61-protótipo-do-sistema-mobile)
    - [6.2 Protótipo do Sistema Web](#62-protótipo-do-sistema-web)
-   - [6.3 Perguntas que podem ser respondidas pelo sistema?](#63-perguntas-que-podem-ser-respondidas-pelo-sistema)
+   - [6.3 Quais perguntas podem ser respondidas pelo sistema?](#63-quais-perguntas-podem-ser-respondidas-pelo-sistema)
 7. [Modelo Conceitual](#7-modelo-conceitual)
 8. [Descrição dos Dados](#8-descrição-dos-dados)
 9. [Rastreabilidade dos Artefatos](#9-rastreabilidade-dos-artefatos)
@@ -200,24 +200,111 @@ ou alteração da ideia.]
 ## 5.2 Histórias de Usuário
 
 ### História de Usuário 1
-
-> Como [tipo de usuário],  
-> quero [objetivo],  
-> para [benefício].
+Como administrador, 
+quero cadastrar usuários no sistema 
+para permitir que os integrantes da empresa tenham acesso às funcionalidades correspondentes ao seu perfil.
 
 ### História de Usuário 2
 
-> Como [tipo de usuário],  
-> quero [objetivo],  
-> para [benefício].
+Como usuário,
+quero realizar login no sistema 
+para acessar as funcionalidades disponíveis para o meu perfil.
 
 ### História de Usuário 3
 
-> Como [tipo de usuário],  
-> quero [objetivo],  
-> para [benefício].
+Como administrador, 
+quero definir o perfil de cada usuário 
+para controlar quais funcionalidades ele pode acessar.
 
-[Adicionar as demais histórias de usuário.]
+### História de Usuário criar checklist
+
+Como administrador, 
+quero criar um checklist personalizado 
+para definir as verificações que deverão ser realizadas durante uma inspeção.
+
+### História de Usuário 
+
+Como administrador, 
+quero adicionar e configurar itens em um checklist 
+para definir exatamente o que deverá ser verificado durante a inspeção.'   
+
+### História de Usuário 
+
+Como administrador, 
+quero editar um checklist 
+para corrigir ou atualizar suas informações e itens de verificação.
+
+### História de Usuário
+
+Como administrador, 
+quero desativar um checklist que não está mais em uso 
+para impedir que ele seja utilizado em novas inspeções sem apagar seu histórico.
+
+### História de Usuário
+
+Como funcionário ou inspetor, 
+quero visualizar os checklists disponíveis 
+para escolher aquele que corresponde à inspeção que preciso realizar.
+
+### História de Usuário
+
+Como funcionário ou inspetor, 
+quero iniciar uma inspeção utilizando um checklist 
+para registrar a vistoria que estou realizando.
+
+### História de Usuário
+
+Como funcionário ou inspetor, 
+quero responder cada item do checklist 
+para registrar o resultado da verificação realizada.
+
+### História de Usuário 
+
+Como funcionário ou inspetor, 
+quero registrar uma observação durante uma inspeção 
+para complementar as informações de uma resposta ou ocorrência.
+
+### História de Usuário 
+
+Como funcionário ou inspetor, 
+quero anexar uma evidência a uma resposta 
+para comprovar visualmente ou documentalmente uma situação encontrada durante a inspeção.
+
+### História de Usuário 
+
+Como funcionário ou inspetor, 
+quero salvar uma inspeção ainda não finalizada 
+para poder continuar seu preenchimento posteriormente.
+
+### História de Usuário 
+
+Como funcionário ou inspetor, 
+quero finalizar uma inspeção 
+para registrar oficialmente o resultado da vistoria.
+
+### História de Usuário 
+
+Como funcionário ou inspetor, 
+quero registrar uma ocorrência durante a inspeção 
+para informar uma situação que necessita de atenção.
+
+### História de Usuário 
+
+Como gestor, 
+quero acompanhar as ocorrências identificadas nas inspeções 
+para verificar quais problemas ainda precisam de atenção.
+
+### História de Usuário 
+
+Como gestor, 
+quero consultar o histórico das inspeções realizadas 
+para acompanhar os resultados das vistorias ao longo do tempo.
+
+### História de Usuário
+
+Como gestor, 
+quero filtrar o histórico das inspeções 
+para localizar informações específicas com mais facilidade.
 
 ---
 
