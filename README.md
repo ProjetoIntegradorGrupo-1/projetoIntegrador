@@ -199,114 +199,113 @@ ou alteração da ideia.]
 ---
 
 ## 5.2 Histórias de Usuário
+**História de Usuário 1 — Cadastrar usuário**
 
-### História de Usuário 1
-Como administrador, 
-quero cadastrar usuários no sistema 
-para permitir que os integrantes da empresa tenham acesso às funcionalidades correspondentes ao seu perfil.
+Como administrador,  
+quero cadastrar usuários no sistema  
+para permitir que os usuários tenham acesso às funcionalidades correspondentes ao seu perfil.
 
-### História de Usuário 2
+**História de Usuário 2 — Realizar login**
 
-Como usuário,
-quero realizar login no sistema 
+Como usuário,  
+quero realizar login no sistema  
 para acessar as funcionalidades disponíveis para o meu perfil.
 
-### História de Usuário 3
+**História de Usuário 3 — Definir perfil de usuário**
 
-Como administrador, 
-quero definir o perfil de cada usuário 
+Como administrador,  
+quero definir o perfil de cada usuário  
 para controlar quais funcionalidades ele pode acessar.
 
-### História de Usuário criar checklist
+**História de Usuário 4 — Criar checklist**
 
-Como administrador, 
-quero criar um checklist personalizado 
+Como gestor,  
+quero criar um checklist personalizado  
 para definir as verificações que deverão ser realizadas durante uma inspeção.
 
-### História de Usuário 
+**História de Usuário 5 — Configurar itens do checklist**
 
-Como administrador, 
-quero adicionar e configurar itens em um checklist 
-para definir exatamente o que deverá ser verificado durante a inspeção.'   
+Como gestor,  
+quero adicionar e configurar itens em um checklist  
+para definir exatamente o que deverá ser verificado durante a inspeção.
 
-### História de Usuário 
+**História de Usuário 6 — Editar checklist**
 
-Como administrador, 
-quero editar um checklist 
+Como gestor,  
+quero editar um checklist  
 para corrigir ou atualizar suas informações e itens de verificação.
 
-### História de Usuário
+**História de Usuário 7 — Desativar checklist**
 
-Como administrador, 
-quero desativar um checklist que não está mais em uso 
+Como gestor,  
+quero desativar um checklist que não está mais em uso  
 para impedir que ele seja utilizado em novas inspeções sem apagar seu histórico.
 
-### História de Usuário
+**História de Usuário 8 — Visualizar checklists disponíveis**
 
-Como funcionário ou inspetor, 
-quero visualizar os checklists disponíveis 
+Como funcionário ou inspetor,  
+quero visualizar os checklists disponíveis  
 para escolher aquele que corresponde à inspeção que preciso realizar.
 
-### História de Usuário
+**História de Usuário 9 — Iniciar inspeção**
 
-Como funcionário ou inspetor, 
-quero iniciar uma inspeção utilizando um checklist 
+Como funcionário ou inspetor,  
+quero iniciar uma inspeção utilizando um checklist  
 para registrar a vistoria que estou realizando.
 
-### História de Usuário
+**História de Usuário 10 — Responder itens do checklist**
 
-Como funcionário ou inspetor, 
-quero responder cada item do checklist 
+Como funcionário ou inspetor,  
+quero responder cada item do checklist  
 para registrar o resultado da verificação realizada.
 
-### História de Usuário 
+**História de Usuário 11 — Registrar observação**
 
-Como funcionário ou inspetor, 
-quero registrar uma observação durante uma inspeção 
-para complementar as informações de uma resposta ou ocorrência.
+Como funcionário ou inspetor,  
+quero registrar uma observação durante uma inspeção  
+para complementar as informações de uma resposta ou situação identificada.
 
-### História de Usuário 
+**História de Usuário 12 — Anexar evidência**
 
-Como funcionário ou inspetor, 
-quero anexar uma evidência a uma resposta 
+Como funcionário ou inspetor,  
+quero anexar uma evidência a uma resposta  
 para comprovar visualmente ou documentalmente uma situação encontrada durante a inspeção.
 
-### História de Usuário 
+**História de Usuário 13 — Salvar inspeção em andamento**
 
-Como funcionário ou inspetor, 
-quero salvar uma inspeção ainda não finalizada 
+Como funcionário ou inspetor,  
+quero salvar uma inspeção ainda não finalizada  
 para poder continuar seu preenchimento posteriormente.
 
-### História de Usuário 
+**História de Usuário 14 — Finalizar inspeção**
 
-Como funcionário ou inspetor, 
-quero finalizar uma inspeção 
+Como funcionário ou inspetor,  
+quero finalizar uma inspeção  
 para registrar oficialmente o resultado da vistoria.
 
-### História de Usuário 
+**História de Usuário 15 — Registrar ocorrência**
 
-Como funcionário ou inspetor, 
-quero registrar uma ocorrência durante a inspeção 
+Como funcionário ou inspetor,  
+quero registrar uma ocorrência durante a inspeção  
 para informar uma situação que necessita de atenção.
 
-### História de Usuário 
+**História de Usuário 16 — Acompanhar ocorrências**
 
-Como gestor, 
-quero acompanhar as ocorrências identificadas nas inspeções 
+Como gestor,  
+quero acompanhar as ocorrências identificadas nas inspeções  
 para verificar quais problemas ainda precisam de atenção.
 
-### História de Usuário 
+**História de Usuário 17 — Consultar histórico de inspeções**
 
-Como gestor, 
-quero consultar o histórico das inspeções realizadas 
+Como gestor,  
+quero consultar o histórico das inspeções realizadas  
 para acompanhar os resultados das vistorias ao longo do tempo.
 
-### História de Usuário
+**História de Usuário 18 — Filtrar histórico de inspeções**
 
-Como gestor, 
-quero filtrar o histórico das inspeções 
+Como gestor,  
+quero filtrar o histórico das inspeções  
 para localizar informações específicas com mais facilidade.
-
 ---
 
 ## 6. PROTÓTIPOS DO SISTEMA
