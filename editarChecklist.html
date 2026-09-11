@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Checklist - Axion</title>
+    <!-- CSS do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div class="card p-4 shadow-sm" style="max-width: 750px; width: 100%;">
+            <h1 class="h4 text-center mb-1">Editar Checklist</h1>
+            <p class="text-muted text-center small mb-4">Altere perguntas, respostas esperadas e recomendações de não conformidade</p>
+
+            <!-- 1. BLOCO DE SELEÇÃO DO CHECKLIST -->
+            <form action="buscar_checklist.php" method="get" class="mb-4 p-3 bg-light border rounded">
+                <label for="select-checklist" class="form-label fw-bold">Selecione o Modelo de Checklist</label>
+                <div class="input-group">
+                    <select id="select-checklist" name="id_checklist" class="form-select" required>
+                        <option value="" selected disabled>Escolha um checklist para editar...</option>
+                        <option value="101">Vistoria Diária de Segurança (Elétrico)</option>
+                        <option value="102">Checklist de Troca de Turno (Mecânico)</option>
+                    </select>
+                    <button class="btn btn-outline-primary" type="submit">Carregar Formulário</button>
+                </div>
+            </form>
+
+            <hr class="my-4">
+
+            <!-- 2. FORMULÁRIO DINÂMICO DE EDIÇÃO -->
+            <form action="processar_edicao_checklist.php" method="post" id="formEditarChecklist">
+                <!-- ID Oculto do Checklist -->
+                <input type="hidden" name="id_checklist" value="101">
+
+                <!-- Informações do Checklist -->
+                <div class="mb-3">
+                    <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
+                    <input type="text" id="tituloChecklist" name="titulo" class="form-control" value="Vistoria Diária de Segurança" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
+                    <select id="categoriaChecklist" name="categoria" class="form-select" required>
+                        <option value="eletrico" selected>Elétrico</option>
+                        <option value="mecanico">Mecânico</option>
+                        <option value="estetico">Estético</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+
+                <h2 class="h6 fw-bold mb-3">Perguntas do Checklist</h2>
+
+                <!-- Container onde as perguntas salvas são carregadas -->
+                <div id="containerPerguntas">
+                    
+                    <!-- Pergunta 1 (Sim/Não com regra de não conformidade) -->
+                    <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_1">
+                        <input type="hidden" name="perguntas[1][id_pergunta]" value="501">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary">Pergunta 1</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_1')">Excluir</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Texto da Pergunta</label>
+                            <input type="text" name="perguntas[1][texto]" class="form-control" value="O farol principal está funcionando?" required>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold">Tipo de Resposta</label>
+                                <select name="perguntas[1][tipo]" class="form-select" onchange="alternarCamposConformidade(this, 1)" required>
+                                    <option value="sim_nao" selected>Sim / Não</option>
+                                    <option value="texto">Texto Curto (Observação)</option>
+                                    <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-end">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="perguntas[1][obrigatorio]" value="1" id="req_1" checked>
+                                    <label class="form-check-label" for="req_1">Resposta Obrigatória</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regras de Não Conformidade -->
+                        <div class="row p-2 mx-0 bg-light border rounded" id="box_conformidade_1">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-bold text-success">Resposta Esperada</label>
+                                <select name="perguntas[1][resposta_esperada]" class="form-select form-select-sm">
+                                    <option value="sim" selected>Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <label class="form-label small fw-bold text-warning-emphasis">Orientação se Fora do Padrão (Toast)</label>
+                                <input type="text" name="perguntas[1][orientacao]" class="form-control form-control-sm" value="Parar o veículo e solicitar troca imediata da lâmpada no pátio">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pergunta 2 (Tipo Número) -->
+                    <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_2">
+                        <input type="hidden" name="perguntas[2][id_pergunta]" value="502">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary">Pergunta 2</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_2')">Excluir</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Texto da Pergunta</label>
+                            <input type="text" name="perguntas[2][texto]" class="form-control" value="Informe a quilometragem atual do painel" required>
+                        </div>
+
+                        <div class="row mb-2">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label fw-semibold">Tipo de Resposta</label>
+                                <select name="perguntas[2][tipo]" class="form-select" onchange="alternarCamposConformidade(this, 2)" required>
+                                    <option value="sim_nao">Sim / Não</option>
+                                    <option value="texto">Texto Curto (Observação)</option>
+                                    <option value="numero" selected>Número (Ex: Quilometragem/Pressão)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-2 d-flex align-items-end">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="perguntas[2][obrigatorio]" value="1" id="req_2" checked>
+                                    <label class="form-check-label" for="req_2">Resposta Obrigatória</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regras de Não Conformidade ocultas por ser tipo número -->
+                        <div class="row p-2 mx-0 bg-light border rounded d-none" id="box_conformidade_2">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-bold text-success">Resposta Esperada</label>
+                                <select name="perguntas[2][resposta_esperada]" class="form-select form-select-sm">
+                                    <option value="sim" selected>Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 mb-2">
+                                <label class="form-label small fw-bold text-warning-emphasis">Orientação se Fora do Padrão (Toast)</label>
+                                <input type="text" name="perguntas[2][orientacao]" class="form-control form-control-sm" placeholder="Orientação para o motorista...">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Botão para Acrescentar Novas Perguntas -->
+                <div class="mb-4 text-center">
+                    <button type="button" class="btn btn-outline-success w-100" onclick="adicionarPergunta()">
+                        + Acrescentar Nova Pergunta
+                    </button>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-grid gap-2">
+                    <input type="submit" value="Salvar Alterações" class="btn btn-primary">
+                    <a href="oqfazer.php" class="btn btn-outline-secondary">Cancelar e Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script JavaScript Dinâmico -->
+    <script>
+        let contadorPerguntas = document.querySelectorAll('.pergunta-item').length;
+
+        function adicionarPergunta() {
+            contadorPerguntas++;
+            const container = document.getElementById('containerPerguntas');
+            
+            const novoHtml = `
+                <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_${contadorPerguntas}">
+                    <input type="hidden" name="perguntas[${contadorPerguntas}][id_pergunta]" value="nova">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success">Nova Pergunta ${contadorPerguntas}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_${contadorPerguntas}')">Excluir</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Texto da Pergunta</label>
+                        <input type="text" name="perguntas[${contadorPerguntas}][texto]" class="form-control" placeholder="Digite o enunciado..." required>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-semibold">Tipo de Resposta</label>
+                            <select name="perguntas[${contadorPerguntas}][tipo]" class="form-select" onchange="alternarCamposConformidade(this, ${contadorPerguntas})" required>
+                                <option value="sim_nao" selected>Sim / Não</option>
+                                <option value="texto">Texto Curto (Observação)</option>
+                                <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="perguntas[${contadorPerguntas}][obrigatorio]" value="1" id="req_${contadorPerguntas}" checked>
+                                <label class="form-check-label" for="req_${contadorPerguntas}">Resposta Obrigatória</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Regras de Não Conformidade -->
+                    <div class="row p-2 mx-0 bg-light border rounded" id="box_conformidade_${contadorPerguntas}">
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label small fw-bold text-success">Resposta Esperada</label>
+                            <select name="perguntas[${contadorPerguntas}][resposta_esperada]" class="form-select form-select-sm">
+                                <option value="sim" selected>Sim</option>
+                                <option value="nao">Não</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 mb-2">
+                            <label class="form-label small fw-bold text-warning-emphasis">Orientação se Fora do Padrão (Toast)</label>
+                            <input type="text" name="perguntas[${contadorPerguntas}][orientacao]" class="form-control form-control-sm" placeholder="Ex: Informar a manutenção e tirar foto">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', novoHtml);
+        }
+
+        function removerPergunta(idElemento) {
+            const listaPerguntas = document.querySelectorAll('.pergunta-item');
+            if (listaPerguntas.length > 1) {
+                document.getElementById(idElemento).remove();
+            } else {
+                alert('O checklist precisa ter pelo menos uma pergunta.');
+            }
+        }
+
+        function alternarCamposConformidade(selectElemento, idIndex) {
+            const boxConformidade = document.getElementById(`box_conformidade_${idIndex}`);
+            if (selectElemento.value === 'sim_nao') {
+                boxConformidade.classList.remove('d-none');
+            } else {
+                boxConformidade.classList.add('d-none');
+            }
+        }
+    </script>
+
+    <!-- JS do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
