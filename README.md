@@ -42,8 +42,7 @@ duas principais ideias consideradas pelo grupo.
 
 **Título:** Gerenciador de checklists
 **Descrição:**  
-O sistema de gerenciamento de checklists seria destinado a empresas dos setores industrial e de transportes que precisam realizar vistorias periódicas em veículos, equipamentos, máquinas e demais itens que exigem acompanhamento. A proposta busca facilitar a criação, organização e execução dessas vistorias, permitindo que checklists de diferentes frequências sejam gerenciados de forma mais prática e padronizada.
-
+O sistema de gerenciamento de checklists é destinado a empresas que trabalham com frotas de veículos e precisam realizar inspeções periódicas para acompanhar suas condições. A proposta busca facilitar a criação, organização e execução dessas inspeções, permitindo que checklists com diferentes finalidades, como retirada e devolução de veículos, sejam gerenciados de forma mais prática e padronizada.
 ### Ideia 2
 
 **Título:** Software para fichas medicas
@@ -99,7 +98,7 @@ Opportunity Card da ideia selecionada.
 
 ### 1. Área de afinidade/contexto
 
-Empresas que funcionam em turno ininterrupto de revezamento, com equipamentos que precisam de monitoramento periódico (correias transportadoras, geradores, bombas, veículos, etc…) 
+Empresas que operam em turno ininterrupto de revezamento e possuem frotas de veículos que necessitam de inspeções e monitoramento periódico, como empresas de transporte e locadoras de veículos.
 
 ### 2. Problema percebido
 
@@ -107,11 +106,11 @@ Perda de informações coletadas em papel. Necessidade de pranchetas na área op
 
 ### 3. Quem possui o problema
 
-Os usuários finais (trabalhadores do “chão de fábrica”, motoristas, vigilantes). 
+Os usuários finais, como trabalhadores da área operacional, motoristas e vigilantes, que realizam as inspeções e registram as informações dos veículos.
 
 ### 4. Como é resolvido hoje
 
- Formulários de checklists em papel ou eu software genérico, com limitações de espaço na tela e excesso de toques para responder uma pergunta do checklist (UX). 
+Formulários de checklists em papel e/ou software genérico, com limitações de espaço na tela e excesso de toques para responder uma pergunta do checklist (UX). 
 
 ### 5. Soluções semelhantes
 
@@ -129,7 +128,7 @@ Motoristas, vigilantes, operadores do Terminal Aquaviário da Barra do Riacho (T
 
 Otimização do tempo e da qualidade das respostas dos checklists operacionais (para uma unidade como a do TABR, por exemplo, com 237 perguntas no checklist, são necessários 3 a 4 toques no celular por pergunta). 
 
-### 9. Fomento/oportunidade
+### 9. Momento/oportunidade
 
 Considerando que um dos integrantes do grupo é funcionário da Transpetro, pelo contrato de trabalho assinado, se a Transpetro achar interessante a solução apresentada pelo funcionário, ele não será remunerado pela aplicação desenvolvida. 
 
