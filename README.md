@@ -92,7 +92,7 @@ Essa ideia foi selecionada por sua fácil viabilidade dentro do tempo que temos,
 
 ### Opportunity Card
 
-![Opportunity Card](arquivos/opportunityCard.png)
+<img width="1152" height="648" alt="Card2 (1)" src="https://github.com/user-attachments/assets/825cd1d5-2eec-452e-9fa0-96d57b3d5449" />
 
 Descreva abaixo o que foi definido pelo grupo para cada item do
 Opportunity Card da ideia selecionada.
