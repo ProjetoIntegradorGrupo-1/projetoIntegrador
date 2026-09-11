@@ -141,7 +141,11 @@ Apresentar aos órgãos decisórios das potenciais clientes.
 
 ## 3. MINIMUNDO
 
-> [O sistema é uma plataforma digital destinada à criação, gerenciamento e realização de checklists personalizados para diferentes tipos de atividades de inspeção. Os administradores são responsáveis por criar e gerenciar modelos de checklist, definindo as perguntas, opções de resposta, obrigatoriedade de registros fotográficos, campos para observações e níveis de criticidade. Os usuários podem realizar as inspeções utilizando os checklists disponíveis, registrando as respostas para cada item e adicionando evidências, como fotos e observações, quando necessário. Após a realização da inspeção, o sistema permite o acompanhamento dos resultados e das ocorrências identificadas. O sistema também mantém um histórico das inspeções realizadas, permitindo que os administradores e gestores acompanhem os resultados, as ocorrências registradas e as evidências associadas a cada inspeção, facilitando o controle e o acompanhamento das atividades realizadas. ]
+> O sistema é uma plataforma digital destinada à criação, gerenciamento e realização de checklists para inspeção de veículos. Os checklists são utilizados para verificar as condições dos veículos de uma frota, podendo possuir diferentes categorias e finalidades, como inspeções de retirada e devolução. Cada checklist é composto por perguntas, opções de resposta, registros de evidências e informações relacionadas à criticidade dos itens avaliados.
+Os usuários podem realizar as inspeções utilizando os checklists disponíveis, registrando as respostas para cada pergunta e adicionando evidências, como fotos e observações, quando necessário. As informações registradas ficam associadas ao veículo e à inspeção realizada, permitindo acompanhar as condições encontradas e identificar possíveis problemas.
+O sistema mantém o histórico das inspeções realizadas, possibilitando o acompanhamento dos resultados, das evidências e da criticidade das avaliações. Dessa forma, a plataforma auxilia no controle das condições dos veículos e no acompanhamento das informações obtidas durante as inspeções.
+Essa eu acho que é a direção certa. Mantém mais ou menos o tamanho e a estrutura do mini-mundo antigo, mas agora ele realmente fala sobre o sistema de vocês, e não sobre qualquer plataforma de checklist.
+
 
 ### Entrevista com o usuário
 
