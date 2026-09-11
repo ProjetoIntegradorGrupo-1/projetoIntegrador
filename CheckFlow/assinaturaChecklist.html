@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura dos Usuários - Axion</title>
+    <!-- CSS do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .canvas-container {
+            position: relative;
+            touch-action: none; /* Impede a tela do celular de rolar enquanto assina */
+        }
+        canvas {
+            border: 2px dashed #6c757d;
+            border-radius: 6px;
+            cursor: crosshair;
+            background-color: #ffffff;
+            width: 100%;
+            height: 160px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
+            
+            <h1 class="h4 text-center mb-4">Assinatura dos usuários do veículo</h1>
+
+            <!-- ALERTAS DE FEEDBACK DO ENVIO -->
+            <div id="alertaSucesso" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert">
+                <strong>Sucesso!</strong> Checklist e assinaturas enviados com sucesso! Redirecionando...
+            </div>
+
+            <div id="alertaErro" class="alert alert-danger alert-dismissible fade show d-none mb-3" role="alert">
+                <strong>Atenção:</strong> Por favor, informe as duas assinaturas antes de concluir.
+            </div>
+
+            <form id="formAssinaturas" action="processar_checklist_final.php" method="post">
+                <!-- Inputs ocultos para enviar as assinaturas em formato de imagem (Base64) para o PHP -->
+                <input type="hidden" name="assinatura_motorista" id="inputAssinaturaMotorista">
+                <input type="hidden" name="assinatura_vistoriador" id="inputAssinaturaVistoriador">
+
+                <!-- 1. ASSINATURA DO MOTORISTA -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Assinatura do motorista</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasMotorista')">Limpar</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="canvasMotorista"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2. ASSINATURA DO VISTORIADOR -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Assinatura do vistoriador</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasVistoriador')">Limpar</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="canvasVistoriador"></canvas>
+                    </div>
+                </div>
+
+                <!-- BOTÃO DE AÇÃO PRINCIPAL (Sem botão de voltar) -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="finalizarChecklist()">Concluir Checklist</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- JS do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- LÓGICA DE CAPTURA DA ASSINATURA E VALIDAÇÃO -->
+    <script>
+        function configurarCanvas(idCanvas) {
+            const canvas = document.getElementById(idCanvas);
+            const ctx = canvas.getContext('2d');
+            let desenhando = false;
+
+            // Ajusta a resolução do canvas conforme a largura real da tela
+            function redimensionarCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = 160;
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000';
+            }
+            redimensionarCanvas();
+
+            function obterPosicao(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clienteX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clienteY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clienteX - rect.left,
+                    y: clienteY - rect.top
+                };
+            }
+
+            function iniciarDesenho(e) {
+                desenhando = true;
+                const pos = obterPosicao(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function desenhar(e) {
+                if (!desenhando) return;
+                const pos = obterPosicao(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function pararDesenho() {
+                desenhando = false;
+            }
+
+            // Eventos de Mouse
+            canvas.addEventListener('mousedown', iniciarDesenho);
+            canvas.addEventListener('mousemove', desenhar);
+            canvas.addEventListener('mouseup', pararDesenho);
+            canvas.addEventListener('mouseleave', pararDesenho);
+
+            // Eventos de Toque (Celular/Tablet)
+            canvas.addEventListener('touchstart', iniciarDesenho);
+            canvas.addEventListener('touchmove', desenhar);
+            canvas.addEventListener('touchend', pararDesenho);
+        }
+
+        function limparCanvas(idCanvas) {
+            const canvas = document.getElementById(idCanvas);
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function canvasEstaVazio(idCanvas) {
+            const canvas = document.getElementById(idCanvas);
+            const ctx = canvas.getContext('2d');
+            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            return !pixelData.some(channel => channel !== 0);
+        }
+
+        function finalizarChecklist() {
+            const alertaErro = document.getElementById('alertaErro');
+            const alertaSucesso = document.getElementById('alertaSucesso');
+
+            // Oculta alertas prévios
+            alertaErro.classList.add('d-none');
+            alertaSucesso.classList.add('d-none');
+
+            // Verifica se os dois quadros foram assinados
+            if (canvasEstaVazio('canvasMotorista') || canvasEstaVazio('canvasVistoriador')) {
+                alertaErro.classList.remove('d-none');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // Converte os desenhos dos quadros para texto base64
+            document.getElementById('inputAssinaturaMotorista').value = document.getElementById('canvasMotorista').toDataURL();
+            document.getElementById('inputAssinaturaVistoriador').value = document.getElementById('canvasVistoriador').toDataURL();
+
+            // Exibe mensagem de sucesso e redireciona após 2 segundos
+            alertaSucesso.classList.remove('d-none');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            setTimeout(function () {
+                // Envia o formulário para o backend (ou diretamente redireciona para a página principal)
+                document.getElementById('formAssinaturas').submit();
+                // Redirecionamento de segurança para o fluxo da interface
+                window.location.href = "oqfazer.html";
+            }, 2000);
+        }
+
+        // Inicializa a captura de ambos os quadros de assinatura ao carregar a tela
+        document.addEventListener('DOMContentLoaded', function () {
+            configurarCanvas('canvasMotorista');
+            configurarCanvas('canvasVistoriador');
+        });
+    </script>
+</body>
+
+</html>
