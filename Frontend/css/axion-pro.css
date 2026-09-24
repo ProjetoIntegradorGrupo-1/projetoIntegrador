@@ -1,0 +1,83 @@
+/* ==========================================
+   AXION PRO - ESTILOS E ANIMAÇÕES MODERNAS
+   ================================---------- */
+
+/* Animação suave de entrada para os cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Transições elegantes em botões e inputs */
+.btn, .form-control, .form-select {
+    border-radius: 8px !important;
+    transition: all 0.25s ease-in-out;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    border: none;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(13, 110, 253, 0.4);
+}
+
+/* ==========================================
+   MODO DE ACESSIBILIDADE (Alto Contraste)
+   ================================---------- */
+body.accessibility-high-contrast {
+    background-color: #000000 !important;
+    color: #ffff00 !important;
+}
+
+body.accessibility-high-contrast .card {
+    background-color: #121212 !important;
+    color: #ffff00 !important;
+    border: 2px solid #ffff00 !important;
+}
+
+body.accessibility-high-contrast .form-control, 
+body.accessibility-high-contrast .form-select {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffff00 !important;
+}
+
+body.accessibility-high-contrast .text-muted {
+    color: #00ffff !important;
+}
+
+/* Modo de fonte ampliada */
+body.accessibility-large-text {
+    font-size: 1.2rem !important;
+}
+
+body.accessibility-large-text input, 
+body.accessibility-large-text select, 
+body.accessibility-large-text button,
+body.accessibility-large-text label {
+    font-size: 1.1rem !important;
+}

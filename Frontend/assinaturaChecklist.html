@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura dos Usuários - Axion</title>
+    <!-- CSS do Bootstrap e Estilos Profissionais -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/axion-pro.css">
+    <style>
+        .canvas-container {
+            position: relative;
+            touch-action: none;
+        }
+        canvas {
+            border: 2px dashed #6c757d;
+            border-radius: 6px;
+            cursor: crosshair;
+            background-color: #ffffff;
+            width: 100%;
+            height: 160px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
+            
+            <h1 class="h4 text-center mb-4">Assinatura dos usuários do veículo</h1>
+
+            <!-- ALERTAS DE FEEDBACK DO ENVIO -->
+            <div id="alertaSucesso" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert">
+                <strong>Sucesso!</strong> Checklist e assinaturas enviados com sucesso! Redirecionando...
+            </div>
+
+            <div id="alertaErro" class="alert alert-danger alert-dismissible fade show d-none mb-3" role="alert">
+                <strong>Atenção:</strong> Por favor, informe as duas assinaturas antes de concluir.
+            </div>
+
+            <form id="formAssinaturas" action="../backend/inspecoes/processar_checklist_final.php" method="POST">
+                <!-- Inputs ocultos para enviar as assinaturas em formato de imagem (Base64) -->
+                <input type="hidden" name="assinatura_motorista" id="inputAssinaturaMotorista">
+                <input type="hidden" name="assinatura_vistoriador" id="inputAssinaturaVistoriador">
+
+                <!-- 1. ASSINATURA DO MOTORISTA -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Assinatura do motorista</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasMotorista')">Limpar</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="canvasMotorista"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2. ASSINATURA DO VISTORIADOR -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Assinatura do vistoriador</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasVistoriador')">Limpar</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="canvasVistoriador"></canvas>
+                    </div>
+                </div>
+
+                <!-- BOTÃO DE AÇÃO PRINCIPAL -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="finalizarChecklist()">Concluir Checklist</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+   <!-- BARRA DE ACESSIBILIDADE FLUTUANTE -->
+<div class="position-fixed bottom-0 start-0 p-3" style="z-index: 1050;">
+    <div class="bg-white p-2 rounded-pill shadow-sm border d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-outline-dark rounded-pill" onclick="toggleAltoContraste()" title="Ativar Alto Contraste">
+            🌓 Contraste
+        </button>
+        <div class="vr"></div>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle fw-bold" onclick="mudarZoom('menos')" title="Diminuir Letra">
+            A-
+        </button>
+        <button type="button" class="btn btn-sm btn-light rounded-pill px-2 text-muted small" onclick="mudarZoom('reset')" title="Restorar Padrão">
+            Zoom
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle fw-bold" onclick="mudarZoom('mais')" title="Aumentar Letra">
+            A+
+        </button>
+    </div>
+</div>
+    <!-- Scripts: Bootstrap, Assinaturas e Acessibilidade -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/assinaturas.js"></script>
+    <script src="js/axion-accessibility.js"></script>
+</body>
+
+</html>
