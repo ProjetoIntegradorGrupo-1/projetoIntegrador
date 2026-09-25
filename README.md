@@ -325,9 +325,10 @@ descartadas.
 
 ## 6.1 PROTÓTIPO DO SISTEMA MOBILE
 
-### Tela 1 — [Nome da tela]
+### Tela 1 — [Login]
 
-![Tela Mobile 1](arquivos/prototipos/mobile/tela1.png)
+![Tela Mobile 1]
+
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
@@ -345,18 +346,20 @@ descartadas.
 
 ## 6.2 PROTÓTIPO DO SISTEMA WEB
 
-### Tela 1 — [Nome da tela]
+### Tela 1 — [Login]
 
-![Tela Web 1]([Conceptual model - BRMW - Vanderci (2).pdf](https://github.com/user-attachments/files/32671029/Conceptual.model.-.BRMW.-.Vanderci.2.pdf))
+![Tela Web 1] <img width="583" height="820" alt="image" src="https://github.com/user-attachments/assets/efcb1b12-8e05-4fe7-93f2-438bf2e56e25" />
+
+
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
 
-### Tela 2 — [Nome da tela]
+### Tela 2 — [Inspetor]
 
-![Tela Web 2](![Uploading image.png…](<img width="808" height="671" alt="image" src="https://github.com/user-attachments/assets/7b7673e9-c971-43ef-a540-046a53e02601" />
-)
-)
+![Tela Web 2] <img width="773" height="705" alt="image" src="https://github.com/user-attachments/assets/41d373f5-7001-453f-bde9-b66e238603f5" />
+
+Protótipo: https://check-ride-mentor.lovable.app/
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
