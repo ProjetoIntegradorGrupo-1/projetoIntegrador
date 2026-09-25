@@ -183,21 +183,21 @@ Os resultados da pesquisa reforçaram a proposta inicial do sistema e ajudaram a
 
 ---
 
-## 5. PERSONAS E HISTÓRIAS DE USUÁRIO
+## 5. S E HISTÓRIAS DE USUÁRIO
 
 ### 5.1 Personas
 
 ### Persona 1 — [Administrador]
 
-![Persona 1](<img width="334" height="663" alt="usuario" src="https://github.com/user-attachments/assets/46879242-bfa0-4a82-ba87-92e41714c405" />);
+![Persona 1] <img width="395" height="781" alt="image" src="https://github.com/user-attachments/assets/8ebf3fe4-fdee-48b5-a330-f5733d4995a8" />
 
 **Descrição:**  
 Atua nos bastidores da plataforma, garantindo que as informações e estruturas utilizadas nas inspeções estejam organizadas e adequadas às necessidades da empresa.
 
 ### Persona 2 — [Usuário]
 
-![Persona 2](<img width="334" height="663" alt="Captura de tela 2026-09-25 175808" src="https://github.com/user-attachments/assets/f65ddff7-a4c5-4998-93bc-7066642c48f6" />
-)
+![Persona 2] <img width="399" height="770" alt="image" src="https://github.com/user-attachments/assets/de1a2fae-b745-407b-93a2-3d56955e55a3" />
+
 
 **Descrição:**  
 É o perfil que está mais próximo da atividade prática, utilizando o sistema durante a rotina de trabalho para registrar as condições encontradas de forma padronizada e documentada.
