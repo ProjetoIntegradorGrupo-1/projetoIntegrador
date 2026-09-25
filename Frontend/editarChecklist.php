@@ -1,3 +1,14 @@
+<?php
+session_start();
+
+// Verifica se a variável de sessão criada no login NÃO existe
+if (!isset($_SESSION['usuario_logado'])) {
+    // Expulsa o invasor de volta para a tela de login
+    header("Location: index.php?erro=nao_autorizado");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -7,7 +18,7 @@
     <title>Editar Checklist - Axion</title>
     <!-- CSS do Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/axion-pro.css">
+    <link rel="stylesheet" href="/Frontend/css/axion-pro.css">
 </head>
 
 <body class="bg-light">

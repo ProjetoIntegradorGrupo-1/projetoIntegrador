@@ -21,6 +21,7 @@ try {
     $telefone = $_POST['telefone'] ?? '';
     $email = trim($_POST['email'] ?? '');
     $perfil = $_POST['perfil'] ?? '';
+
     
     // Hash da senha obrigatório
     $senhaHash = password_hash($_POST['senha'] ?? '', PASSWORD_DEFAULT);

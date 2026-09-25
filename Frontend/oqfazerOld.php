@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+// Verifica se a variável de sessão criada no login NÃO existe
+if (!isset($_SESSION['usuario_logado'])) {
+    // Expulsa o invasor de volta para a tela de login
+    header("Location: index.php?erro=nao_autorizado");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 

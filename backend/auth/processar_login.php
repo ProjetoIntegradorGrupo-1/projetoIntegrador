@@ -5,7 +5,7 @@ session_start();
 require_once __DIR__ . '/../config/conexao.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../../Frontend/index.html');
+    header('Location: ../../Frontend/index.php'); // Atualizado para .php
     exit;
 }
 
@@ -13,7 +13,7 @@ $usuario_digitado = trim($_POST['txtuser'] ?? '');
 $senha_digitada = $_POST['txtsenha'] ?? '';
 
 if ($usuario_digitado === '' || $senha_digitada === '') {
-    header('Location: ../../Frontend/index.html?erro=campos_obrigatorios');
+    header('Location: ../../Frontend/index.php?erro=campos_obrigatorios'); // Atualizado para .php
     exit;
 }
 
@@ -45,12 +45,14 @@ if (
     $usuario['status'] !== 'ativo' ||
     !password_verify($senha_digitada, $usuario['senha'])
 ) {
-    header('Location: ../../Frontend/index.html?erro=credenciais_invalidas');
+    header('Location: ../../Frontend/index.php?erro=credenciais_invalidas'); // Atualizado para .php
     exit;
 }
 
 session_regenerate_id(true);
 
+// CRIAÇÃO DAS VARIÁVEIS DE SESSÃO
+$_SESSION['usuario_logado'] = true; // A chave mestra adicionada!
 $_SESSION['id_usuario'] = $usuario['id_usuario'];
 $_SESSION['nome_usuario'] = $usuario['nome'];
 $_SESSION['perfil_usuario'] = $usuario['perfil'];

@@ -39,6 +39,7 @@ try {
     // 3. Iterar sobre o array recebido do Frontend e gravar cada pergunta associada ao ID do checklist
     $ordem = 1;
     foreach ($perguntas as $p) {
+        
         $texto = trim($p['texto'] ?? '');
         $tipo = trim($p['tipo'] ?? 'sim_nao');
         $obrigatorio = isset($p['obrigatorio']) ? 1 : 0;
@@ -47,6 +48,7 @@ try {
             $stmtPergunta->execute([$id_checklist, $texto, $tipo, $obrigatorio, $ordem]);
             $ordem++;
         }
+        
     }
 
     $pdo->commit();

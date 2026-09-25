@@ -33,7 +33,7 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $placa, 
-        $marca, 
+        $marca,
         $modelo, 
         $ano, 
         $cor, 

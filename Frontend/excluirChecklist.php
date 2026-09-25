@@ -1,10 +1,21 @@
+<?php
+session_start();
+
+// Verifica se a variável de sessão criada no login NÃO existe
+if (!isset($_SESSION['usuario_logado'])) {
+    // Expulsa o invasor de volta para a tela de login
+    header("Location: index.php?erro=nao_autorizado");
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excluir Veículo - Axion</title>
+    <title>Excluir Checklist - Axion</title>
     <!-- CSS do Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/axion-pro.css">
@@ -14,17 +25,16 @@
 
     <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
         <div class="card p-4 shadow-sm border-danger" style="max-width: 550px; width: 100%;">
-            <h1 class="h4 text-center text-danger mb-1">Excluir Veículo</h1>
-            <p class="text-muted text-center small mb-4">Remova o cadastro do veículo da frota</p>
+            <h1 class="h4 text-center text-danger mb-1">Excluir Modelo de Checklist</h1>
+            <p class="text-muted text-center small mb-4">Remova o formulário de vistoria e suas perguntas vinculadas</p>
 
-            <!-- Seleção do Veículo -->
-<form action="../backend/veiculos/buscar_veiculo_excluir.php" method="GET" class="mb-4">
-                    <label for="select-veiculo" class="form-label fw-bold">Selecione o Veículo</label>
+            <!-- Seleção do Checklist -->
+<form action="../backend/cheklist/buscar_checklist_excluir.php" method="GET" class="mb-4">                <label for="select-checklist" class="form-label fw-bold">Selecione o Modelo de Checklist</label>
                 <div class="input-group">
-                    <select id="select-veiculo" name="id_veiculo" class="form-select" required>
-                        <option value="" selected disabled>Escolha um veículo...</option>
-                        <option value="1">ABC-1D23 | VW Gol - Prata</option>
-                        <option value="2">XYZ-9876 | Fiat Uno - Branco</option>
+                    <select id="select-checklist" name="id_checklist" class="form-select" required>
+                        <option value="" selected disabled>Escolha um checklist...</option>
+                        <option value="101">Vistoria Diária de Segurança (Elétrico)</option>
+                        <option value="102">Checklist de Troca de Turno (Mecânico)</option>
                     </select>
                     <button class="btn btn-outline-danger" type="submit">Carregar</button>
                 </div>
@@ -33,35 +43,32 @@
             <hr>
 
             <!-- Confirmação e Envio -->
-            <form action="../backend/veiculos/processar_exclusao_veiculo.php" method="POST">
-                <input type="hidden" name="id_veiculo" value="1">
+<form action="../backend/cheklist/processar_exclusao_checklist.php" method="POST">                <input type="hidden" name="id_checklist" value="101">
 
                 <div class="card bg-danger-subtle border-danger p-3 mb-4">
-                    <h2 class="h6 text-danger fw-bold mb-2">Dados do Veículo Selecionado:</h2>
+                    <h2 class="h6 text-danger fw-bold mb-2">Resumo do Checklist:</h2>
                     <ul class="mb-0 small text-dark ps-3">
-                        <li><strong>Placa:</strong> ABC-1D23</li>
-                        <li><strong>Modelo/Marca:</strong> VW Gol 1.0</li>
-                        <li><strong>Ano:</strong> 2022</li>
-                        <li><strong>Chassi:</strong> 9BWZZZ377VT000000</li>
+                        <li><strong>Título:</strong> Vistoria Diária de Segurança</li>
+                        <li><strong>Categoria:</strong> Elétrico</li>
+                        <li><strong>Total de Perguntas:</strong> 6 perguntas cadastradas</li>
                     </ul>
                 </div>
 
                 <div class="form-check mb-4">
-                    <input class="form-check-input" type="checkbox" id="confirmarExclusaoVeiculo" required>
-                    <label class="form-check-label small fw-semibold text-danger" for="confirmarExclusaoVeiculo">
-                        Confirmar a exclusão permanente deste veículo do sistema.
+                    <input class="form-check-input" type="checkbox" id="confirmarExclusaoChecklist" required>
+                    <label class="form-check-label small fw-semibold text-danger" for="confirmarExclusaoChecklist">
+                        Confirmar a exclusão deste modelo de checklist. Os motoristas não poderão mais preenchê-lo.
                     </label>
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-danger">Excluir Veículo</button>
-                    <a href="../backend/php/oqfazer.php" class="btn btn-outline-secondary">Cancelar e Voltar</a>
-                </div>
+                    <button type="submit" class="btn btn-danger">Excluir Checklist</button>
+<a href="../backend/php/oqfazer.php" class="btn btn-outline-secondary">Cancelar e Voltar</a>          
+      </div>
             </form>
         </div>
     </div>
-
-   <!-- BARRA DE ACESSIBILIDADE FLUTUANTE -->
+<!-- BARRA DE ACESSIBILIDADE FLUTUANTE -->
     <div class="position-fixed bottom-0 start-0 p-3" style="z-index: 1050;">
         <div class="bg-white p-2 rounded-pill shadow-sm border d-flex align-items-center gap-2">
             <button type="button" class="btn btn-sm btn-outline-dark rounded-pill" onclick="toggleAltoContraste()" title="Ativar Alto Contraste">
