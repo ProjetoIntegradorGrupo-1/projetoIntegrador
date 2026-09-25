@@ -189,15 +189,15 @@ Os resultados da pesquisa reforçaram a proposta inicial do sistema e ajudaram a
 
 ### Persona 1 — [Administrador]
 
-![Persona 1](<img width="333" height="661" alt="Captura de tela 2026-09-25 175539" src="https://github.com/user-attachments/assets/54d190e2-b389-4012-9a74-1515a766e031" />
-)
+![Persona 1](<img width="333" height="661" alt="Captura de tela 2026-09-25 175539" src="https://github.com/user-attachments/assets/54d190e2-b389-4012-9a74-1515a766e031" />)
 
 **Descrição:**  
 Atua nos bastidores da plataforma, garantindo que as informações e estruturas utilizadas nas inspeções estejam organizadas e adequadas às necessidades da empresa.
 
 ### Persona 2 — [Usuário]
 
-![Persona 2](<img width="334" height="663" alt="Captura de tela 2026-09-25 175808" src="https://github.com/user-attachments/assets/888e9f24-75a1-43aa-abb2-38ecedf5bb02" />)
+![Persona 2](<img width="334" height="663" alt="Captura de tela 2026-09-25 175808" src="https://github.com/user-attachments/assets/f65ddff7-a4c5-4998-93bc-7066642c48f6" />
+)
 
 **Descrição:**  
 É o perfil que está mais próximo da atividade prática, utilizando o sistema durante a rotina de trabalho para registrar as condições encontradas de forma padronizada e documentada.
