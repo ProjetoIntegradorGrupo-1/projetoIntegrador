@@ -347,8 +347,7 @@ descartadas.
 
 ### Tela 1 — [Nome da tela]
 
-![Tela Web 1](<img width="861" height="813" alt="image" src="https://github.com/user-attachments/assets/f8e184ac-b99a-4b59-9d91-78f9a67631fe" />
-)
+![Tela Web 1]([Conceptual model - BRMW - Vanderci (2).pdf](https://github.com/user-attachments/files/32671029/Conceptual.model.-.BRMW.-.Vanderci.2.pdf))
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
