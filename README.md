@@ -189,7 +189,7 @@ Os resultados da pesquisa reforçaram a proposta inicial do sistema e ajudaram a
 
 ### Persona 1 — [Administrador]
 
-![Persona 1](<img width="333" height="661" alt="Captura de tela 2026-09-25 175539" src="https://github.com/user-attachments/assets/54d190e2-b389-4012-9a74-1515a766e031" />)
+![Persona 1](<img width="334" height="663" alt="usuario" src="https://github.com/user-attachments/assets/46879242-bfa0-4a82-ba87-92e41714c405" />);
 
 **Descrição:**  
 Atua nos bastidores da plataforma, garantindo que as informações e estruturas utilizadas nas inspeções estejam organizadas e adequadas às necessidades da empresa.
