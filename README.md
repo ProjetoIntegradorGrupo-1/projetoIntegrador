@@ -167,17 +167,19 @@ https://docs.google.com/forms/d/e/1FAIpQLSfhAbcdeDb946Aj8rsI9r5QmwfeYjps1cm14KZ6
 
 ## 4.2 Resultados da validação
 
-[Link para o relatório/apresentação dos resultados]
+(https://docs.google.com/forms/d/1tMPbrHBxVMcUGsD_-dncfP1PgJmC2txoj9QXeERONJU/edit#responses)
 
 ### Síntese dos resultados
 
-[Descrever brevemente os principais resultados obtidos
-na validação.]
+A pesquisa contou com 23 participantes, sendo que 18 já tiveram experiência em empresas que realizavam vistorias. Entre eles, 15 relataram que as inspeções acontecem diariamente ou várias vezes ao dia.
+
+Os principais problemas identificados foram a dificuldade de extrair indicadores e relatórios, a demora para as informações chegarem aos gestores e a falta de comprovação visual das ocorrências. Também houve destaque para a necessidade de fotos, histórico das inspeções, integração com outros sistemas e funcionamento offline.
+
+Além disso, 11 participantes acreditam que a digitalização dos checklists pode gerar alto impacto na produtividade ou na redução de custos. Os resultados reforçam a necessidade de uma solução que centralize as informações, facilite as inspeções e permita o acompanhamento dos resultados e evidências.
 
 ### Conclusão da validação
 
-[Explique como os resultados influenciaram a continuidade
-ou alteração da ideia.]
+Os resultados da pesquisa reforçaram a proposta inicial do sistema e ajudaram a definir as principais necessidades da solução. A partir das respostas, foram priorizados recursos como registro de evidências, histórico das inspeções, relatórios e acompanhamento das informações pelo gestor.
 
 ---
 
@@ -185,19 +187,20 @@ ou alteração da ideia.]
 
 ### 5.1 Personas
 
-### Persona 1 — [Nome]
+### Persona 1 — [Administrador]
 
-![Persona 1](arquivos/personas/persona1.png)
-
-**Descrição:**  
-[Descrição da persona.]
-
-### Persona 2 — [Nome]
-
-![Persona 2](arquivos/personas/persona2.png)
+![Persona 1](<img width="333" height="661" alt="Captura de tela 2026-09-25 175539" src="https://github.com/user-attachments/assets/54d190e2-b389-4012-9a74-1515a766e031" />
+)
 
 **Descrição:**  
-[Descrição da persona.]
+Atua nos bastidores da plataforma, garantindo que as informações e estruturas utilizadas nas inspeções estejam organizadas e adequadas às necessidades da empresa.
+
+### Persona 2 — [Usuário]
+
+![Persona 2](<img width="334" height="663" alt="Captura de tela 2026-09-25 175808" src="https://github.com/user-attachments/assets/888e9f24-75a1-43aa-abb2-38ecedf5bb02" />)
+
+**Descrição:**  
+É o perfil que está mais próximo da atividade prática, utilizando o sistema durante a rotina de trabalho para registrar as condições encontradas de forma padronizada e documentada.
 
 ---
 
@@ -344,14 +347,17 @@ descartadas.
 
 ### Tela 1 — [Nome da tela]
 
-![Tela Web 1](arquivos/prototipos/web/tela1.png)
+![Tela Web 1](<img width="861" height="813" alt="image" src="https://github.com/user-attachments/assets/f8e184ac-b99a-4b59-9d91-78f9a67631fe" />
+)
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
 
 ### Tela 2 — [Nome da tela]
 
-![Tela Web 2](arquivos/prototipos/web/tela2.png)
+![Tela Web 2](![Uploading image.png…](<img width="808" height="671" alt="image" src="https://github.com/user-attachments/assets/7b7673e9-c971-43ef-a540-046a53e02601" />
+)
+)
 
 **Descrição:**  
 [Descreva o objetivo da tela.]
@@ -367,20 +373,20 @@ relacionados às necessidades identificadas no minimundo.
 
 ### Principais relatórios
 
-1. **[Nome do relatório 1]**  
-   [Descrição das informações apresentadas.]
+1. **[Relatório de Inspeções por Período]**  
+   Apresenta a quantidade de inspeções realizadas em um período selecionado, permitindo acompanhar o volume de vistorias realizadas e ter uma visão geral da atividade de inspeção.
 
-2. **[Nome do relatório 2]**  
-   [Descrição das informações apresentadas.]
+2. **[Relatório de Inspeções Críticas]**  
+   [Reúne as inspeções que apresentaram itens classificados como críticos. O relatório permite identificar essas avaliações e consultar as informações registradas durante a inspeção.]
 
-3. **[Nome do relatório 3]**  
-   [Descrição das informações apresentadas.]
+3. **[Relatório Comparativo de Condições dos Veículos]**  
+   [Permite comparar os resultados das inspeções realizadas nos diferentes veículos, facilitando a visualização das condições encontradas e das diferenças entre os registros.]
 
-4. **[Nome do relatório 4]**  
-   [Descrição das informações apresentadas.]
+4. **[Relatório de Histórico do Veículo]**  
+   [Apresenta o histórico de inspeções de um determinado veículo, reunindo os registros realizados ao longo do tempo para acompanhar as condições identificadas em cada avaliação.]
 
-5. **[Nome do relatório 5]**  
-   [Descrição das informações apresentadas.]
+5. **[Relatório de Inspeções por Usuário]**  
+   [Apresenta as inspeções realizadas por cada usuário, permitindo acompanhar quais avaliações foram registradas por cada pessoa e consultar as informações relacionadas a essas inspeções.]
 
 ---
 
@@ -392,7 +398,7 @@ identificadas nas etapas anteriores.
 
 ## 7.1 Modelo Conceitual
 
-![Modelo Conceitual](arquivos/modelo-conceitual/modelo-conceitual.png)
+![Modelo Conceitual](<img width="1036" height="709" alt="image" src="https://github.com/user-attachments/assets/9fabd640-a850-4f1e-8b8f-7efdc27da83e" />)
 
 ### Notação utilizada
 
