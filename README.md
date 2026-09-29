@@ -26,7 +26,7 @@
 - **Gustavo Meneis** —
 ifesmeneis277@gmail.com
 - **Isabela Pereira** — isabela.pbarreto.av@gmail.com
-- **Vanderci Lucas** — vandercilucas76@gmail.com
+- **Vanderci Lucas** — in.form.magic@outlook.com
 
 ---
 
