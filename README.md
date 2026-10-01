@@ -312,6 +312,7 @@ para acompanhar os resultados das vistorias ao longo do tempo.
 Como gestor,  
 quero filtrar o histórico das inspeções  
 para localizar informações específicas com mais facilidade.
+
 ---
 
 ## 6. PROTÓTIPOS DO SISTEMA
@@ -420,13 +421,15 @@ As três principais entidades identificadas no sistema são:
 
 ## 7.3 Principais fluxos de informação
 
-### Fluxo 1 — [Nome]
+### Fluxo 1 — Adiministrador
 
 [Descrição do fluxo.]
 
-### Fluxo 2 — [Nome]
+### Fluxo 2 — Gestor
 
 [Descrição do fluxo.]
+
+### Fluxo 2 - Funcionário
 
 ---
 
