@@ -29,10 +29,20 @@ $nome_usuario = $_SESSION['nome_usuario'];
             <h1 class="h4 text-center mb-1">Olá, <?php echo htmlspecialchars($nome_usuario); ?>!</h1>
             <p class="text-muted text-center small mb-4">Bem-vindo ao Axion</p>
 
+            <div class="mb-3">
+                <a href="dashboard.php" class="btn btn-primary w-100 fw-semibold">
+                    📊 Ver Dashboard e Histórico de Vistorias
+                </a>
+            </div>
+
             <form action="../backend/processar_opcao.php" method="post">
                 <fieldset class="mb-4">
                     <legend class="form-label fw-bold small text-primary mb-3">O que você deseja fazer hoje?</legend>
 
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="opcao" id="optDash" value="dashboard">
+                        <label class="form-check-label fw-semibold text-primary" for="optDash">Painel / Histórico de Vistorias</label>
+                    </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="radio" name="opcao" id="opt1" value="cadastrar_usuario" checked>
                         <label class="form-check-label" for="opt1">Cadastrar Usuário</label>

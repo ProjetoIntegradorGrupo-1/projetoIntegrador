@@ -29,11 +29,12 @@ Backlog técnico vivo do time Axion. Use este arquivo para acompanhar tarefas op
 | F-005 | US-006 | Integração de envio de formulário com canvas em `assinaturaChecklist.html` | Frontend | Concluído | 2026-10-05 |
 | B-009 | Todas | Atualização de rotas em `processar_opcao.php` para apontar para telas PHP dinâmicas | Backend | Concluído | 2026-10-06 |
 | P-001 | Todas | Formalização do Product Backlog INVEST em `docs/product_backlog.md` e User Stories | Governança | Concluído | 2026-10-06 |
+| F-006 | US-009 | Dashboard analítico com KPIs, filtros em tempo real e histórico de vistorias (`dashboard.php`) | Frontend | Concluído | 2026-10-06 |
+| F-007 | US-010 | Emissão e formatação de Laudo Oficial de Vistoria em PDF / Impressão A4 (`laudoVistoria.php`) | Frontend | Concluído | 2026-10-06 |
 
 ---
 
-## Próximas Tarefas (Sprint 02)
+## Próximas Tarefas (Sprint 02 / Backlog Técnico)
 
-- [ ] **[F-006]** Implementação de dashboard com indicadores de vistorias realizadas e status da frota (`US-009`)
-- [ ] **[B-010]** Geração de relatório PDF com FPDF/Dompdf contendo fotos e assinaturas (`US-010`)
 - [ ] **[Q-001]** Elaboração de casos de teste automatizados e suite E2E com Cypress ou Playwright
+- [ ] **[C-001]** Especificação formal de Contratos OpenAPI (`docs/contracts/`) e cenários BDD (`docs/bdd/`)

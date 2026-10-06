@@ -12,6 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['opcao'])) {
 
     // Mapeia a escolha para a página correspondente
     switch ($opcao) {
+        case 'dashboard':
+            header("Location: ../frontend/dashboard.php");
+            break;
         case 'cadastrar_usuario':
             header("Location: ../frontend/caduser.html");
             break;

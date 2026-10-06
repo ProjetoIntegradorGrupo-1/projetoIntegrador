@@ -98,8 +98,8 @@ Use `Spec`, `Contract` e `BDD` para rastrear os artefatos técnicos quando a Use
 
 | ID | Issue | Título | Story Points | Status | Sprint | Spec | Contract | BDD |
 |----|-------|--------|--------------|--------|--------|------|----------|-----|
-| US-009 | - | Dashboard com Indicadores de Conformidade e Alertas de Pátio | 8 | Backlog | Sprint 02 | - | - | - |
-| US-010 | - | Exportação de Vistoria Concluída com Evidências e Assinaturas em PDF | 5 | Backlog | Sprint 02 | - | - | - |
+| US-009 | - | Dashboard com Indicadores de Conformidade e Alertas de Pátio | 8 | Concluído | Sprint 02 | - | - | - |
+| US-010 | - | Exportação de Vistoria Concluída com Evidências e Assinaturas em PDF | 5 | Concluído | Sprint 02 | - | - | - |
 
 ---
 
@@ -125,16 +125,16 @@ Use `Spec`, `Contract` e `BDD` para rastrear os artefatos técnicos quando a Use
 
 ## Roadmap Overview
 
-### Sprint 01 (Atual - Estabilização e Arquitetura Canônica)
+### Sprint 01 (Estabilização e Arquitetura Canônica)
 - [x] Estruturação canônica ScrumAIDev (`frontend/`, `backend/`, `database/`, `docs/`)
 - [x] Modelagem do banco `axion_db` com 9 tabelas relacionais (`schema.sql` e `seeds.sql`)
 - [x] Implementação de todos os endpoints transacionais PDO
 - [x] Dinamização completa das telas de Edição e Exclusão (Usuários, Veículos, Checklists)
 - [x] Conexão do fluxo de vistoria completa (Abertura -> Não Conformidades -> Assinatura)
 
-### Sprint 02 (Governança e Relatórios)
-- [ ] Geração de laudo de vistoria em PDF para download
-- [ ] Painel gerencial e histórico de vistorias com filtros por placa/data
+### Sprint 02 (Governança, Dashboard e Relatórios)
+- [x] Geração de laudo de vistoria em PDF/Impressão oficial (`laudoVistoria.php`)
+- [x] Painel gerencial e histórico de vistorias com filtros por placa/data (`dashboard.php`)
 - [ ] Especificação formal de Contratos OpenAPI (`docs/contracts/`) e BDD (`docs/bdd/`)
 
 ---

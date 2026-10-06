@@ -84,8 +84,8 @@ Após o primeiro /sprint-planning de um projeto derivado, atualizar este manifes
 
 ## Estado Atual do Projeto
 
-- Sprint ativa: **Sprint 01 (Estabilização e Dinamização)**
-- Backlog: **Gerado e formalizado (`docs/product_backlog.md`)**
-- Próximo passo sugerido: Realizar testes integrados no navegador (XAMPP) e planejar a Sprint 02 (Dashboard analítico e relatórios em PDF)
+- Sprint ativa: **Sprint 02 (Dashboard Analítico e Laudos em PDF)**
+- Backlog: **Atualizado e formalizado (`docs/product_backlog.md`)**
+- Próximo passo sugerido: Demonstrar laudo emitido ao usuário e planejar automações de teste E2E / contratos OpenAPI
 
 > Atualize apenas ao final de cada sprint ou mudança relevante. Evite atualizações desnecessárias.
