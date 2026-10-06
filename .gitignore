@@ -1,1 +1,6 @@
-
+# Diretórios e arquivos temporários
+scratch/
+backend/uploads/*
+!backend/uploads/.gitkeep
+.env
+*.log
