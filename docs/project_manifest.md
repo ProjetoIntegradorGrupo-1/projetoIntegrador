@@ -1,13 +1,13 @@
 # Project Manifest
 
 **Framework:** ScrumAIDev
-**Status do projeto:** UNDEFINED
-**Projeto atual:** A definir
-**Origem do contexto:** A definir (figma | código | usuário | híbrido)
-**Confiança do contexto:** baixa
-**Contexto processado:** não
-**Estado operacional:** Pré-inicialização — sem sprint ativa, sem backlog gerado
-**Última atualização:** N/A
+**Status do projeto:** IN_PROGRESS
+**Projeto atual:** Axion - Sistema de Vistoria e Checklist Veicular
+**Origem do contexto:** código
+**Confiança do contexto:** alta
+**Contexto processado:** sim
+**Estado operacional:** Estruturação concluída — pronto para planejamento/backlog
+**Última atualização:** 2026-10-05
 
 ## GitHub Planning Defaults
 
@@ -30,9 +30,9 @@
 - `mock_strategy`: `not_configured`
 - `type_generation`: `not_configured`
 - `ci_contract_gates`: `optional_noop`
-- `frontend_stack`: `undefined`
-- `backend_stack`: `undefined`
-- `database_stack`: `undefined`
+- `frontend_stack`: `html5_bootstrap5`
+- `backend_stack`: `php_pdo`
+- `database_stack`: `mysql`
 
 ## Agent Delegation Defaults
 
@@ -84,8 +84,8 @@ Após o primeiro /sprint-planning de um projeto derivado, atualizar este manifes
 
 ## Estado Atual do Projeto
 
-- Sprint ativa: **nenhuma**
-- Backlog: **não gerado**
-- Próximo passo sugerido: iniciar com `/init-project`; depois, se aplicável, usar `/sprint-planning`
+- Sprint ativa: **Sprint 01 (Estabilização e Dinamização)**
+- Backlog: **Gerado e formalizado (`docs/product_backlog.md`)**
+- Próximo passo sugerido: Realizar testes integrados no navegador (XAMPP) e planejar a Sprint 02 (Dashboard analítico e relatórios em PDF)
 
 > Atualize apenas ao final de cada sprint ou mudança relevante. Evite atualizações desnecessárias.
