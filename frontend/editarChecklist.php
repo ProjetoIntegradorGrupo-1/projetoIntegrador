@@ -1,13 +1,21 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-require_once '../backend/conexao.php';
+header('Content-Type: text/html; charset=utf-8');
+require_once __DIR__ . '/../backend/conexao.php';
+require_once __DIR__ . '/../backend/auth_check.php';
 
-// Busca lista de todos os checklists ativos
-$stmtTodos = $pdo->query("SELECT id_checklist, titulo, categoria, status FROM Checklists WHERE status = 'ativo' ORDER BY titulo ASC");
+// Edição de modelos de checklist é restrita a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
+
+// Busca lista de todos os checklists que não foram excluídos (ativos, pendentes ou com ajuste solicitado)
+$stmtTodos = $pdo->query("SELECT id_checklist, titulo, categoria, status, motivo_ajuste 
+                          FROM Checklists 
+                          WHERE status != 'inativo' 
+                          ORDER BY 
+                            CASE WHEN status = 'ajuste_solicitado' THEN 1 
+                                 WHEN status = 'pendente_aprovacao' THEN 2 
+                                 ELSE 3 END, 
+                            titulo ASC");
 $listaChecklists = $stmtTodos->fetchAll(PDO::FETCH_ASSOC);
 
 $id_selecionado = intval($_GET['id_checklist'] ?? 0);
@@ -15,17 +23,18 @@ $checklistAtual = null;
 $perguntasAtuais = [];
 
 if ($id_selecionado > 0) {
-    $stmtC = $pdo->prepare("SELECT * FROM Checklists WHERE id_checklist = :id AND status = 'ativo' LIMIT 1");
+    $stmtC = $pdo->prepare("SELECT * FROM Checklists WHERE id_checklist = :id AND status != 'inativo' LIMIT 1");
     $stmtC->bindParam(':id', $id_selecionado, PDO::PARAM_INT);
     $stmtC->execute();
     $checklistAtual = $stmtC->fetch(PDO::FETCH_ASSOC);
 } elseif (count($listaChecklists) > 0) {
     $id_selecionado = $listaChecklists[0]['id_checklist'];
-    $stmtC = $pdo->prepare("SELECT * FROM Checklists WHERE id_checklist = :id AND status = 'ativo' LIMIT 1");
+    $stmtC = $pdo->prepare("SELECT * FROM Checklists WHERE id_checklist = :id AND status != 'inativo' LIMIT 1");
     $stmtC->bindParam(':id', $id_selecionado, PDO::PARAM_INT);
     $stmtC->execute();
     $checklistAtual = $stmtC->fetch(PDO::FETCH_ASSOC);
 }
+
 
 if ($checklistAtual) {
     $stmtP = $pdo->prepare("SELECT * FROM Perguntas WHERE id_checklist = :id ORDER BY ordem ASC, id_pergunta ASC");
@@ -60,9 +69,15 @@ if ($checklistAtual) {
                         <?php if (empty($listaChecklists)): ?>
                             <option value="" disabled selected>Nenhum checklist ativo cadastrado</option>
                         <?php else: ?>
-                            <?php foreach ($listaChecklists as $c): ?>
+                            <?php foreach ($listaChecklists as $c): 
+                                $sLabel = match($c['status']) {
+                                    'ajuste_solicitado' => ' [AJUSTE SOLICITADO]',
+                                    'pendente_aprovacao' => ' [PENDENTE]',
+                                    default => ''
+                                };
+                            ?>
                                 <option value="<?= $c['id_checklist'] ?>" <?= ($c['id_checklist'] == $id_selecionado) ? 'selected' : '' ?>>
-                                    #<?= $c['id_checklist'] ?> - <?= htmlspecialchars($c['titulo']) ?> (<?= ucfirst(htmlspecialchars($c['categoria'] ?? 'Geral')) ?>)
+                                    #<?= $c['id_checklist'] ?> - <?= htmlspecialchars($c['titulo']) ?><?= $sLabel ?> (<?= ucfirst(htmlspecialchars($c['categoria'] ?? 'Geral')) ?>)
                                 </option>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -74,8 +89,24 @@ if ($checklistAtual) {
             <hr class="my-4">
 
             <?php if ($checklistAtual): ?>
+
+            <?php if ($checklistAtual['status'] === 'ajuste_solicitado' && !empty($checklistAtual['motivo_ajuste'])): ?>
+                <div class="alert alert-danger shadow-sm mb-4">
+                    <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Parecer do Gestor Administrador (Orientações de Ajuste):</h6>
+                    <p class="mb-0 small"><?= nl2br(htmlspecialchars($checklistAtual['motivo_ajuste'])) ?></p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (($_SESSION['perfil_usuario'] ?? '') === 'supervisor'): ?>
+                <div class="alert alert-info py-2 small mb-4">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    <strong>Nota de Governança:</strong> Ao salvar este modelo, ele retornará automaticamente para o status <span class="badge bg-warning text-dark">Pendente de Aprovação</span> para validação prévia do Gestor.
+                </div>
+            <?php endif; ?>
+
             <!-- 2. FORMULÁRIO DINÂMICO DE EDIÇÃO -->
             <form action="../backend/processar_edicao_checklist.php" method="post" id="formEditarChecklist">
+
                 <input type="hidden" name="id_checklist" value="<?= $checklistAtual['id_checklist'] ?>">
 
                 <!-- Informações Básicas do Checklist -->

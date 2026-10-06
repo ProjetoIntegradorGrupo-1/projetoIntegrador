@@ -1,7 +1,11 @@
 <?php
-// processar_cadastro_motorista.php
-session_start();
+// backend/processar_cadastro_motorista.php
 require_once 'conexao.php';
+require_once 'auth_check.php';
+
+// Cadastro de motoristas é restrito a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
@@ -37,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (PDOException $e) {
         echo "<script>
                 alert('Erro ao cadastrar motorista: " . addslashes($e->getMessage()) . "');
-                window.location.href = '../frontend/caduser.html';
+                window.location.href = '../frontend/caduser.php';
               </script>";
         exit;
+
     }
 
 } else {

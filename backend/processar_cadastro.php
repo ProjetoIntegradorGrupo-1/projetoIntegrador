@@ -1,7 +1,11 @@
 <?php
-// processar_cadastro.php
-session_start();
+// backend/processar_cadastro.php
 require_once 'conexao.php';
+require_once 'auth_check.php';
+
+// Cadastro geral é restrito a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
 
 // Verifica se a requisição foi feita via POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -48,9 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Redireciona com a mensagem de erro
         echo "<script>
                 alert('Erro ao cadastrar usuário: " . addslashes($e->getMessage()) . "');
-                window.location.href = '../frontend/caduser.html';
+                window.location.href = '../frontend/caduser.php';
               </script>";
         exit;
+
     }
 
 } else {

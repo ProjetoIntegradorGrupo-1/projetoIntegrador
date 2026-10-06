@@ -1,12 +1,11 @@
 <?php
 // backend/processar_edicao_usuario.php
-session_start();
 require_once 'conexao.php';
+require_once 'auth_check.php';
 
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../frontend/index.html");
-    exit;
-}
+// Edição de cadastro de usuários é restrita ao Gestor Administrador
+autorizarAcesso(['gestor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_usuario    = intval($_POST['id_usuario'] ?? 0);

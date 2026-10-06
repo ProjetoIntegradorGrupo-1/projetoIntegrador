@@ -1,12 +1,10 @@
 <?php
 // backend/processar_edicao_checklist.php
-session_start();
 require_once 'conexao.php';
+require_once 'auth_check.php';
 
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../frontend/index.html");
-    exit;
-}
+// Edição de checklists é restrita a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_checklist = intval($_POST['id_checklist'] ?? 0);
@@ -22,12 +20,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
 
+        $perfilUsuario = $_SESSION['perfil_usuario'] ?? 'supervisor';
+
         // 1. Atualiza dados do Checklist
-        $stmt = $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :categoria WHERE id_checklist = :id");
+        if ($perfilUsuario === 'supervisor') {
+            // Se o supervisor editou ou ajustou, o checklist volta para pendente_aprovacao
+            $stmt = $pdo->prepare("UPDATE Checklists 
+                                   SET titulo = :titulo, categoria = :categoria, 
+                                       status = 'pendente_aprovacao', motivo_ajuste = NULL, 
+                                       aprovado_por = NULL, data_aprovacao = NULL 
+                                   WHERE id_checklist = :id");
+        } else {
+            $stmt = $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :categoria WHERE id_checklist = :id");
+        }
         $stmt->bindParam(':titulo', $titulo);
         $stmt->bindParam(':categoria', $categoria);
         $stmt->bindParam(':id', $id_checklist, PDO::PARAM_INT);
         $stmt->execute();
+
 
         // 2. Se perguntas foram enviadas, sincroniza atualizações e inserções
         if (!empty($perguntas) && is_array($perguntas)) {

@@ -1,12 +1,11 @@
 <?php
 // backend/processar_edicao_veiculo.php
-session_start();
 require_once 'conexao.php';
+require_once 'auth_check.php';
 
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../frontend/index.html");
-    exit;
-}
+// Edição cadastral de veículos é restrita a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_veiculo    = intval($_POST['id_veiculo'] ?? 0);

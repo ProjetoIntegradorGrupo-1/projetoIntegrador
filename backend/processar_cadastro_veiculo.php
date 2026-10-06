@@ -1,7 +1,11 @@
 <?php
-// processar_cadastro_veiculo.php
-session_start();
+// backend/processar_cadastro_veiculo.php
 require_once 'conexao.php';
+require_once 'auth_check.php';
+
+// Cadastro de veículos é restrito a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
@@ -31,9 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (PDOException $e) {
         echo "<script>
                 alert('Erro ao cadastrar veículo (Placa já existente?): " . addslashes($e->getMessage()) . "');
-                window.location.href = '../frontend/cadcar.html';
+                window.location.href = '../frontend/cadcar.php';
               </script>";
         exit;
+
     }
 
 } else {

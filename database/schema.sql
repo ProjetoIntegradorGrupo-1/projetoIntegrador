@@ -88,13 +88,19 @@ CREATE TABLE `Checklists` (
     `titulo` VARCHAR(200) NOT NULL,
     `categoria` VARCHAR(50) NULL,
     `descricao` TEXT NULL,
-    `status` ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    `aprovado_por` INT NULL COMMENT 'ID do Gestor que validou o modelo',
+    `motivo_ajuste` TEXT NULL COMMENT 'Parecer do Gestor caso devolva para correções',
+    `data_aprovacao` DATETIME NULL,
+    `status` ENUM('ativo', 'pendente_aprovacao', 'ajuste_solicitado', 'inativo') NOT NULL DEFAULT 'ativo',
     `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_checklists_status` (`status`),
     CONSTRAINT `fk_checklists_criador` 
         FOREIGN KEY (`id_criador`) REFERENCES `Usuarios` (`id_usuario`) 
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_checklists_aprovador` 
+        FOREIGN KEY (`aprovado_por`) REFERENCES `Usuarios` (`id_usuario`) 
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -228,5 +234,41 @@ CREATE TABLE `RecuperacaoSenha` (
     CONSTRAINT `fk_recuperacao_usuario` 
         FOREIGN KEY (`id_usuario`) REFERENCES `Usuarios` (`id_usuario`) 
         ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 10. TABELA: Ocorrencias
+-- Gestão e triagem de não conformidades operacionais e despacho para oficina
+-- =============================================================================
+CREATE TABLE `Ocorrencias` (
+    `id_ocorrencia` INT AUTO_INCREMENT PRIMARY KEY,
+    `codigo_ocorrencia` VARCHAR(30) NOT NULL UNIQUE,
+    `id_vistoria` INT NOT NULL,
+    `id_veiculo` INT NULL,
+    `placa_veiculo` VARCHAR(10) NOT NULL,
+    `modelo_veiculo` VARCHAR(100) NOT NULL,
+    `subsistema` VARCHAR(50) NOT NULL DEFAULT 'Geral',
+    `descricao_falha` TEXT NOT NULL,
+    `criticidade` ENUM('baixa', 'media', 'alta', 'critica') NOT NULL DEFAULT 'media',
+    `status` ENUM('aberta', 'em_oficina', 'resolvida') NOT NULL DEFAULT 'aberta',
+    `status_veiculo` ENUM('retido_oficina', 'liberado') NOT NULL DEFAULT 'retido_oficina',
+    `acao_recomendada` TEXT NULL,
+    `foto_evidencia` VARCHAR(255) NULL,
+    `local_patio` VARCHAR(100) DEFAULT 'Pátio Principal',
+    `fiscal_responsavel` VARCHAR(150) NOT NULL,
+    `data_abertura` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `data_resolucao` DATETIME NULL,
+    `observacao_despacho` TEXT NULL,
+    `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_ocorrencias_status` (`status`),
+    INDEX `idx_ocorrencias_criticidade` (`criticidade`),
+    INDEX `idx_ocorrencias_placa` (`placa_veiculo`),
+    CONSTRAINT `fk_ocorrencias_vistoria` 
+        FOREIGN KEY (`id_vistoria`) REFERENCES `Vistorias` (`id_vistoria`) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_ocorrencias_veiculo` 
+        FOREIGN KEY (`id_veiculo`) REFERENCES `Veiculos` (`id_veiculo`) 
+        ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

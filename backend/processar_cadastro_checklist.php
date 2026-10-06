@@ -34,10 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $veiculo = $stmtVeiculo->fetch(PDO::FETCH_ASSOC);
         $id_veiculo = $veiculo ? $veiculo['id_veiculo'] : null;
 
-        // 2. Busca o primeiro modelo de checklist ativo cadastrado
-        $stmtCheck = $pdo->query("SELECT id_checklist FROM Checklists WHERE status = 'ativo' ORDER BY id_checklist ASC LIMIT 1");
-        $check = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-        $id_checklist = $check ? $check['id_checklist'] : 1;
+        // 2. Busca o modelo de checklist selecionado ou o primeiro ativo cadastrado
+        $id_checklist_post = intval($_POST['id_checklist'] ?? 0);
+        if ($id_checklist_post > 0) {
+            $id_checklist = $id_checklist_post;
+        } else {
+            $stmtCheck = $pdo->query("SELECT id_checklist FROM Checklists WHERE status = 'ativo' ORDER BY id_checklist ASC LIMIT 1");
+            $check = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+            $id_checklist = $check ? $check['id_checklist'] : 1;
+        }
 
         // 3. Insere a nova vistoria com status pendente
         $sql = "INSERT INTO Vistorias (id_checklist, id_veiculo, placa_veiculo, nome_motorista, data_vistoria, hora_vistoria, km_rodado, nome_vistoriador, id_vistoriador, status)
@@ -58,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_vistoria = $pdo->lastInsertId();
         $_SESSION['id_vistoria_ativa'] = $id_vistoria;
 
-        // Redireciona para o formulário de não conformidade / evidências
-        header("Location: ../frontend/detalhesNaoConformidade.html?id_vistoria=" . $id_vistoria);
+        // Redireciona para a execução da vistoria (Modo Híbrido: Campo ou Lista)
+        header("Location: ../frontend/vistoria.php?id_vistoria=" . $id_vistoria);
         exit;
 
     } catch (PDOException $e) {

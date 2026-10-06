@@ -1,5 +1,5 @@
 <?php
-// processar_opcao.php
+// backend/processar_opcao.php
 session_start();
 
 if (!isset($_SESSION['id_usuario'])) {
@@ -7,23 +7,55 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 
+$perfil = $_SESSION['perfil_usuario'] ?? 'motorista';
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['opcao'])) {
     $opcao = $_POST['opcao'];
+
+    // MATRIZ DE AUTORIZAÇÃO RBAC
+    $permissoes = [
+        'dashboard'           => ['gestor', 'supervisor'],
+        'ocorrencias'         => ['gestor', 'supervisor'],
+        'gestao_checklists'   => ['gestor', 'supervisor'],
+        'cadastrar_usuario'   => ['gestor', 'supervisor'],
+        'cadastrar_veiculo'   => ['gestor', 'supervisor'],
+        'criar_checklist'     => ['gestor', 'supervisor'],
+        'editar_usuario'      => ['gestor'],
+        'editar_veiculo'      => ['gestor', 'supervisor'],
+        'editar_checklist'    => ['gestor', 'supervisor'],
+        'excluir_usuario'     => ['gestor'],
+        'excluir_veiculo'     => ['gestor'],
+        'excluir_checklist'   => ['gestor'],
+        'preencher_checklist' => ['gestor', 'supervisor', 'motorista', 'cliente']
+    ];
+
+    // Se o usuário tentar acessar recurso não permitido para o seu papel
+    if (isset($permissoes[$opcao]) && !in_array($perfil, $permissoes[$opcao])) {
+        header("Location: ../frontend/oqfazer.php?erro=acesso_negado");
+        exit;
+    }
 
     // Mapeia a escolha para a página correspondente
     switch ($opcao) {
         case 'dashboard':
             header("Location: ../frontend/dashboard.php");
             break;
+        case 'ocorrencias':
+            header("Location: ../frontend/ocorrencias.php");
+            break;
+        case 'gestao_checklists':
+            header("Location: ../frontend/gestaoChecklists.php");
+            break;
         case 'cadastrar_usuario':
-            header("Location: ../frontend/caduser.html");
+            header("Location: ../frontend/caduser.php");
             break;
         case 'cadastrar_veiculo':
-            header("Location: ../frontend/cadcar.html");
+            header("Location: ../frontend/cadcar.php");
             break;
         case 'criar_checklist':
-            header("Location: ../frontend/criarChecklist.html");
+            header("Location: ../frontend/criarChecklist.php");
             break;
+
         case 'editar_usuario':
             header("Location: ../frontend/editarUsuario.php");
             break;
@@ -43,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['opcao'])) {
             header("Location: ../frontend/excluirChecklist.php");
             break;
         case 'preencher_checklist':
-            header("Location: ../frontend/cadcheck.html");
+            header("Location: ../frontend/cadcheck.php");
             break;
         default:
             header("Location: ../frontend/oqfazer.php?erro=opcao_invalida");
@@ -54,4 +86,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['opcao'])) {
     header("Location: ../frontend/oqfazer.php");
     exit;
 }
-?>

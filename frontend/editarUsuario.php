@@ -1,10 +1,11 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-require_once '../backend/conexao.php';
+header('Content-Type: text/html; charset=utf-8');
+require_once __DIR__ . '/../backend/conexao.php';
+require_once __DIR__ . '/../backend/auth_check.php';
+
+// Edição de cadastro de usuários é restrita ao Gestor Administrador
+autorizarAcesso(['gestor']);
+
 
 // Busca lista de todos os usuários ativos para o select
 $stmtTodos = $pdo->query("SELECT id_usuario, nome, cpf_matricula, perfil FROM Usuarios WHERE ativo = 1 ORDER BY nome ASC");

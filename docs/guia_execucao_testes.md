@@ -61,9 +61,11 @@ O banco inicial já vem com usuários pré-configurados para testar os diferente
 
 | Perfil | E-mail de Login | Senha | Função no Sistema |
 |---|---|---|---|
-| **Gestor / Administrador** | `admin@axion.com` | `admin123` | Acesso completo a todas as funções e cadastros |
-| **Supervisor** | `supervisor@axion.com` | `mudar123` | Criação/edição de checklists e vistorias |
-| **Motorista** | `motorista@axion.com` | `mudar123` | Preenchimento de checklist e assinatura digital |
+| **Gestor Administrador** | `admin@axion.com` | `admin123` | Acesso pleno: homologação de checklists, exclusões e cadastro de supervisores |
+| **Supervisor Operacional**| `supervisor@axion.com` | `mudar123` | Cadastra motoristas/veículos, propõe checklists e triagem de oficinas |
+| **Motorista / Inspetor** | `motorista@axion.com` | `mudar123` | Execução em campo no Modo Híbrido e assinaturas digitais |
+| **Cliente / Locatário**  | `cliente@axion.com` | `mudar123` | Vistorias de entrega/devolução de veículos alugados |
+
 
 ---
 
@@ -132,14 +134,17 @@ Acesse no navegador: **[http://localhost/projetoIntegrador/](http://localhost/pr
 
 ## 6. Como Rodar a Suíte de Testes Automatizada via Terminal
 
-Para quem preferir validar todas as regras do sistema de forma instantânea via linha de comando, disponibilizamos um executor E2E que roda 19 asserções em ~1 segundo:
+Para quem preferir validar todas as regras do sistema de forma instantânea via linha de comando, disponibilizamos um executor E2E que roda **49 asserções completas** cobrindo autenticação, vistorias, laudos técnicos, matriz RBAC e governança de homologação de checklists:
+ 
+ 1. Certifique-se de que o Apache e o MySQL estão rodando no XAMPP.
+ 2. Abra o terminal na raiz do projeto e execute:
+ ```bash
+ C:\xampp\php\php.exe scratch/run_e2e_smoke_test.php
+ ```
+ *(ou simplesmente `php scratch/run_e2e_smoke_test.php` se o PHP estiver no seu PATH do sistema)*
+ 
+ 3. O terminal exibirá o relatório com **100% de aprovação (49/49)** de todos os endpoints, middleware RBAC, transações PDO, persistência atômica e ciclo de aprovação.
 
-1. Certifique-se de que o Apache e o MySQL estão rodando no XAMPP.
-2. Abra o terminal na raiz do projeto e execute:
-```bash
-php scratch/run_e2e_smoke_test.php
-```
-3. O terminal exibirá o relatório com 100% de aprovação de todos os endpoints e transações PDO.
 
 ---
 
@@ -149,3 +154,4 @@ php scratch/run_e2e_smoke_test.php
 - **Histórias Detalhadas INVEST:** [`docs/stories/`](stories/)
 - **Quadro de Tarefas Técnicas (TODO):** [`docs/todo.md`](todo.md)
 - **Manifesto do Framework ScrumAIDev:** [`docs/project_manifest.md`](project_manifest.md)
+

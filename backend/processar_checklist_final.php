@@ -40,6 +40,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bindParam(':id', $id_vistoria, PDO::PARAM_INT);
             $stmt->execute();
 
+            // Se houver não conformidade, cria automaticamente o registro na tabela Ocorrencias
+            if ($statusFinal === 'aprovado_com_restricoes') {
+                $checkOc = $pdo->prepare("SELECT COUNT(*) FROM Ocorrencias WHERE id_vistoria = :id");
+                $checkOc->execute([':id' => $id_vistoria]);
+                if ($checkOc->fetchColumn() == 0) {
+                    $stmtVFull = $pdo->prepare("SELECT v.*, ve.marca_modelo FROM Vistorias v LEFT JOIN Veiculos ve ON v.id_veiculo = ve.id_veiculo WHERE v.id_vistoria = :id");
+                    $stmtVFull->execute([':id' => $id_vistoria]);
+                    $vRow = $stmtVFull->fetch(PDO::FETCH_ASSOC);
+
+                    $codOc = 'OC-2026-' . str_pad($id_vistoria, 3, '0', STR_PAD_LEFT);
+                    $stmtFoto = $pdo->prepare("SELECT caminho_arquivo FROM EvidenciasVistoria WHERE id_vistoria = :id LIMIT 1");
+                    $stmtFoto->execute([':id' => $id_vistoria]);
+                    $fotoRow = $stmtFoto->fetch(PDO::FETCH_ASSOC);
+
+                    $insertOc = $pdo->prepare("INSERT INTO Ocorrencias 
+                        (codigo_ocorrencia, id_vistoria, id_veiculo, placa_veiculo, modelo_veiculo, subsistema, descricao_falha, criticidade, status, status_veiculo, acao_recomendada, foto_evidencia, local_patio, fiscal_responsavel)
+                        VALUES (:cod, :idv, :idvei, :placa, :mod, :sub, :falha, 'alta', 'aberta', 'retido_oficina', :acao, :foto, 'Pátio Operacional', :fiscal)");
+                    $insertOc->execute([
+                        ':cod' => $codOc,
+                        ':idv' => $id_vistoria,
+                        ':idvei' => $vRow['id_veiculo'] ?? null,
+                        ':placa' => $vRow['placa_veiculo'],
+                        ':mod' => $vRow['marca_modelo'] ?? 'Veículo em Operação',
+                        ':sub' => 'Avarias Constatadas',
+                        ':falha' => $vRow['descricao_nao_conformidade'] ?? 'Avaria registrada durante inspeção.',
+                        ':acao' => 'Veículo retido para triagem técnica e despacho operacional pelo gestor.',
+                        ':foto' => $fotoRow['caminho_arquivo'] ?? null,
+                        ':fiscal' => $vRow['nome_vistoriador'] ?? 'Inspetor'
+                    ]);
+                }
+            }
+
             // Limpa a vistoria ativa da sessão
             unset($_SESSION['id_vistoria_ativa']);
         }

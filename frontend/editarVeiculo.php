@@ -1,10 +1,11 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-require_once '../backend/conexao.php';
+header('Content-Type: text/html; charset=utf-8');
+require_once __DIR__ . '/../backend/conexao.php';
+require_once __DIR__ . '/../backend/auth_check.php';
+
+// Edição cadastral de veículos é restrita a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
+
 
 // Busca lista de todos os veículos ativos para o select
 $stmtTodos = $pdo->query("SELECT id_veiculo, placa, marca_modelo, marca, modelo, ano, cor, km_rodado, renavam, chassi 

@@ -1,12 +1,11 @@
 <?php
 // backend/processar_exclusao_veiculo.php
-session_start();
 require_once 'conexao.php';
+require_once 'auth_check.php';
 
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../frontend/index.html");
-    exit;
-}
+// Apenas o Gestor pode realizar a exclusão lógica de veículos
+autorizarAcesso(['gestor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_veiculo = intval($_POST['id_veiculo'] ?? 0);

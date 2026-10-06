@@ -1,10 +1,11 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-require_once '../backend/conexao.php';
+header('Content-Type: text/html; charset=utf-8');
+require_once __DIR__ . '/../backend/conexao.php';
+require_once __DIR__ . '/../backend/auth_check.php';
+
+// Exclusão de modelos de checklist é prerrogativa exclusiva do Gestor Administrador
+autorizarAcesso(['gestor']);
+
 
 // Busca lista de todos os checklists ativos
 $stmtTodos = $pdo->query("SELECT id_checklist, titulo, categoria FROM Checklists WHERE status = 'ativo' ORDER BY titulo ASC");

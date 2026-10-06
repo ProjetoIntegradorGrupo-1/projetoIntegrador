@@ -1,7 +1,11 @@
 <?php
-// processar_cadastro_supervisor.php
-session_start();
+// backend/processar_cadastro_supervisor.php
 require_once 'conexao.php';
+require_once 'auth_check.php';
+
+// Apenas o Gestor Administrador pode cadastrar novos supervisores
+autorizarAcesso(['gestor']);
+
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
@@ -37,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (PDOException $e) {
         echo "<script>
                 alert('Erro ao cadastrar supervisor: " . addslashes($e->getMessage()) . "');
-                window.location.href = '../frontend/caduser.html';
+                window.location.href = '../frontend/caduser.php';
               </script>";
         exit;
+
     }
 
 } else {

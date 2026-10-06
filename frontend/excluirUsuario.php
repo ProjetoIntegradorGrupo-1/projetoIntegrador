@@ -1,10 +1,11 @@
 <?php
-session_start();
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-require_once '../backend/conexao.php';
+header('Content-Type: text/html; charset=utf-8');
+require_once __DIR__ . '/../backend/conexao.php';
+require_once __DIR__ . '/../backend/auth_check.php';
+
+// Exclusão de usuários é prerrogativa exclusiva do Gestor Administrador
+autorizarAcesso(['gestor']);
+
 
 // Busca lista de todos os usuários ativos
 $stmtTodos = $pdo->query("SELECT id_usuario, nome, cpf_matricula, perfil, email FROM Usuarios WHERE ativo = 1 ORDER BY nome ASC");

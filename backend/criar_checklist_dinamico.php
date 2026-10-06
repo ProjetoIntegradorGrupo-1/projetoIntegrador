@@ -1,15 +1,11 @@
 <?php
-// salvar_checklist_dinamico.php
-session_start();
+// backend/criar_checklist_dinamico.php
+require_once 'conexao.php';
+require_once 'auth_check.php';
 
-// Ajuste o nível de pastas conforme o local onde este arquivo está salvo
-require_once 'conexao.php'; 
+// Criação de novos checklists é restrita a Gestores e Supervisores
+autorizarAcesso(['gestor', 'supervisor']);
 
-// Verifica se o usuário está logado
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: ../frontend/index.html");
-    exit;
-}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
@@ -29,11 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Inicia uma transação: ou salva tudo (checklist + perguntas), ou não salva nada
         $pdo->beginTransaction();
 
-        // 1. Grava o cabeçalho do Checklist (A categoria não existe mais aqui)
-        $sqlChecklist = "INSERT INTO Checklists (id_criador, titulo) VALUES (:id_criador, :titulo)";
+        $perfilCriador = $_SESSION['perfil_usuario'] ?? 'supervisor';
+        $statusInicial = ($perfilCriador === 'gestor') ? 'ativo' : 'pendente_aprovacao';
+
+        // 1. Grava o cabeçalho do Checklist com status de governança
+        $sqlChecklist = "INSERT INTO Checklists (id_criador, titulo, status) VALUES (:id_criador, :titulo, :status)";
         $stmtChecklist = $pdo->prepare($sqlChecklist);
         $stmtChecklist->bindParam(':id_criador', $id_criador, PDO::PARAM_INT);
         $stmtChecklist->bindParam(':titulo', $titulo);
+        $stmtChecklist->bindParam(':status', $statusInicial);
         $stmtChecklist->execute();
 
         // Resgata o ID gerado pelo banco para atrelar as perguntas a este checklist

@@ -84,8 +84,9 @@ Após o primeiro /sprint-planning de um projeto derivado, atualizar este manifes
 
 ## Estado Atual do Projeto
 
-- Sprint ativa: **Sprint 02 (Dashboard Analítico e Laudos em PDF)**
+- Sprint ativa: **Sprint 03 (Controle de Acesso RBAC, Governança de Checklists e Matriz de Permissões Concluídos)**
 - Backlog: **Atualizado e formalizado (`docs/product_backlog.md`)**
-- Próximo passo sugerido: Demonstrar laudo emitido ao usuário e planejar automações de teste E2E / contratos OpenAPI
+- Próximo passo sugerido: Demonstração e alinhamento com o usuário para a banca avaliadora do IFES e consolidação do merge Git na branch principal (`main`).
 
 > Atualize apenas ao final de cada sprint ou mudança relevante. Evite atualizações desnecessárias.
+
