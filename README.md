@@ -24,8 +24,7 @@
 
 - **Ana Klara Jardim** — anaklaraifesjd@gmail.com
 - **Estela do nascimento** — estela.nv2025@gmail.com
-- **Gustavo Meneis** —
-ifesmeneis277@gmail.com
+- **Gustavo Meneis** — ifesmeneis277@gmail.com
 - **Isabela Pereira** — isabela.pbarreto.av@gmail.com
 - **Vanderci Lucas** — in.form.magic@outlook.com
 
@@ -123,7 +122,7 @@ Software otimizado para rodar em celular, onde todas as perguntas aparecem compl
 
 ### 7. Pessoas acessíveis
 
-Motoristas, vigilantes, operadores do Terminal Aquaviário da Barra do Riacho (Transpetro). 
+Motoristas, vigilantes, operadores da Transpetro. 
 
 ### 8. Hipótese de oportunidade
 
@@ -135,7 +134,7 @@ Considerando que um dos integrantes do grupo é funcionário da Transpetro, pelo
 
 ### 10. Principal incerteza/desafio
 
-Apresentar aos órgãos decisórios das potenciais clientes. 
+Apresentar aos órgãos decisórios dos potenciais clientes. 
 
 ---
 

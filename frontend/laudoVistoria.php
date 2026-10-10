@@ -74,6 +74,50 @@ if (!$vistoria) {
     exit;
 }
 
+// 1.1 Controle de Acesso e Prevenção de IDOR (Broken Access Control)
+$perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
+$idUsuarioLogado = intval($_SESSION['id_usuario'] ?? 0);
+$autorizado = false;
+
+if (in_array($perfilLogado, ['gestor', 'supervisor'])) {
+    // Gestores e supervisores têm acesso irrestrito para auditoria e gestão da frota
+    $autorizado = true;
+} elseif ($perfilLogado === 'motorista') {
+    // Motoristas só podem auditar laudos em que foram motoristas condutores ou vistoriadores executores
+    if (intval($vistoria['id_motorista']) === $idUsuarioLogado || intval($vistoria['id_vistoriador']) === $idUsuarioLogado) {
+        $autorizado = true;
+    }
+} elseif ($perfilLogado === 'cliente') {
+    // Clientes só podem visualizar laudos vinculados a eles diretamente
+    if (intval($vistoria['id_motorista']) === $idUsuarioLogado) {
+        $autorizado = true;
+    }
+}
+
+if (!$autorizado) {
+    http_response_code(403);
+    echo "<!DOCTYPE html>
+    <html lang='pt-br'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Acesso Negado - Axion</title>
+        <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' rel='stylesheet'>
+        <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'>
+    </head>
+    <body class='bg-light d-flex justify-content-center align-items-center vh-100'>
+        <div class='card p-4 shadow-sm text-center' style='max-width: 480px;'>
+            <div class='text-danger mb-3'><i class='bi bi-shield-lock-fill' style='font-size: 3rem;'></i></div>
+            <h1 class='h4 text-danger fw-bold'>Acesso Negado (403)</h1>
+            <p class='text-muted small'>Seu perfil (<strong>" . htmlspecialchars($perfilLogado) . "</strong>) não possui autorização para auditar o laudo técnico da Vistoria #" . htmlspecialchars($id_vistoria) . ".</p>
+            <p class='small text-secondary'>Apenas gestores, supervisores ou os responsáveis diretamente vinculados a esta vistoria podem visualizar o laudo técnico oficial.</p>
+            <a href='dashboard.php' class='btn btn-primary mt-2'><i class='bi bi-arrow-left me-1'></i> Retornar ao Painel</a>
+        </div>
+    </body>
+    </html>";
+    exit;
+}
+
 // 2. Busca Evidências Fotográficas
 $stmtEv = $pdo->prepare("SELECT * FROM EvidenciasVistoria WHERE id_vistoria = :id ORDER BY id_evidencia ASC");
 $stmtEv->bindParam(':id', $id_vistoria, PDO::PARAM_INT);

@@ -182,7 +182,6 @@ $vistorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <span class="navbar-brand fw-bold fs-4">Axion <span class="badge bg-primary fs-6">Gestão de Frotas</span></span>
             <div class="d-flex align-items-center text-white">
                 <span class="me-3 small"><i class="bi bi-person-circle me-1"></i> Olá, <?= htmlspecialchars($nome_usuario) ?></span>
-                <a href="ocorrencias.php" class="btn btn-warning btn-sm fw-semibold me-2"><i class="bi bi-tools me-1"></i> Triagem de Ocorrências</a>
                 <a href="oqfazer.php" class="btn btn-outline-light btn-sm me-2">Menu Principal</a>
                 <a href="../backend/logout.php" class="btn btn-danger btn-sm">Sair</a>
             </div>

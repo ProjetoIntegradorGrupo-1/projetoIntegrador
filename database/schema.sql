@@ -13,6 +13,7 @@ USE `axion_db`;
 -- Desabilita temporariamente verificações de chaves estrangeiras para limpeza ordenada
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `Ocorrencias`;
 DROP TABLE IF EXISTS `EvidenciasVistoria`;
 DROP TABLE IF EXISTS `RespostasVistoria`;
 DROP TABLE IF EXISTS `Vistorias`;

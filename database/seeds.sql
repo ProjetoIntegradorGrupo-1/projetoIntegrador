@@ -7,9 +7,14 @@ USE `axion_db`;
 
 -- Limpa registros existentes para idempotência das seeds
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE `Ocorrencias`;
+TRUNCATE TABLE `EvidenciasVistoria`;
+TRUNCATE TABLE `RespostasVistoria`;
+TRUNCATE TABLE `Vistorias`;
 TRUNCATE TABLE `Subperguntas`;
 TRUNCATE TABLE `Perguntas`;
 TRUNCATE TABLE `Checklists`;
+TRUNCATE TABLE `RecuperacaoSenha`;
 TRUNCATE TABLE `Veiculos`;
 TRUNCATE TABLE `Usuarios`;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -24,7 +29,8 @@ INSERT INTO `Usuarios`
 VALUES
 (1, 'Administrador Geral', 'admin@axion.com', '000.000.000-00', '$2y$10$KUv3GX3h6VZVbOrPyRly1.jtNSwNx/2Poqe0.b42YwgEFa2t0k2z2', 'gestor', '(27) 99999-0000', 'Vitória', 'ES', 1),
 (2, 'Maria Oliveira', 'supervisor@axion.com', '111.111.111-11', '$2y$10$mL6vlWGpIDyoul.L3SqQFuAdm4h8WT6Xkgv0Fa79agWAfGdkKDxTq', 'supervisor', '(27) 99999-1111', 'Vila Velha', 'ES', 1),
-(3, 'João Silva', 'motorista@axion.com', '222.222.222-22', '$2y$10$mL6vlWGpIDyoul.L3SqQFuAdm4h8WT6Xkgv0Fa79agWAfGdkKDxTq', 'motorista', '(27) 99999-2222', 'Serra', 'ES', 1);
+(3, 'João Silva', 'motorista@axion.com', '222.222.222-22', '$2y$10$mL6vlWGpIDyoul.L3SqQFuAdm4h8WT6Xkgv0Fa79agWAfGdkKDxTq', 'motorista', '(27) 99999-2222', 'Serra', 'ES', 1),
+(4, 'Carlos Mendes (Cliente)', 'cliente@axion.com', '333.333.333-33', '$2y$10$mL6vlWGpIDyoul.L3SqQFuAdm4h8WT6Xkgv0Fa79agWAfGdkKDxTq', 'cliente', '(27) 99999-3333', 'Cariacica', 'ES', 1);
 
 -- =============================================================================
 -- 2. VEÍCULOS DE TESTE

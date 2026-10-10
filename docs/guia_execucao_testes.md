@@ -92,23 +92,27 @@ Acesse no navegador: **[http://localhost/projetoIntegrador/](http://localhost/pr
 
 ---
 
-### Teste 3: Execução de Vistoria e Registro de Avarias
-1. No menu principal, selecione **"Preencher Checklist"**.
-2. Selecione a placa de um veículo cadastrado (ex: `ABC-1D23` ou `XYZ9876`), informe o motorista condutor, quilometragem atual e avance.
-3. Na tela de **Não Conformidade** ([`frontend/detalhesNaoConformidade.html`](../frontend/detalhesNaoConformidade.html)):
-   - Descreva uma avaria simulada (ex: *"Farol dianteiro esquerdo com lente trincada"*).
-   - Selecione uma foto/imagem do seu computador para anexar como evidência.
-   - Avance para a próxima etapa.
+### Teste 3: Abertura e Execução de Vistoria (Fluxo Híbrido)
+1. No menu principal, selecione **"Preencher Checklist"** (ou acesse [`frontend/cadcheck.php`](../frontend/cadcheck.php)).
+2. Selecione a placa de um veículo cadastrado (ex: `ABC-1D23` ou `XYZ9876`), o modelo de checklist ativo, o motorista condutor, o vistoriador e a quilometragem atual.
+3. Escolha o modo de preenchimento desejado:
+   - **Modo Campo (Fitts):** Interface otimizada para tablets/smartphones com botões de toque amplos e navegação pergunta por pergunta.
+   - **Modo Lista Completa:** Exibição tradicional com rolagem contínua de todos os itens.
+4. Clique em **"Iniciar Vistoria"**: você será direcionado para o formulário interativo de execução ([`frontend/vistoria.php`](../frontend/vistoria.php)).
 
 ---
 
-### Teste 4: Assinatura Digital em Canvas e Conclusão
-1. Na tela de **Assinatura** ([`frontend/assinaturaChecklist.html`](../frontend/assinaturaChecklist.html)):
-   - Desenhe a assinatura do motorista no primeiro quadro canvas usando o mouse ou touch screen.
-   - Desenhe a assinatura do vistoriador no segundo quadro canvas.
+### Teste 4: Registro de Evidências, Assinaturas Digitais em Canvas e Finalização
+1. Durante a inspeção em [`frontend/vistoria.php`](../frontend/vistoria.php):
+   - Responda aos itens com *Conforme* ou *Não Conforme*.
+   - Ao apontar uma não conformidade, observe o acionamento de perguntas condicionais e o campo para anexar fotos de evidência.
+2. Na seção de encerramento da vistoria:
+   - Desenhe a assinatura do motorista condutor no primeiro quadro canvas.
+   - Desenhe a assinatura do vistoriador responsável no segundo quadro canvas.
    - Se errar o traço, teste o botão *"Limpar"*.
-2. Clique em **"Concluir Vistoria"**:
-   - O sistema salvará as assinaturas em Base64 no MySQL, vinculará as fotos e atualizará o status da vistoria para `aprovado_com_restricoes`.
+3. Clique em **"Concluir e Emitir Laudo"**:
+   - O processamento backend ([`backend/processar_execucao_vistoria.php`](../backend/processar_execucao_vistoria.php)) salvará as respostas, converterá as assinaturas Base64, vinculará as fotos e, havendo avarias, abrirá automaticamente uma ocorrência para triagem na oficina.
+   - Você será redirecionado imediatamente para a visualização do **Laudo Técnico Oficial** ([`frontend/laudoVistoria.php`](../frontend/laudoVistoria.php)).
 
 ---
 
@@ -136,12 +140,12 @@ Acesse no navegador: **[http://localhost/projetoIntegrador/](http://localhost/pr
 
 Para quem preferir validar todas as regras do sistema de forma instantânea via linha de comando, disponibilizamos um executor E2E que roda **49 asserções completas** cobrindo autenticação, vistorias, laudos técnicos, matriz RBAC e governança de homologação de checklists:
  
- 1. Certifique-se de que o Apache e o MySQL estão rodando no XAMPP.
+ 1. Certifique-se de que o Apache e o MySQL estão rodando no XAMPP ou via container Docker.
  2. Abra o terminal na raiz do projeto e execute:
  ```bash
- C:\xampp\php\php.exe scratch/run_e2e_smoke_test.php
+ php tests/run_e2e_smoke_test.php
  ```
- *(ou simplesmente `php scratch/run_e2e_smoke_test.php` se o PHP estiver no seu PATH do sistema)*
+ *(ou `C:\xampp\php\php.exe tests/run_e2e_smoke_test.php` se o PHP não estiver no PATH)*
  
  3. O terminal exibirá o relatório com **100% de aprovação (49/49)** de todos os endpoints, middleware RBAC, transações PDO, persistência atômica e ciclo de aprovação.
 

@@ -227,6 +227,12 @@ try {
                 $stmtVei->execute([':idv' => $vistoria['id_veiculo']]);
             }
         }
+    } else {
+        // Se a vistoria foi 100% aprovada, garante que o veículo volte a ficar ativo
+        if (!empty($vistoria['id_veiculo'])) {
+            $stmtVeiAtivo = $pdo->prepare("UPDATE Veiculos SET status = 'ativo' WHERE id_veiculo = :idv");
+            $stmtVeiAtivo->execute([':idv' => $vistoria['id_veiculo']]);
+        }
     }
 
     echo json_encode([

@@ -8,8 +8,8 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 require_once __DIR__ . '/../backend/conexao.php';
 
-// Busca lista de veículos cadastrados e ativos
-$stmtVeiculos = $pdo->query("SELECT id_veiculo, placa, marca_modelo, km_rodado FROM Veiculos WHERE status = 'ativo' ORDER BY marca_modelo ASC");
+// Busca lista de veículos cadastrados (ativos e em manutenção/reinspeção, excluindo apenas os deletados)
+$stmtVeiculos = $pdo->query("SELECT id_veiculo, placa, marca_modelo, km_rodado, status FROM Veiculos WHERE status != 'inativo' ORDER BY marca_modelo ASC");
 $veiculos = $stmtVeiculos->fetchAll(PDO::FETCH_ASSOC);
 
 // Busca modelos de checklist ativos
@@ -83,7 +83,7 @@ $nomeVistoriador = $_SESSION['nome_usuario'] ?? 'Inspetor';
                         <option value="" disabled selected>-- Selecione um veículo da frota --</option>
                         <?php foreach ($veiculos as $v): ?>
                             <option value="<?= htmlspecialchars($v['placa']) ?>" data-km="<?= $v['km_rodado'] ?>">
-                                <?= htmlspecialchars($v['marca_modelo']) ?> — Placa: <?= htmlspecialchars($v['placa']) ?>
+                                <?= htmlspecialchars($v['marca_modelo']) ?> — Placa: <?= htmlspecialchars($v['placa']) ?><?= ($v['status'] === 'manutencao') ? ' ⚠️ (Em Manutenção)' : '' ?>
                             </option>
                         <?php endforeach; ?>
                         <option value="__avulso__">➕ Outro veículo avulso (não cadastrado)</option>

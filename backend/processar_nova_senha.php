@@ -32,27 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmtToken->execute();
         $rec = $stmtToken->fetch(PDO::FETCH_ASSOC);
 
-        if ($rec) {
-            $id_usuario = $rec['id_usuario'];
-            // Atualiza a senha do usuário
-            $stmtUp = $pdo->prepare("UPDATE Usuarios SET senha = :senha WHERE id_usuario = :id");
-            $stmtUp->bindParam(':senha', $senha_hash);
-            $stmtUp->bindParam(':id', $id_usuario, PDO::PARAM_INT);
-            $stmtUp->execute();
-
-            // Invalida o token usado
-            $stmtMarca = $pdo->prepare("UPDATE RecuperacaoSenha SET usado = 1 WHERE token = :token");
-            $stmtMarca->bindParam(':token', $token);
-            $stmtMarca->execute();
-        } else {
-            // Em ambiente local/acadêmico sem token persistido, se houver usuário logado, atualiza ele
-            if (isset($_SESSION['id_usuario'])) {
-                $stmtUp = $pdo->prepare("UPDATE Usuarios SET senha = :senha WHERE id_usuario = :id");
-                $stmtUp->bindParam(':senha', $senha_hash);
-                $stmtUp->bindParam(':id', $_SESSION['id_usuario'], PDO::PARAM_INT);
-                $stmtUp->execute();
-            }
+        if (!$rec) {
+            echo "<script>alert('Token inválido ou expirado. Solicite um novo link.'); window.location.href = '../frontend/esqueciSenha.html';</script>";
+            exit;
         }
+
+        $id_usuario = $rec['id_usuario'];
+        // Atualiza a senha do usuário com hash BCrypt seguro
+        $stmtUp = $pdo->prepare("UPDATE Usuarios SET senha = :senha WHERE id_usuario = :id");
+        $stmtUp->bindParam(':senha', $senha_hash);
+        $stmtUp->bindParam(':id', $id_usuario, PDO::PARAM_INT);
+        $stmtUp->execute();
+
+        // Invalida o token usado para prevenir reutilização
+        $stmtMarca = $pdo->prepare("UPDATE RecuperacaoSenha SET usado = 1 WHERE token = :token");
+        $stmtMarca->bindParam(':token', $token);
+        $stmtMarca->execute();
 
         echo "<script>
                 alert('Senha alterada com sucesso! Você já pode entrar com sua nova senha.');
