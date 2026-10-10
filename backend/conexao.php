@@ -34,22 +34,23 @@ if ($usar_aiven) {
     }
 
 } else {
-    // Configurações do MySQL Local (XAMPP)
-    $host     = 'localhost';
-    $dbname   = 'axion_db';
-    $usuario  = 'root';
-    $senha    = '';
+    // Configurações do MySQL Local (XAMPP ou Docker)
+    $host     = getenv('DB_HOST') ?: 'localhost';
+    $dbname   = getenv('DB_NAME') ?: 'axion_db';
+    $usuario  = getenv('DB_USER') ?: 'root';
+    $senha    = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
+    $port     = getenv('DB_PORT') ?: 3306;
 
     try {
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
         ];
-        $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+        $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
         $pdo = new PDO($dsn, $usuario, $senha, $options);
         $pdo->exec("SET time_zone = '-03:00'");
     } catch (PDOException $e) {
-        die("Erro de conexão com o banco local (XAMPP): " . $e->getMessage());
+        die("Erro de conexão com o banco local (XAMPP/Docker): " . $e->getMessage());
     }
 }
 ?>

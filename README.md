@@ -645,6 +645,46 @@ Todos os artefatos de governança, evidências e entregáveis do projeto estão 
 - 📊 **[Guia de Apresentação e Numeração de Figuras (`docs/guia_apresentacao_slides.md`)](docs/guia_apresentacao_slides.md):** Roteiro formal para os slides com numeração de todas as figuras e justificativa mercadológica completa.
 - 📁 **[Diretório de Artefatos (`arquivos/`)](arquivos/):** Reúne a Matriz de Seleção de Ideias (`arquivos/matrizSelecao.png`), o PMC (`arquivos/PMC/PMC.png`) e os protótipos de alta fidelidade.
 - 📸 **[Galeria de Capturas de Tela (`docs/screenshots/`)](docs/screenshots/):** Prints oficiais das 7 principais telas funcionais do sistema em alta definição.
-- 🧪 **[Guia de Execução de Testes Automatizados (`docs/guia_execucao_testes.md`)](docs/guia_execucao_testes.md):** Instruções passo a passo para execução do script de smoke test (49/49 cenários aprovados, 100% de sucesso cobrindo Autenticação, RBAC, Vistorias, PDFs e Governança de Checklists).
+- 🧪 **[Guia de Execução de Testes Automatizados (`docs/guia_execucao_testes.md`)](docs/guia_execucao_testes.md):** Instruções passo a passo para execução do script de smoke test (`php tests/run_e2e_smoke_test.php` com 49/49 cenários aprovados, 100% de sucesso cobrindo Autenticação, RBAC, Vistorias, PDFs e Governança de Checklists).
 - 📜 **[Histórico e Histórias de Usuário (`docs/stories/`)](docs/stories/):** Especificação completa das User Stories US-001 a US-010 no padrão INVEST.
+
+---
+
+## 12. COMO EXECUTAR O SISTEMA (DOCKER & AMBIENTE LOCAL)
+
+### Opção 1: Execução Isolada via Docker (Padrão Recomendado para Avaliação)
+
+A aplicação conta com configuração oficial em container para execução reprodutível, segura e sem necessidade de instalação manual de banco:
+
+```bash
+# Sobe a aplicação (PHP 8.2 Apache) e o banco MySQL 8.0 pré-configurado
+docker compose up -d
+```
+
+- **Acesso à Aplicação:** [http://localhost:8080/](http://localhost:8080/)
+- **Porta do Banco:** MySQL exposto na porta `3307` (usuário `root`, senha `axion_root_2026`).
+- **Carga de Dados:** O container executa automaticamente os scripts `database/schema.sql` e `database/seeds.sql` na inicialização.
+
+Para parar os containers:
+```bash
+docker compose down
+```
+
+### Opção 2: Execução via XAMPP Local
+
+Consulte o passo a passo detalhado em **[`docs/guia_execucao_testes.md`](docs/guia_execucao_testes.md)**.
+- Coloque o projeto em `C:\xampp\htdocs\projetoIntegrador`.
+- Inicie o Apache e o MySQL no XAMPP Control Panel.
+- Importe `database/schema.sql` e `database/seeds.sql` no phpMyAdmin.
+- Acesse: [http://localhost/projetoIntegrador/](http://localhost/projetoIntegrador/)
+
+### Credenciais de Acesso de Teste
+
+| Perfil | E-mail | Senha |
+|---|---|---|
+| **Gestor Administrador** | `admin@axion.com` | `admin123` |
+| **Supervisor Operacional** | `supervisor@axion.com` | `mudar123` |
+| **Motorista / Inspetor** | `motorista@axion.com` | `mudar123` |
+| **Cliente / Locatário** | `cliente@axion.com` | `mudar123` |
+
 

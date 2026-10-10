@@ -1,0 +1,7 @@
+.git
+.gitignore
+scratch/
+*.exe
+*.iss
+*.log
+tests/cookie.txt
