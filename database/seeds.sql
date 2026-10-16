@@ -3,6 +3,9 @@
 -- Script de Carga Inicial / Dados de Teste (seeds.sql)
 -- =============================================================================
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 USE `axion_db`;
 
 -- Limpa registros existentes para idempotência das seeds

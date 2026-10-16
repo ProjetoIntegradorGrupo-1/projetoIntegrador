@@ -4,6 +4,9 @@
 -- Compatível com MySQL 5.7+ / 8.0+ e MariaDB (Padrão XAMPP)
 -- =============================================================================
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS `axion_db` 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;

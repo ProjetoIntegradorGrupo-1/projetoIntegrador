@@ -10,6 +10,14 @@ if (!isset($_SESSION['id_usuario'])) {
 
 require_once __DIR__ . '/../backend/conexao.php';
 
+// Garante que o nome na sessão reflita o valor atualizado em UTF-8 no banco
+$stmtUser = $pdo->prepare("SELECT nome, perfil FROM Usuarios WHERE id_usuario = :id LIMIT 1");
+$stmtUser->execute([':id' => $_SESSION['id_usuario']]);
+if ($rowUser = $stmtUser->fetch(PDO::FETCH_ASSOC)) {
+    $_SESSION['nome_usuario']   = $rowUser['nome'];
+    $_SESSION['perfil_usuario'] = $rowUser['perfil'];
+}
+
 $nome_usuario   = $_SESSION['nome_usuario'] ?? 'Usuário';
 $perfil_usuario = $_SESSION['perfil_usuario'] ?? 'motorista';
 
