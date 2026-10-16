@@ -17,6 +17,8 @@ function sanitizar(?string $str): string {
 }
 
 $id_vistoria = intval($_GET['id_vistoria'] ?? $_SESSION['id_vistoria_ativa'] ?? 0);
+$perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
+$linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.php' : 'oqfazer.php';
 
 // Se não houver ID informado, busca a última vistoria pendente criada pelo usuário
 if ($id_vistoria <= 0) {
@@ -409,7 +411,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
             
             <!-- Identificação do Veículo -->
             <div class="d-flex align-items-center gap-2">
-                <a href="dashboard.php" class="btn btn-outline-secondary btn-sm px-2 py-1" title="Sair da Vistoria" onclick="return confirm('Deseja sair? Suas respostas preenchidas serão salvas.')">
+                <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary btn-sm px-2 py-1" title="Sair da Vistoria" onclick="return confirm('Deseja sair? Suas respostas preenchidas serão salvas.')">
                     <i class="bi bi-arrow-left"></i>
                 </a>
                 <div>

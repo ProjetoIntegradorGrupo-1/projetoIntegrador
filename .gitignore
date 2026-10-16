@@ -1,5 +1,5 @@
 # Diretórios e arquivos temporários
-scratch/
+# scratch/ agora é pública no repositório conforme requisito da banca
 backend/uploads/*
 !backend/uploads/.gitkeep
 .env

@@ -60,8 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $salvarEvidencia('documento_evidencia', 'documento');
         }
 
-        // Redireciona para o passo final de assinaturas
-        header("Location: ../frontend/assinaturaChecklist.html");
+        // Redireciona para o passo final de assinaturas integrado em vistoria.php
+        header("Location: ../frontend/vistoria.php?id_vistoria=" . $id_vistoria);
         exit;
 
     } catch (PDOException $e) {
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
 } else {
-    header("Location: ../frontend/detalhesNaoConformidade.html");
+    header("Location: ../frontend/cadcheck.php");
     exit;
 }
 ?>

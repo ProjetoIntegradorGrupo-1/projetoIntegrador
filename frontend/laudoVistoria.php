@@ -46,7 +46,7 @@ function sanitizar_utf8(?string $str): string {
 $id_vistoria = intval($_GET['id_vistoria'] ?? 0);
 
 if ($id_vistoria <= 0) {
-    header("Location: dashboard.php");
+    header("Location: oqfazer.php");
     exit;
 }
 
@@ -67,16 +67,16 @@ $sql = "SELECT v.*,
 $stmt = $pdo->prepare($sql);
 $stmt->bindParam(':id', $id_vistoria, PDO::PARAM_INT);
 $stmt->execute();
-$vistoria = $stmt->fetch(PDO::FETCH_ASSOC);
+$perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
+$idUsuarioLogado = intval($_SESSION['id_usuario'] ?? 0);
+$linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.php' : 'oqfazer.php';
 
 if (!$vistoria) {
-    echo "<script>alert('Vistoria não encontrada.'); window.location.href = 'dashboard.php';</script>";
+    echo "<script>alert('Vistoria não encontrada.'); window.location.href = '" . $linkRetorno . "';</script>";
     exit;
 }
 
 // 1.1 Controle de Acesso e Prevenção de IDOR (Broken Access Control)
-$perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
-$idUsuarioLogado = intval($_SESSION['id_usuario'] ?? 0);
 $autorizado = false;
 
 if (in_array($perfilLogado, ['gestor', 'supervisor'])) {
@@ -111,7 +111,7 @@ if (!$autorizado) {
             <h1 class='h4 text-danger fw-bold'>Acesso Negado (403)</h1>
             <p class='text-muted small'>Seu perfil (<strong>" . htmlspecialchars($perfilLogado) . "</strong>) não possui autorização para auditar o laudo técnico da Vistoria #" . htmlspecialchars($id_vistoria) . ".</p>
             <p class='small text-secondary'>Apenas gestores, supervisores ou os responsáveis diretamente vinculados a esta vistoria podem visualizar o laudo técnico oficial.</p>
-            <a href='dashboard.php' class='btn btn-primary mt-2'><i class='bi bi-arrow-left me-1'></i> Retornar ao Painel</a>
+            <a href='<?= $linkRetorno ?>' class='btn btn-primary mt-2'><i class='bi bi-arrow-left me-1'></i> Retornar</a>
         </div>
     </body>
     </html>";
@@ -264,8 +264,8 @@ $badgeCor = match($vistoria['status']) {
     <div class="container-fluid bg-dark text-white py-2 px-4 no-print shadow-sm sticky-top">
         <div class="d-flex justify-content-between align-items-center max-w-900 mx-auto" style="max-width: 900px;">
             <div>
-                <a href="dashboard.php" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Voltar ao Dashboard
+                <a href="<?= $linkRetorno ?>" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar ao <?= in_array($perfilLogado, ['gestor', 'supervisor']) ? 'Dashboard' : 'Menu Principal' ?>
                 </a>
             </div>
             <div class="d-flex gap-2">

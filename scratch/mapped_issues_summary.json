@@ -1,0 +1,970 @@
+{
+  "mapped": [
+    {
+      "number": "7",
+      "title": "Definir estrutura do banco de dados",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Modelagem conceitual do banco de dados relacional no brmodelo Web"
+    },
+    {
+      "number": "8",
+      "title": "Criar checklist de veículos com perguntas prontas para o sistema.",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Elaborar tabela comparativa de IAs de prototipação (com Lovable) para o AVA"
+    },
+    {
+      "number": "12",
+      "title": "Revisar a avaliação anterior e identificar pontos de melhoria",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação (6 min)"
+    },
+    {
+      "number": "13",
+      "title": "Definir identidade visual do sistema",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Criação do logotipo e definição da identidade visual da marca (Axion)"
+    },
+    {
+      "number": "15",
+      "title": "Revisar a navegação e os fluxos do frontend",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Clarificação técnica e padronização de templates e componentes do frontend"
+    },
+    {
+      "number": "16",
+      "title": "Remodelar o banco de dados",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Modelagem conceitual do banco de dados relacional no brmodelo Web"
+    },
+    {
+      "number": "20",
+      "title": "Criação e edição de apresentação sobre andamento do projeto",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação do documento oficial de Documentação do Projeto Integrador no Docs"
+    },
+    {
+      "number": "21",
+      "title": "Criar botões dinâmico e de pagina animações",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P2",
+      "matched_to": "[Task] Pesquisa e prototipação de botões animados e microinterações em CSS"
+    },
+    {
+      "number": "22",
+      "title": "Diagrama básico de arquitetura do sistema",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Triagem e alocação da issue de Diagrama Básico de Arquitetura no Kanban (#22)"
+    },
+    {
+      "number": "24",
+      "title": "Implementar rotinas de exclusão e gestão de utilizadores e veículos no backend",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Gerenciar membros, auditoria de convites e permissões no GitHub"
+    },
+    {
+      "number": "25",
+      "title": "Criar o painel de navegação centralizado e controlo de sessões",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Estruturar rito de Daily Meetings e criar mensagem padrão via IA"
+    },
+    {
+      "number": "26",
+      "title": "Criar o painel de navegação centralizado e controlo de sessões",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Estruturar rito de Daily Meetings e criar mensagem padrão via IA"
+    },
+    {
+      "number": "27",
+      "title": "Desenvolver os scripts de processamento e conexões seguras com o banco de dados",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Replicação e execução da carga do banco de dados na máquina local (Isabela)"
+    },
+    {
+      "number": "28",
+      "title": "Implementar canvas de assinatura digital para motorista e vistoriador com conversão Base64",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Revisão técnica de cardinalidades (1:1 e 0:N) e migração para Docs colaborativo"
+    },
+    {
+      "number": "29",
+      "title": "Popular base de dados MySQL com dados simulados para apresentação",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "30",
+      "title": "Criar interface dinâmica para submissão de perguntas de inspeção (cadcheck.html)",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Prototipação dinâmica de criação de checklists com perguntas flexíveis"
+    },
+    {
+      "number": "31",
+      "title": "Aplicar design system e acessibilidade nos formulários de Veículos e Usuários",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Especificação formal da política de inativação lógica (Soft Delete) para Veículos, Usuários e Checklists"
+    },
+    {
+      "number": "36",
+      "title": "[Task] Apoio a correcção de bugs visuais e logicos",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação (6 min)"
+    },
+    {
+      "number": "38",
+      "title": "[Task] Desenvolver Dashboard analítico de vistorias com KPIs e filtros",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Execução da Daily com reporte de bloqueios e alinhamento presencial no IFES"
+    },
+    {
+      "number": "39",
+      "title": "[Task] Implementar emissão e impressão de laudo Oficial de vistoria em PDF",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Geração de link público e exportação do modelo conceitual em PDF (Vanderci)"
+    },
+    {
+      "number": "41",
+      "title": "[Task] Configuração de sala de reunião online para a equipe",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "42",
+      "title": "[Task] Pesquisa e ideação inicial do escopo do projeto usando IA",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Pesquisa e ideação inicial do escopo do projeto via ChatGPT"
+    },
+    {
+      "number": "43",
+      "title": "[Task] Task Pesquisa e protoƟpação de botões animados e microinterações em CSS",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P2",
+      "matched_to": "[Task] Pesquisa e prototipação de botões animados e microinterações em CSS"
+    },
+    {
+      "number": "44",
+      "title": "[Task] Gerenciar membros, auditoria de convites e permissões no GitHub",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Gerenciar membros, auditoria de convites e permissões no GitHub"
+    },
+    {
+      "number": "45",
+      "title": "[Task] Criação e estruturação inicial do quadro Kanban no GitHub Projects",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação e estruturação inicial do quadro Kanban no GitHub Projects"
+    },
+    {
+      "number": "46",
+      "title": "[Task] Inicializar documentação do repositório com criação do README.md",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Inicializar documentação do repositório com criação do README.md"
+    },
+    {
+      "number": "47",
+      "title": "[Task] Capacitação técnica da equipe em Git e GitHub (LEDS Academy)",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Capacitação técnica da equipe em Git e GitHub (LEDS Academy)"
+    },
+    {
+      "number": "48",
+      "title": "[Task] Desenvolvimento das interfaces e páginas estáticas em HTML",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Desenvolvimento das interfaces e páginas estáticas em HTML (90% inicial)"
+    },
+    {
+      "number": "49",
+      "title": "[Task] Finalização das páginas HTML pendentes e envio para repositório",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Finalização das páginas HTML pendentes e envio para repositório"
+    },
+    {
+      "number": "50",
+      "title": "[Task] Integração e versionamento das telas do sistema no repositório GitHub",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Integração e versionamento das telas do sistema no repositório GitHub"
+    },
+    {
+      "number": "51",
+      "title": "[Task] Elaboração do documento técnico de Modelagem do Banco de Dados",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Elaboração do documento técnico de Modelagem do Banco de Dados (6 páginas)"
+    },
+    {
+      "number": "52",
+      "title": "[Task] Criação do script DDL inicial com comandos SQL das tabelas (comandos.md)",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação do script DDL inicial com comandos SQL das tabelas (comandos.md)"
+    },
+    {
+      "number": "53",
+      "title": "[Task] Revisão técnica de cardinalidades (1:1 e 0:N) e migração para Docs colaboraƟvo",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Revisão técnica de cardinalidades (1:1 e 0:N) e migração para Docs colaborativo"
+    },
+    {
+      "number": "54",
+      "title": "[Task] Criação do modelo da Daily com reporte de bloqueios e alinhamento ",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Execução da Daily com reporte de bloqueios e alinhamento presencial no IFES"
+    },
+    {
+      "number": "55",
+      "title": "[Task] Modelagem conceitual do banco de dados relacional no brmodelo Web",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Modelagem conceitual do banco de dados relacional no brmodelo Web"
+    },
+    {
+      "number": "56",
+      "title": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 enƟdades do IFES",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "57",
+      "title": "[Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo"
+    },
+    {
+      "number": "58",
+      "title": "[Task] Construção do novo modelo conceitual simplificado (5 enƟdades) no brmodelo Web",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Construção do novo modelo conceitual simplificado (5 entidades) no brmodelo Web"
+    },
+    {
+      "number": "59",
+      "title": "[Task] Prototipação dinâmica de criação de checklists com perguntas flexíveis",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Prototipação dinâmica de criação de checklists com perguntas flexíveis"
+    },
+    {
+      "number": "60",
+      "title": "[Task] Compartilhamento e centralização da documentação de banco no Google Docs",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Compartilhamento e centralização da documentação de banco no Google Docs"
+    },
+    {
+      "number": "61",
+      "title": "[Task] Alinhamento e padronização do fluxo de comandos Git (add, commit, push)",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Alinhamento e padronização do fluxo de comandos Git (add, commit, push)"
+    },
+    {
+      "number": "62",
+      "title": "[Task] Estudo prático de estruturação semântica em HTML5 e boas práticas de CSS",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P2",
+      "matched_to": "[Task] Estudo prático de estruturação semântica em HTML5 e boas práticas de CSS"
+    },
+    {
+      "number": "63",
+      "title": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação (6 min)"
+    },
+    {
+      "number": "64",
+      "title": "[Task] Auditoria de estrutura de pastas e correção de branch no repositório GitHub",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Auditoria de estrutura de pastas e correção de branch no repositório GitHub"
+    },
+    {
+      "number": "65",
+      "title": "[Task] Suporte técnico de comandos Git remotos e sincronização de branches",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Suporte técnico de comandos Git remotos e sincronização de branches"
+    },
+    {
+      "number": "66",
+      "title": "[Task] Atualização e inclusão de diretrizes do professor no README.md do repositório",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Atualização e inclusão de diretrizes do professor no README.md do repositório"
+    },
+    {
+      "number": "67",
+      "title": "[Task]  Refinamento do DER no brmodelo e exportação do diagrama conceitual em PDF",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refinamento do DER no brmodelo e exportação do diagrama conceitual em PDF (Ana)"
+    },
+    {
+      "number": "68",
+      "title": "[Task] Elaboração de apresentação/documento de diagnóstico de ajustes e melhorias",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Elaboração de apresentação/documento de diagnóstico de ajustes e melhorias"
+    },
+    {
+      "number": "69",
+      "title": "[Task] Realização da reunião geral de alinhamento da Sprint",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Realização da reunião geral de alinhamento da Sprint (Call de Domingo 18h30)"
+    },
+    {
+      "number": "70",
+      "title": "[Task] Criação do documento oficial de Documentação do Projeto Integrador no Drive",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação do documento oficial de Documentação do Projeto Integrador no Docs"
+    },
+    {
+      "number": "71",
+      "title": "[Task] Elaboração do script DDL final do banco axion_db com as 5 tabelas principais",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Elaboração do script DDL final do banco axion_db com as 5 tabelas principais"
+    },
+    {
+      "number": "72",
+      "title": "[Task] Implementação de integridade referencial com ON DELETE RESTRICT e CASCADE",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Implementação de integridade referencial com ON DELETE RESTRICT e CASCADE"
+    },
+    {
+      "number": "73",
+      "title": "[Task] Criação do script de seed inicial do Gestor Master com hash seguro BCrypt",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação do script de seed inicial do Gestor Master com hash seguro BCrypt"
+    },
+    {
+      "number": "74",
+      "title": "[Task] Alinhar cronograma e entregas com o professor orientador",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Alinhamento com o professor orientador (Moisés) sobre cronograma e entregas"
+    },
+    {
+      "number": "75",
+      "title": "[Task] Levantar e priorizar demandas para trabalho no laboratório do IFES",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Levantamento e priorização de demandas pendentes para trabalho no laboratório do IFES"
+    },
+    {
+      "number": "76",
+      "title": "[Task] Publicar e exportar o modelo conceitual elaborado por Vanderci",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Geração de link público e exportação do modelo conceitual em PDF (Vanderci)"
+    },
+    {
+      "number": "77",
+      "title": "[Task] Comparar e revisar os modelos conceituais de Ana e Vanderci",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo"
+    },
+    {
+      "number": "78",
+      "title": "[Task] Elaborar ata e registrar perguntas da Sprint Review",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Elaboração da ata de reunião e documento de perguntas da Sprint Review"
+    },
+    {
+      "number": "79",
+      "title": "[Task] Elaborar guia ilustrado do ambiente local com XAMPP e DBeaver",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Elaboração do guia técnico de setup, deploy local e homologação no XAMPP (Guia Axion)"
+    },
+    {
+      "number": "80",
+      "title": "[Task] Configurar e validar o banco axion_db no ambiente local de Isabela",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Compartilhamento e centralização da documentação de banco no Google Docs"
+    },
+    {
+      "number": "81",
+      "title": "[Task] Planejar a semana e acompanhar a capacidade da equipe",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Capacitação técnica da equipe em Git e GitHub (LEDS Academy)"
+    },
+    {
+      "number": "82",
+      "title": "[Task] Mapear e documentar as personas do sistema",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Mapeamento e especificação formal das Personas do sistema"
+    },
+    {
+      "number": "83",
+      "title": "[Task] Realizar e documentar a retrospectiva da Sprint",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Realização e formalização do rito de Retrospectiva da Sprint (Retrospectiva.pdf)"
+    },
+    {
+      "number": "84",
+      "title": "[Task] Empacotar a versão consolidada do código de 11/09",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "85",
+      "title": "[Task] Analisar os requisitos de avaliação disponibilizados no AVA",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Estudo das diretrizes e requisitos de avaliação disponibilizados no AVA"
+    },
+    {
+      "number": "86",
+      "title": "[Task] Auditar o Kanban e identificar lacunas de documentação",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Auditoria do Kanban e identificação de gaps de documentação (diagrama do sistema)"
+    },
+    {
+      "number": "87",
+      "title": "[Task] Prototipar a tela de seleção de perfis",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Prototipação da tela de seleção de perfis (Administrador, Gestor e Inspetor)"
+    },
+    {
+      "number": "88",
+      "title": "[Task] Elaborar e aplicar o formulário de pesquisa de mercado",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Elaboração e aplicação de formulário de pesquisa de mercado no Google Forms"
+    },
+    {
+      "number": "89",
+      "title": "[Task] Consolidar e analisar as respostas da pesquisa de validação",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Coleta e análise estatística das respostas do questionário de validação"
+    },
+    {
+      "number": "90",
+      "title": "[Task] Documentar limites do Lovable e ajustar o escopo do protótipo",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Documentação de restrições de cota do Lovable e alinhamento de escopo do protótipo"
+    },
+    {
+      "number": "91",
+      "title": "[Task] Acompanhar a meta de respostas da pesquisa de mercado",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Monitoramento da meta de respostas do formulário de pesquisa (25 respostas)"
+    },
+    {
+      "number": "92",
+      "title": "[Task] Configurar e validar permissões de acesso aos slides no Canva",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Gestão de permissões colaborativas e auditoria de acesso aos slides (Canva)"
+    },
+    {
+      "number": "93",
+      "title": "[Task] Estruturar o roteiro da apresentação em cinco blocos",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Estruturação do roteiro de apresentação em 5 blocos temáticos e divisão de falas"
+    },
+    {
+      "number": "94",
+      "title": "[Task] Ensaiar a apresentação e definir a ordem das falas",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Ensaio da apresentação e definição da ordem de falas via enquete democrática"
+    },
+    {
+      "number": "95",
+      "title": "[Task] Apresentar o Trabalho 1 à banca do IFES",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Apresentação presencial do Trabalho 1 para a banca de professores no IFES"
+    },
+    {
+      "number": "96",
+      "title": "[Task] Definir acordos de autoria e compartilhamento dos slides",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Revisão técnica e controle de qualidade dos slides de apresentação"
+    },
+    {
+      "number": "97",
+      "title": "[Task] Validar o link público do modelo conceitual nos slides",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Vinculação e validação do link público do modelo conceitual (brmodelo) nos slides"
+    },
+    {
+      "number": "98",
+      "title": "[Task] Compilar e submeter o relatório final AXION em PDF",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Homologação e exportação da apresentação final em PDF para a banca"
+    },
+    {
+      "number": "100",
+      "title": "[Task] Documentar a decisão de escopo entre aplicação web e mobile nativa",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação (6 min)"
+    },
+    {
+      "number": "101",
+      "title": "[Task] Registrar a rotação de Scrum Master da Sprint para Vanderci",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Rotação e definição da liderança de Scrum Master da Sprint"
+    },
+    {
+      "number": "103",
+      "title": "[Task] Configurar o certificado ca.pem para conexão SSL com a Aiven",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Configuração de certificado de segurança SSL (ca.pem) para conexão criptografada"
+    },
+    {
+      "number": "104",
+      "title": "[Task] Elaborar guia de conexão SSL à Aiven no DBeaver",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Elaboração de guia de conexão SSL remota no DBeaver para o time de desenvolvimento"
+    },
+    {
+      "number": "105",
+      "title": "[Task] Comparar alternativas de hospedagem para a aplicação PHP",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "106",
+      "title": "[Task] Criar e sincronizar branch de desenvolvimento no GitHub",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Criação de branch temática de desenvolvimento e sincronização no GitHub"
+    },
+    {
+      "number": "107",
+      "title": "[Task] Analisar o feedback da Profa. Marta sobre o Trabalho 1",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Análise e homologação do relatório de feedback oficial da Profa. Marta (Nota 9.0)"
+    },
+    {
+      "number": "108",
+      "title": "[Task] Reorganizar tarefas e prazos diante de impedimentos da Sprint",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Gestão de contingência e redistribuição de tarefas da Sprint (Luto/Impedimento)"
+    },
+    {
+      "number": "109",
+      "title": "[Task] Refinar os fluxos de telas durante trabalho no laboratório",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Levantamento e priorização de demandas pendentes para trabalho no laboratório do IFES"
+    },
+    {
+      "number": "110",
+      "title": "[Task] Definir padrões de templates e componentes do frontend",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Clarificação técnica e padronização de templates e componentes do frontend"
+    },
+    {
+      "number": "111",
+      "title": "[Task] Preencher a planilha de acompanhamento semanal e mensal do PI",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Elaboração do planejamento semanal e monitoramento de capacidade do time"
+    },
+    {
+      "number": "112",
+      "title": "[Task] Registrar reunião presencial de planejamento com o orientador",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Reunião presencial de alinhamento com orientador no campus do IFES"
+    },
+    {
+      "number": "113",
+      "title": "[Task] Registrar a eleição e transição de Scrum Master para Isabela",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Eleição e transição formal de Scrum Master da Sprint (Isabela)"
+    },
+    {
+      "number": "114",
+      "title": "[Task] Definir diretrizes de revisão humana para uso de IA",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Revisão técnica de cardinalidades (1:1 e 0:N) e migração para Docs colaborativo"
+    },
+    {
+      "number": "115",
+      "title": "[Task] Documentar acordos de comunicação e prazos da equipe",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Estabelecimento de acordos de trabalho (Working Agreements) e gestão de prazos"
+    },
+    {
+      "number": "116",
+      "title": "[Task] Estudar e sintetizar as orientações de metodologia ágil do professor",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Estudo aprofundado das diretrizes e videoaulas de metodologia ágil do Prof. Moisés"
+    },
+    {
+      "number": "118",
+      "title": "[Task] Alinhar o protótipo de alta fidelidade com o painel do funcionário",
+      "tempo": "L (3h)",
+      "fluxo": "Fluxo 3",
+      "prioridade": "P1",
+      "matched_to": "[Task] Task 5.1: Alinhamento visual do protótipo de alta fidelidade no Figma/Lovable"
+    },
+    {
+      "number": "119",
+      "title": "[Task] Preparar roteiro e storyboard do vídeo de demonstração",
+      "tempo": "M (2.5h)",
+      "fluxo": "Fluxo 1 e Fluxo 3",
+      "prioridade": "P1",
+      "matched_to": "[Task] Task 5.2: Preparação do roteiro e storyboard para o vídeo de demonstração do sistema"
+    },
+    {
+      "number": "120",
+      "title": "[Task] Diferenciar tarefas internas e entregas acadêmicas no backlog",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Refinamento de Backlog: Diferenciação entre tarefas internas da Sprint e macro-entregas do AVA"
+    },
+    {
+      "number": "121",
+      "title": "[Task] Alinhar a integração de telas, backend e banco de forma assíncrona",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "122",
+      "title": "[Task] Preparar o áudio da aula de ScrumAIDev para consulta da equipe",
+      "tempo": "L (3h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Gravação, tratamento de áudio e processamento multimodal da aula de ScrumAIDev do Prof. Moisés"
+    },
+    {
+      "number": "124",
+      "title": "[Task] Produzir materiais de treinamento em vídeo e podcast sobre ScrumAIDev",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Geração de conteúdos multimídia de treinamento da equipe (Vídeo MP4 e Podcast M4A)"
+    },
+    {
+      "number": "125",
+      "title": "[Task] Acompanhar a solicitação de acessos a recursos acadêmicos",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Solicitação formal de credenciais/acessos a recursos acadêmicos junto ao Prof. Moisés"
+    },
+    {
+      "number": "126",
+      "title": "[Task] Organizar workshop interno de práticas ScrumAIDev",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Convocação e alinhamento de workshop interno sobre práticas de desenvolvimento ScrumAIDev"
+    },
+    {
+      "number": "127",
+      "title": "[Task] Validar a paridade visual da tela de Login do Gestor",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1 e Fluxo 3",
+      "prioridade": "P0",
+      "matched_to": "[Task] Revisão de paridade visual e homologação da tela de Login do Gestor"
+    },
+    {
+      "number": "128",
+      "title": "[Task] Documentar contas de teste para validação dos perfis",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Documentação e distribuição de credenciais de teste para validação de perfis de usuário"
+    },
+    {
+      "number": "129",
+      "title": "[Task] Documentar a solicitação de alteração do banco na Aiven",
+      "tempo": "L (4h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P0",
+      "matched_to": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 entidades do IFES"
+    },
+    {
+      "number": "130",
+      "title": "[Task] Elaborar o Guia Axion de execução local e homologação",
+      "tempo": "M (2h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Elaboração do guia técnico de setup, deploy local e homologação no XAMPP (Guia Axion)"
+    },
+    {
+      "number": "132",
+      "title": "[Task] Conferir o cronograma de entregas e reuniões de acompanhamento",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Auditoria do cronograma institucional de entregas e planejamento de reuniões de acompanhamento"
+    },
+    {
+      "number": "133",
+      "title": "[Task] Transformar recomendações de ProgWeb em ações de melhoria",
+      "tempo": "S (1h)",
+      "fluxo": "Fluxo 1",
+      "prioridade": "P1",
+      "matched_to": "[Task] Análise e triagem de recomendações do relatório avaliativo de ProgWeb para adequação do sistema"
+    }
+  ],
+  "unmatched": [
+    {
+      "number": "1",
+      "title": "fafs"
+    },
+    {
+      "number": "2",
+      "title": "Fazer a tela inicial do sistema."
+    },
+    {
+      "number": "3",
+      "title": "Definir a linguagem do sistema."
+    },
+    {
+      "number": "4",
+      "title": "Separar de forma definitiva as funções do grupo."
+    },
+    {
+      "number": "5",
+      "title": "Criar um fluxograma do sistema."
+    },
+    {
+      "number": "6",
+      "title": "Modelar usuários e permissões"
+    },
+    {
+      "number": "9",
+      "title": "Estruturar o backend"
+    },
+    {
+      "number": "10",
+      "title": "Fazer a tela inicial do Sistema."
+    },
+    {
+      "number": "11",
+      "title": "Prototipação do Sistema"
+    },
+    {
+      "number": "14",
+      "title": "Desenvolver o CSS das telas"
+    },
+    {
+      "number": "17",
+      "title": "Edição e envio do Card Opportunity"
+    },
+    {
+      "number": "18",
+      "title": "Definir quais relatórios de revisões o administrador poderá observar "
+    },
+    {
+      "number": "19",
+      "title": "Reorganizar o readme do projeto"
+    },
+    {
+      "number": "23",
+      "title": "Criar um fluxo de Usuários"
+    },
+    {
+      "number": "32",
+      "title": "Mudança do frontend do HTML para php"
+    },
+    {
+      "number": "33",
+      "title": "Validar o fluxo do painel administrativo"
+    },
+    {
+      "number": "34",
+      "title": "Estudar ferramentas de IA"
+    },
+    {
+      "number": "35",
+      "title": "[Task] Fazer apresentação do sistema"
+    },
+    {
+      "number": "37",
+      "title": "[Task] Normalizar as issues do Kanban"
+    },
+    {
+      "number": "40",
+      "title": "Discussão a respeito do Kanban"
+    },
+    {
+      "number": "99",
+      "title": "[Task] Alinhar a organização das atividades remotas"
+    },
+    {
+      "number": "102",
+      "title": "[Task] Provisionar o banco MySQL compartilhado na Aiven"
+    },
+    {
+      "number": "117",
+      "title": "[Task] Realizar alinhamento semanal da equipe antes da aula"
+    },
+    {
+      "number": "123",
+      "title": "[Task] Elaborar o Playbook ScrumAIDev da equipe"
+    },
+    {
+      "number": "131",
+      "title": "[Task] Exportar e organizar os scripts schema.sql e seeds.sql"
+    }
+  ]
+}

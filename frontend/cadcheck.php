@@ -19,6 +19,8 @@ $checklists = $stmtCheck->fetchAll(PDO::FETCH_ASSOC);
 $dataAtual = date('Y-m-d');
 $horaAtual = date('H:i');
 $nomeVistoriador = $_SESSION['nome_usuario'] ?? 'Inspetor';
+$perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
+$linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.php' : 'oqfazer.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -165,7 +167,7 @@ $nomeVistoriador = $_SESSION['nome_usuario'] ?? 'Inspetor';
                     <button type="submit" class="btn btn-primary flex-fill fw-semibold">
                         <i class="bi bi-arrow-right-circle me-1"></i> Prosseguir para Itens de Vistoria
                     </button>
-                    <a href="dashboard.php" class="btn btn-outline-secondary">Cancelar</a>
+                    <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary">Cancelar</a>
                 </div>
             </form>
         </div>

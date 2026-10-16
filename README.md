@@ -12,10 +12,14 @@
    - [6.2 Protótipo do Sistema Web](#62-protótipo-do-sistema-web)
    - [6.3 Quais perguntas podem ser respondidas pelo sistema?](#63-quais-perguntas-podem-ser-respondidas-pelo-sistema)
 7. [Modelo Conceitual](#7-modelo-conceitual)
+   - [7.3 Os 5 Fluxos de Valor da Aplicação](#73-os-5-fluxos-de-valor-da-aplicação)
 8. [Descrição dos Dados](#8-descrição-dos-dados)
 9. [Rastreabilidade dos Artefatos](#9-rastreabilidade-dos-artefatos)
 10. [PMC](#10-pmc)
 11. [Documentação Complementar e Entregáveis Oficiais](#11-documentação-complementar-e-entregáveis-oficiais)
+12. [Tutorial Completo de Instalação (Docker, XAMPP e Nuvem Aiven)](#12-tutorial-completo-de-instalação-docker-xampp-e-nuvem-aiven)
+13. [Tutorial Completo de Utilização (Guia Prático dos 5 Fluxos de Valor)](#13-tutorial-completo-de-utilização-guia-prático-dos-5-fluxos-de-valor)
+14. [Manual Técnico de Engenharia para a Banca Avaliadora](#14-manual-técnico-de-engenharia-para-a-banca-avaliadora)
 ---
 
 ## 1. COMPONENTES
@@ -534,16 +538,29 @@ As principais entidades que compõem o núcleo operacional do sistema são:
 
 ---
 
-## 7.3 Principais Fluxos de Informação
+## 7.3 Os 5 Fluxos de Valor da Aplicação
 
-### Fluxo 1 — Gestor Administrador
-Possui controle irrestrito: cadastra supervisores, valida ou devolve modelos de checklist propostos pela equipe de campo, acompanha o Dashboard analítico em tempo real, despacha veículos e realiza exclusões lógicas auditadas.
+O sistema organiza todas as operações da plataforma em **5 Fluxos de Valor**:
 
-### Fluxo 2 — Supervisor Operacional
-Cadastra motoristas, clientes e veículos; propõe novos modelos de checklist (que passam por aprovação prévia); acompanha a fila de triagem de avarias e encaminha veículos para reparo em oficinas credenciadas.
+### Fluxo 1 — Gestão de Usuários e Frota (CRUD)
+*Definido pelo Professor:* Criar, editar e excluir Usuários e Veículos.  
+Centraliza a administração de acessos baseada em papéis (**RBAC**) e o inventário patrimonial da frota. O Gestor Administrador possui controle total (criando supervisores, motoristas e clientes); o Supervisor Operacional cadastra motoristas, clientes e veículos. Todas as exclusões operacionais são **lógicas** (`status = 'inativo'`), preservando a rastreabilidade histórica e a integridade referencial com vistorias passadas.
 
-### Fluxo 3 — Motorista / Inspetor de Campo
-Executa as vistorias veiculares através do *Modo Híbrido* (Modo Campo com botões gigantes baseados na Lei de Fitts ou Modo Lista com rolagem contínua), anexa fotos de avarias, coleta assinaturas na tela sensível ao toque e emite o laudo técnico oficial.
+### Fluxo 2 — Modelagem e Governança de Checklists (CRUD & Dupla Validação)
+*Definido pelo Professor:* Criar, editar e excluir Checklists.  
+Permite construir formulários dinâmicos de vistoria com categorias técnicas (mecânica, elétrica, lataria, pneus, etc.) e subperguntas condicionais. Implementa **governança com dupla validação**: modelos sugeridos pela equipe operacional entram no estado `pendente_aprovacao`, exigindo homologação formal pelo Gestor Administrador (com aprovação imediata ou parecer descritivo de solicitação de ajustes).
+
+### Fluxo 3 — Inspeção Veicular em Campo e Emissão de Laudos Oficiais
+*Definido pelo Professor:* Preencher Checklists e gerar Relatórios Técnicos.  
+Abrange a abertura da vistoria com seleção de veículo e motorista condutor (placa preenchida automaticamente e data/hora carimbadas pelo servidor contra fraudes de horário). Apresenta o motor de vistoria com **Modo Híbrido**: o *Modo Campo* (botões gigantes de 72px baseados na **Lei de Fitts** para operação com luvas sob sol forte e acionamento direto da câmera móvel `capture="environment"`) e o *Modo Lista* (rolagem panorâmica contínua). Conclui com a coleta de assinaturas digitais vetorizadas em tela sensível (*HTML5 Canvas*) e geração instantânea do Laudo Técnico Oficial com validade jurídica e impressão em PDF.
+
+### Fluxo 4 — Triagem, Despacho de Ocorrências e Gestão de Manutenção
+*Distribuído pela Equipe:* Gestão de não conformidades e oficina.  
+Toda avaria marcada como "Não Conforme" durante uma inspeção gera automaticamente um protocolo oficial de ocorrência (ex: `OC-2026-001`). O módulo adota o padrão ergonômico **Master-Detail**: a coluna esquerda gerencia a fila com filtros por status (*Abertas, Em Oficina, Resolvidas*) e a coluna direita exibe a foto ampliada da avaria, grau de criticidade e botões de ação rápida: **"Enviar p/ Oficina"** (retendo o veículo na frota com status `manutencao`) e **"Aprovar Reparo"** (liberando o veículo recuperado para o pátio).
+
+### Fluxo 5 — Governança Ágil, Segurança RBAC, Auditoria e Inteligência Operacional
+*Distribuído pela Equipe:* Segurança, auditoria e inteligência executiva.  
+Reúne o painel de indicadores (**Dashboard Executivo**) com KPIs em tempo real, taxas de conformidade estritas conforme **WCAG 2.1 AAA**, filtros analíticos e download consolidado de laudos. Engloba o ecossistema de segurança da informação: autenticação com hashes **BCrypt**, proteção de sessão contra *Session Fixation*, blindagem contra **IDOR** (impedindo que motoristas visualizem vistorias alheias) e fluxo real de redefinição de senhas com tokens criptográficos temporários de 1 hora gravados na base de dados.
 
 ---
 
@@ -641,6 +658,8 @@ O **Project Model Canvas (PMC)** do projeto Axion Frotas consolida o planejament
 
 Todos os artefatos de governança, evidências e entregáveis do projeto estão organizados e auditados contra links quebrados:
 
+- 📖 **[Manual Técnico de Engenharia para a Banca Avaliadora (`docs/manual_estudo_banca.md`)](docs/manual_estudo_banca.md):** Guia completo de estudo para a sustentação oral, cobrindo arquitetura em 3 camadas, inventário arquivo por arquivo, explicação de blocos de código e as 7 linhas mais inovadoras/disruptivas.
+- 📋 **[Tabela Completa de Métricas do Kanban (`docs/kanban_tabela_completa.md`)](docs/kanban_tabela_completa.md):** Inventário completo das 133 issues do projeto com Prioridade (P0/P1/P2), Tempo (XS/S/M/L) e Mapeamento nos 5 Fluxos de Valor.
 - 🤖 **[Relatório Oficial de Prompts de IA (`prompt.pdf`)](prompt.pdf):** Documento acadêmico compilando todos os prompts utilizados na modelagem de requisitos, banco de dados, design system e testes ponta a ponta.
 - 📊 **[Guia de Apresentação e Numeração de Figuras (`docs/guia_apresentacao_slides.md`)](docs/guia_apresentacao_slides.md):** Roteiro formal para os slides com numeração de todas as figuras e justificativa mercadológica completa.
 - 📁 **[Diretório de Artefatos (`arquivos/`)](arquivos/):** Reúne a Matriz de Seleção de Ideias (`arquivos/matrizSelecao.png`), o PMC (`arquivos/PMC/PMC.png`) e os protótipos de alta fidelidade.
@@ -650,41 +669,214 @@ Todos os artefatos de governança, evidências e entregáveis do projeto estão 
 
 ---
 
-## 12. COMO EXECUTAR O SISTEMA (DOCKER & AMBIENTE LOCAL)
+## 12. TUTORIAL COMPLETO DE INSTALAÇÃO (DOCKER, XAMPP E NUVEM AIVEN)
 
-### Opção 1: Execução Isolada via Docker (Padrão Recomendado para Avaliação)
+A aplicação foi projetada para oferecer **portabilidade máxima**, permitindo ser executada em contêineres Docker isolados, em servidores locais Apache/MySQL (XAMPP) ou conectada a clusters em nuvem (Aiven Cloud).
 
-A aplicação conta com configuração oficial em container para execução reprodutível, segura e sem necessidade de instalação manual de banco:
+### 12.1 Pré-Requisitos do Ambiente
+- **Para execução com Docker:** Docker Desktop 4.x+ instalado e rodando com suporte a Docker Compose.
+- **Para execução local clássica:** XAMPP com PHP 8.2+ e MySQL 8.0 / MariaDB 10.4+.
+- **Navegador Web:** Google Chrome, Mozilla Firefox ou Microsoft Edge atualizados.
+
+---
+
+### 12.2 Opção A: Execução via Docker Compose (Padrão Recomendado para Avaliação)
+
+A forma mais rápida, segura e reprodutível de rodar o Axion sem interferir em instalações locais do computador:
+
+1. **Abra o terminal** na pasta raiz do projeto clonado (`projetoIntegrador`):
+   ```bash
+   docker compose up -d
+   ```
+2. **O que acontece nos bastidores:**
+   - O Docker compila a imagem oficial da aplicação com **PHP 8.2 Apache**, habilitando as extensões `pdo_mysql`, `gd` e `zip`.
+   - O Docker sobe o banco de dados **MySQL 8.0** na porta `3307`.
+   - Na primeira inicialização, os scripts `database/schema.sql` e `database/seeds.sql` são injetados automaticamente pelo contêiner, criando as 9 tabelas e populando todos os dados de teste.
+3. **Acesse no navegador:**
+   - **URL da Aplicação:** [http://localhost:8080/](http://localhost:8080/)
+4. **Para verificar o status e logs dos contêineres:**
+   ```bash
+   docker compose ps
+   docker compose logs -f web
+   ```
+5. **Para encerrar a execução:**
+   ```bash
+   docker compose down
+   ```
+
+---
+
+### 12.3 Opção B: Instalação no Ambiente Local XAMPP (Windows)
+
+Caso deseje rodar a aplicação através do XAMPP tradicional:
+
+1. **Clonar ou Mover o Projeto:**
+   - Copie a pasta inteira do projeto para o diretório raiz do Apache:  
+     `C:\xampp\htdocs\projetoIntegrador`
+2. **Iniciar os Serviços no XAMPP Control Panel:**
+   - Abra o `xampp-control.exe`.
+   - Clique em **Start** nos módulos **Apache** (porta 80) e **MySQL** (porta 3306).
+3. **Criar e Inicializar o Banco de Dados no phpMyAdmin:**
+   - Abra o navegador e acesse [http://localhost/phpmyadmin/](http://localhost/phpmyadmin/).
+   - Clique na aba **SQL** e crie a base de dados:
+     ```sql
+     CREATE DATABASE IF NOT EXISTS axion_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+     ```
+   - Selecione o banco `axion_db` na lateral esquerda.
+   - Vá na aba **Importar**, clique em **Escolher arquivo** e selecione `database/schema.sql`. Clique em **Executar**.
+   - Em seguida, na mesma aba **Importar**, selecione `database/seeds.sql` e clique em **Executar**.
+4. **Acesse a Aplicação:**
+   - Abra o navegador e acesse:  
+     [http://localhost/projetoIntegrador/frontend/index.html](http://localhost/projetoIntegrador/frontend/index.html) ou [http://localhost/projetoIntegrador/](http://localhost/projetoIntegrador/)
+
+---
+
+### 12.4 Opção C: Conexão com Banco em Nuvem (Aiven Cloud MySQL SSL)
+
+O Axion possui suporte nativo a banco de dados corporativo em nuvem (*DBaaS*):
+
+1. O certificado de autoridade segura da nuvem Aiven já está incluso no repositório em `database/ca.pem`.
+2. Para chavear a aplicação para o banco online, defina a variável de ambiente:
+   - No Windows (PowerShell):
+     ```powershell
+     $env:USE_AIVEN="1"
+     ```
+   - Ou no Docker (`docker-compose.yml`), ative a variável `USE_AIVEN: "1"`.
+3. O script `backend/conexao.php` detectará a flag e estabelecerá uma conexão criptografada TLS v1.3 com validação SSL.
+
+---
+
+### 12.5 Execução da Suíte Automatizada de Testes (Smoke Test)
+
+Para auditar e certificar a integridade de todas as rotas, autenticação, RBAC, abertura de vistorias, laudos em PDF e governança de checklists:
 
 ```bash
-# Sobe a aplicação (PHP 8.2 Apache) e o banco MySQL 8.0 pré-configurado
-docker compose up -d
+# Execução direta via PHP CLI local
+php tests/run_e2e_smoke_test.php
+
+# Ou apontando diretamente para o PHP do XAMPP
+C:\xampp\php\php.exe tests/run_e2e_smoke_test.php
 ```
+> O teste executa **49 asserções automatizadas**, garantindo 100% de sucesso sem intervenção manual.
 
-- **Acesso à Aplicação:** [http://localhost:8080/](http://localhost:8080/)
-- **Porta do Banco:** MySQL exposto na porta `3307` (usuário `root`, senha `axion_root_2026`).
-- **Carga de Dados:** O container executa automaticamente os scripts `database/schema.sql` e `database/seeds.sql` na inicialização.
+---
 
-Para parar os containers:
-```bash
-docker compose down
-```
+## 13. TUTORIAL COMPLETO DE UTILIZAÇÃO (GUIA PRÁTICO DOS 5 FLUXOS DE VALOR)
 
-### Opção 2: Execução via XAMPP Local
+### 13.1 Credenciais de Acesso e Matriz de Permissões RBAC
 
-Consulte o passo a passo detalhado em **[`docs/guia_execucao_testes.md`](docs/guia_execucao_testes.md)**.
-- Coloque o projeto em `C:\xampp\htdocs\projetoIntegrador`.
-- Inicie o Apache e o MySQL no XAMPP Control Panel.
-- Importe `database/schema.sql` e `database/seeds.sql` no phpMyAdmin.
-- Acesse: [http://localhost/projetoIntegrador/](http://localhost/projetoIntegrador/)
+O sistema possui 4 perfis de usuários pré-cadastrados para testes e homologação da banca:
 
-### Credenciais de Acesso de Teste
+| Perfil | E-mail de Login | Senha | Matriz de Autorização RBAC |
+|---|---|---|---|
+| **Gestor Administrador** | `admin@axion.com` | `admin123` | **Acesso Total:** Gerencia usuários e frota (CRUD completo), homologa/avalia checklists, audita laudos técnicos, despacha oficinas e monitora dashboard. |
+| **Supervisor Operacional** | `supervisor@axion.com` | `mudar123` | Cadastra motoristas, clientes e veículos; propõe novos modelos de checklist (aguardando aprovação do gestor); realiza triagem de avarias; acessa dashboard. |
+| **Motorista / Inspetor** | `motorista@axion.com` | `mudar123` | **Foco em Pátio:** Executa vistorias no Modo Campo (Fitts) e Modo Lista, anexa fotos de avarias, coleta assinaturas em tela sensível e gera laudo oficial. |
+| **Cliente / Locatário** | `cliente@axion.com` | `mudar123` | Consulta laudos técnicos vinculados às suas locações e realiza vistorias de devolução/recebimento de veículos. |
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| **Gestor Administrador** | `admin@axion.com` | `admin123` |
-| **Supervisor Operacional** | `supervisor@axion.com` | `mudar123` |
-| **Motorista / Inspetor** | `motorista@axion.com` | `mudar123` |
-| **Cliente / Locatário** | `cliente@axion.com` | `mudar123` |
+---
+
+### 13.2 Jornada do Fluxo 1: Gestão de Usuários e Frota (CRUD)
+
+1. **Acessar o Painel Central:** Faça login como `admin@axion.com` ou `supervisor@axion.com` e localize o cartão **Fluxo 1 — CRUD Usuários & Veículos** em `frontend/oqfazer.php`.
+2. **Cadastrar Novo Usuário (`caduser.php`):**
+   - Clique em **"+ Cadastrar Usuário"**.
+   - Preencha Nome, E-mail, CPF, Telefone, CNH e selecione o papel operacional (`supervisor`, `motorista`, `cliente`). O sistema criptografa a senha com BCrypt (`cost=12`).
+3. **Cadastrar Novo Veículo (`cadcar.php`):**
+   - Clique em **"+ Cadastrar Veículo"**.
+   - Digite Marca, Modelo, Ano, Cor, Placa Mercosul, Quilometragem Atual, Renavam e Chassi. O sistema valida unicidade de placa e chassi.
+4. **Editar e Inativar Cadastros (`editarVeiculo.php`, `excluirVeiculo.php`):**
+   - O Gestor pode atualizar quilometragens ou inativar veículos (`status = 'inativo'`). Veículos retidos na oficina possuem trava preventiva contra exclusão inadvertida.
+
+---
+
+### 13.3 Jornada do Fluxo 2: Modelagem e Governança de Checklists (CRUD & Dupla Validação)
+
+1. **Criar Novo Modelo de Checklist (`criarChecklist.php`):**
+   - Clique em **"+ Criar Novo Modelo"**.
+   - Digite o Título (ex: *"Vistoria Diária de Caminhões Pesados"*) e selecione a Categoria (*Mecânica, Elétrica, Lataria, Pneus, Segurança*).
+   - Adicione perguntas dinâmicas e subperguntas condicionais.
+2. **Mecanismo de Dupla Validação (Governança Ágil):**
+   - Se o checklist for criado por um **Supervisor**, ele entra automaticamente no estado `pendente_aprovacao`.
+   - Um alerta em amarelo surge no menu principal do **Gestor** informando que há modelos pendentes.
+3. **Homologar no Painel de Governança (`gestaoChecklists.php`):**
+   - O Gestor clica em **"Avaliar Agora"**.
+   - Ao revisar as perguntas, o gestor pode:
+     - **Aprovar:** O modelo fica ativo (`status = 'ativo'`) e passa a aparecer imediatamente no pátio para os motoristas.
+     - **Solicitar Ajustes:** O gestor redige um parecer técnico com as melhorias exigidas (`status = 'ajuste_solicitado'`), devolvendo ao supervisor para adequação.
+
+---
+
+### 13.4 Jornada do Fluxo 3: Inspeção Veicular em Campo (Modo Híbrido) e Laudos PDF
+
+1. **Abertura da Vistoria (`cadcheck.php`):**
+   - O motorista ou vistoriador clica em **"Iniciar Nova Vistoria"**.
+   - Seleciona o veículo da frota em lista suspensa: **a placa é preenchida automaticamente** em campo de somente leitura com tipografia `Roboto Mono`.
+   - O sistema bloqueia preenchimento retroativo: data e hora são fixadas com o carimbo oficial do servidor.
+   - Informa o nome do condutor, quilometragem atual do hodômetro e clica em **"Prosseguir para Itens de Vistoria"**.
+2. **Execução Híbrida da Vistoria (`vistoria.php`):**
+   - **Modo Campo (Padrão Mobile - Lei de Fitts):**  
+     Exibe 1 pergunta por vez com **botões gigantes de 72px de altura** ("Conforme", "Não Conforme", "Não se Aplica") na zona de alcance do polegar (*Thumb Zone*).  
+     Ao marcar "Não Conforme", uma gaveta retrátil se abre:
+     - Permite tirar foto da avaria diretamente pela câmera do celular (`capture="environment"`).
+     - Permite classificar a gravidade (*Baixa, Média, Alta, Crítica*) e descrever o defeito.
+   - **Modo Lista (Visão Contínua):**  
+     O usuário pode alternar a qualquer momento no botão superior para visualizar todas as perguntas empilhadas com rolagem contínua.
+3. **Assinaturas Digitais em Canvas:**
+   - Ao concluir as respostas, abre-se a janela de encerramento com resumo estatístico.
+   - O motorista e o vistoriador assinam na tela sensível ao toque com o dedo ou caneta stylus.
+   - Clica em **"Finalizar Vistoria e Emitir Laudo"**.
+4. **Laudo Técnico Oficial (`laudoVistoria.php`):**
+   - O sistema gera instantaneamente o documento probatório com espelho de respostas, fotos anexadas e assinaturas digitais.
+   - O botão superior **"Imprimir / Salvar em PDF"** formata o documento em folha A4 limpa sem botões da interface.
+
+---
+
+### 13.5 Jornada do Fluxo 4: Triagem Master-Detail e Despacho para Oficina
+
+1. **Geração Automática do Chamado:**
+   - Toda vistoria com avaria gera automaticamente uma ocorrência na tabela `Ocorrencias` com protocolo oficial (ex: `OC-2026-001`).
+2. **Painel de Triagem Operacional (`ocorrencias.php`):**
+   - Acesse o botão **"Triagem de Ocorrências (Master-Detail)"**.
+   - **Coluna Master (Esquerda):** Filtre por *Todas, Abertas, Em Oficina, Resolvidas*. Cada card exibe código, placa, veículo, subsistema e gravidade.
+   - **Coluna Detail (Direita):** Clique em qualquer ocorrência da fila. O painel carrega a foto ampliada da avaria, relato do fiscal e diagnóstico.
+3. **Despacho Operacional com Retenção de Frota:**
+   - Clique em **"Enviar p/ Oficina"**: o sistema retém o veículo (`status = 'manutencao'`) e abre ordem de serviço (`status = 'em_oficina'`).
+   - Após o conserto, clique em **"Aprovar Reparo"**: a ocorrência é concluída (`status = 'resolvida'`) e o veículo volta ao status `ativo`, liberado para novas vistorias.
+
+---
+
+### 13.6 Jornada do Fluxo 5: Dashboard Analítico, KPIs em Tempo Real e Recuperação de Senhas
+
+1. **Dashboard Executivo (`dashboard.php`):**
+   - Acesse **"Painel de Vistorias e Relatórios"**.
+   - Acompanhe métricas consolidadas: *Total de Vistorias, Vistorias 100% Conformes, Vistorias com Restrições (Avarias), Vistorias Pendentes e Taxa Geral de Conformidade*.
+   - A semiótica visual segue **WCAG 2.1 AAA**: verde esmeralda é reservado estritamente para vistorias aprovadas sem restrições.
+   - Utilize a busca avançada por placa de veículo ou status de aprovação para baixar laudos específicos.
+2. **Fluxo Real de Redefinição de Senhas:**
+   - Na tela de login (`index.html`), clique em **"Esqueci minha senha"**.
+   - Digite o e-mail cadastrado (ex: `admin@axion.com`).
+   - O backend gera um token criptográfico seguro de 64 caracteres hexadecimais (`random_bytes(32)`) e grava no banco com validade de 1 hora (`DATE_ADD(NOW(), INTERVAL 1 HOUR)`).
+   - Ao acessar o link com token (`frontend/novaSenha.php?token=...`), o usuário digita a nova senha, que é criptografada em BCrypt e o token é consumido.
+3. **Auditoria Anti-IDOR:**
+   - Se um usuário comum tentar acessar laudos de vistorias alheias alterando o ID na URL, receberá a tela padronizada de **Acesso Negado (HTTP 403)**, garantindo conformidade e proteção jurídica à frota.
+
+---
+
+## 14. MANUAL TÉCNICO DE ENGENHARIA PARA A BANCA AVALIADORA
+
+Para preparação aprofundada da equipe antes da sustentação oral perante os examinadores, consulte o documento oficial:
+
+👉 **[Acessar o Manual Completo de Estudo para a Banca (`docs/manual_estudo_banca.md`)](docs/manual_estudo_banca.md)**
+
+O manual aborda:
+- Detalhamento de design patterns e arquitetura em 3 camadas;
+- Inventário de cada arquivo e explicação linha a linha dos blocos de código;
+- As 7 linhas mais inovadoras e disruptivas do sistema;
+- Roteiro de fala por integrante e simulação de perguntas capciosas da banca.
+
+---
+
+**Axion Frotas — Tecnologia, Confiabilidade e Governança em Vistorias Veiculares**
 
 

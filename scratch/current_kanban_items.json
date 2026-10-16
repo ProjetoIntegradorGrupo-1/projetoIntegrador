@@ -1,0 +1,461 @@
+[
+  {
+    "itemId": 266067298,
+    "issue": 80,
+    "title": "[Task] Configurar e validar o banco axion_db no ambiente local de Isabela",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067616,
+    "issue": 82,
+    "title": "[Task] Mapear e documentar as personas do sistema",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067714,
+    "issue": 83,
+    "title": "[Task] Realizar e documentar a retrospectiva da Sprint",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068069,
+    "issue": 86,
+    "title": "[Task] Auditar o Kanban e identificar lacunas de documentação",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068344,
+    "issue": 88,
+    "title": "[Task] Elaborar e aplicar o formulário de pesquisa de mercado",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069455,
+    "issue": 98,
+    "title": "[Task] Compilar e submeter o relatório final AXION em PDF",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069793,
+    "issue": 102,
+    "title": "[Task] Provisionar o banco MySQL compartilhado na Aiven",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "817d0097",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069890,
+    "issue": 103,
+    "title": "[Task] Configurar o certificado ca.pem para conexão SSL com a Aiven",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070163,
+    "issue": 106,
+    "title": "[Task] Criar e sincronizar branch de desenvolvimento no GitHub",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070693,
+    "issue": 111,
+    "title": "[Task] Preencher a planilha de acompanhamento semanal e mensal do PI",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070959,
+    "issue": 114,
+    "title": "[Task] Definir diretrizes de revisão humana para uso de IA",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266072436,
+    "issue": 128,
+    "title": "[Task] Documentar contas de teste para validação dos perfis",
+    "status": "f75ad846",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067127,
+    "issue": 78,
+    "title": "[Task] Elaborar ata e registrar perguntas da Sprint Review",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067507,
+    "issue": 81,
+    "title": "[Task] Planejar a semana e acompanhar a capacidade da equipe",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068182,
+    "issue": 87,
+    "title": "[Task] Prototipar a tela de seleção de perfis",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068478,
+    "issue": 89,
+    "title": "[Task] Consolidar e analisar as respostas da pesquisa de validação",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068626,
+    "issue": 90,
+    "title": "[Task] Documentar limites do Lovable e ajustar o escopo do protótipo",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266068932,
+    "issue": 92,
+    "title": "[Task] Configurar e validar permissões de acesso aos slides no Canva",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069283,
+    "issue": 96,
+    "title": "[Task] Definir acordos de autoria e compartilhamento dos slides",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069996,
+    "issue": 104,
+    "title": "[Task] Elaborar guia de conexão SSL à Aiven no DBeaver",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070075,
+    "issue": 105,
+    "title": "[Task] Comparar alternativas de hospedagem para a aplicação PHP",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070364,
+    "issue": 108,
+    "title": "[Task] Reorganizar tarefas e prazos diante de impedimentos da Sprint",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070603,
+    "issue": 110,
+    "title": "[Task] Definir padrões de templates e componentes do frontend",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266071042,
+    "issue": 115,
+    "title": "[Task] Documentar acordos de comunicação e prazos da equipe",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266071318,
+    "issue": 118,
+    "title": "[Task] Alinhar o protótipo de alta fidelidade com o painel do funcionário",
+    "status": "f75ad846",
+    "priority": "0a877460",
+    "size": "817d0097",
+    "fluxo": null
+  },
+  {
+    "itemId": 264278140,
+    "issue": 40,
+    "title": "Discussão a respeito do Kanban",
+    "status": "df73e18b",
+    "priority": "0a877460",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 265388635,
+    "issue": 71,
+    "title": "[Task] Elaboração do script DDL final do banco axion_db com as 5 tabelas principais",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 266066943,
+    "issue": 76,
+    "title": "[Task] Publicar e exportar o modelo conceitual elaborado por Vanderci",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266072535,
+    "issue": 129,
+    "title": "[Task] Documentar a solicitação de alteração do banco na Aiven",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266072748,
+    "issue": 131,
+    "title": "[Task] Exportar e organizar os scripts schema.sql e seeds.sql",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266070266,
+    "issue": 107,
+    "title": "[Task] Analisar o feedback da Profa. Marta sobre o Trabalho 1",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266071927,
+    "issue": 123,
+    "title": "[Task] Elaborar o Playbook ScrumAIDev da equipe",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "817d0097",
+    "fluxo": null
+  },
+  {
+    "itemId": 266071801,
+    "issue": 122,
+    "title": "[Task] Preparar o áudio da aula de ScrumAIDev para consulta da equipe",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "817d0097",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067050,
+    "issue": 77,
+    "title": "[Task] Comparar e revisar os modelos conceituais de Ana e Vanderci",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069018,
+    "issue": 93,
+    "title": "[Task] Estruturar o roteiro da apresentação em cinco blocos",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069367,
+    "issue": 97,
+    "title": "[Task] Validar o link público do modelo conceitual nos slides",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069640,
+    "issue": 100,
+    "title": "[Task] Documentar a decisão de escopo entre aplicação web e mobile nativa",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069190,
+    "issue": 95,
+    "title": "[Task] Apresentar o Trabalho 1 à banca do IFES",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266069106,
+    "issue": 94,
+    "title": "[Task] Ensaiar a apresentação e definir a ordem das falas",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 265389176,
+    "issue": 72,
+    "title": "[Task] Implementação de integridade referencial com ON DELETE RESTRICT e CASCADE",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 266068836,
+    "issue": 91,
+    "title": "[Task] Acompanhar a meta de respostas da pesquisa de mercado",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067929,
+    "issue": 85,
+    "title": "[Task] Analisar os requisitos de avaliação disponibilizados no AVA",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": null
+  },
+  {
+    "itemId": 266067837,
+    "issue": 84,
+    "title": "[Task] Empacotar a versão consolidada do código de 11/09",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": null
+  },
+  {
+    "itemId": 265390282,
+    "issue": 73,
+    "title": "[Task] Criação do script de seed inicial do Gestor Master com hash seguro BCrypt",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "f784b110",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265357819,
+    "issue": 58,
+    "title": "[Task] Construção do novo modelo conceitual simplificado (5 enƟdades) no brmodelo Web",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265385251,
+    "issue": 68,
+    "title": "[Task] Elaboração de apresentação/documento de diagnóstico de ajustes e melhorias",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265384151,
+    "issue": 67,
+    "title": "[Task]  Refinamento do DER no brmodelo e exportação do diagrama conceitual em PDF",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265383064,
+    "issue": 66,
+    "title": "[Task] Atualização e inclusão de diretrizes do professor no README.md do repositório",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "817d0097",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265381582,
+    "issue": 64,
+    "title": "[Task] Auditoria de estrutura de pastas e correção de branch no repositório GitHub",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265380939,
+    "issue": 63,
+    "title": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  },
+  {
+    "itemId": 265356966,
+    "issue": 57,
+    "title": "[Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo",
+    "status": "98236657",
+    "priority": "79628723",
+    "size": "7515a9f1",
+    "fluxo": "84546fa3"
+  }
+]

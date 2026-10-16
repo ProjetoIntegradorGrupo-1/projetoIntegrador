@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
 } else {
-    header("Location: ../frontend/cadcheck.html");
+    header("Location: ../frontend/cadcheck.php");
     exit;
 }
 ?>

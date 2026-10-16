@@ -35,3 +35,4 @@ EXPOSE 80
 
 # 6. Ponto de entrada padrão
 CMD ["apache2-foreground"]
+

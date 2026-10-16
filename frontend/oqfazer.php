@@ -29,7 +29,7 @@ $sucesso = $_GET['sucesso'] ?? '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu Principal - Axion</title>
+    <title>Menu Principal - Axion Frotas</title>
     <!-- Google Fonts: Inter e Roboto Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,19 +41,26 @@ $sucesso = $_GET['sucesso'] ?? '';
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
         .font-mono { font-family: 'Roboto Mono', monospace !important; }
         .menu-card { border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+        .fluxo-card { border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .fluxo-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+        .fluxo-badge { font-size: 0.72rem; letter-spacing: 0.5px; font-weight: 700; text-transform: uppercase; }
         .btn-opcao-motorista { min-height: 70px; border-radius: 12px; font-size: 1.15rem; font-weight: 700; }
+        .btn-action-tile { border-radius: 8px; font-weight: 600; font-size: 0.88rem; padding: 8px 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     </style>
 </head>
 
 <body>
 
     <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card menu-card p-4 bg-white" style="max-width: 580px; width: 100%;">
+        <div class="card menu-card p-4 bg-white" style="max-width: 780px; width: 100%;">
             
             <!-- IDENTIFICAÇÃO DO USUÁRIO E PAPEL RBAC -->
             <div class="text-center mb-3">
-                <h1 class="h4 fw-bold text-dark mb-1">Olá, <?= htmlspecialchars($nome_usuario); ?>!</h1>
-                <p class="text-muted small mb-2">Bem-vindo ao Axion Frotas</p>
+                <div class="d-inline-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-shield-check text-primary fs-3"></i>
+                    <h1 class="h4 fw-bold text-dark mb-0">Olá, <?= htmlspecialchars($nome_usuario); ?>!</h1>
+                </div>
+                <p class="text-muted small mb-2">Portal de Vistorias e Inteligência Operacional Axion</p>
                 
                 <?php if ($perfil_usuario === 'gestor'): ?>
                     <span class="badge bg-primary px-3 py-2 text-uppercase fs-6">
@@ -96,6 +103,7 @@ $sucesso = $_GET['sucesso'] ?? '';
                         'usuario_excluido'      => 'Usuário desativado com sucesso!',
                         'checklist_excluido'    => 'Modelo de checklist arquivado com sucesso!',
                         'checklist_editado'     => 'Modelo de checklist atualizado com sucesso!',
+                        'checklist_concluido'   => 'Vistoria finalizada e laudo emitido com sucesso!',
                         default                 => 'Operação realizada com sucesso!'
                     };
                 ?>
@@ -105,15 +113,14 @@ $sucesso = $_GET['sucesso'] ?? '';
                 </div>
             <?php endif; ?>
 
-
             <!-- AVISO DE GOVERNANÇA: CHECKLISTS PENDENTES DE VALIDAÇÃO -->
             <?php if ($totalChecklistsPendentes > 0 && ($perfil_usuario === 'gestor' || $perfil_usuario === 'supervisor')): ?>
-                <div class="alert alert-warning border-warning-subtle small d-flex justify-content-between align-items-center mb-3">
+                <div class="alert alert-warning border-warning-subtle small d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <i class="bi bi-exclamation-triangle-fill me-1 text-warning-emphasis"></i>
-                        <strong><?= $totalChecklistsPendentes ?></strong> modelo(s) aguardando validação do Gestor.
+                        <strong>Fluxo 2:</strong> <strong><?= $totalChecklistsPendentes ?></strong> modelo(s) de checklist aguardando validação do Gestor.
                     </div>
-                    <a href="gestaoChecklists.php" class="btn btn-sm btn-outline-dark fw-semibold">Avaliar</a>
+                    <a href="gestaoChecklists.php" class="btn btn-sm btn-outline-dark fw-semibold">Avaliar Agora</a>
                 </div>
             <?php endif; ?>
 
@@ -122,12 +129,12 @@ $sucesso = $_GET['sucesso'] ?? '';
             <!-- =============================================================== -->
             <?php if ($perfil_usuario === 'motorista' || $perfil_usuario === 'cliente'): ?>
                 
-                <div class="p-3 bg-light rounded border text-center my-3">
+                <div class="p-4 bg-light rounded border text-center my-3">
                     <i class="bi bi-clipboard2-check fs-1 text-primary d-block mb-2"></i>
-                    <h2 class="h5 fw-bold text-dark mb-1">Inspeção Veicular no Pátio</h2>
-                    <p class="text-muted small mb-3">Seu perfil está autorizado para realização de vistorias com fotos de avarias e assinatura digital.</p>
+                    <h2 class="h5 fw-bold text-dark mb-1">Fluxo 3: Inspeção Veicular no Pátio</h2>
+                    <p class="text-muted small mb-3">Seu perfil está autorizado para realização de vistorias com fotos de avarias e assinatura digital na tela.</p>
                     
-                    <a href="cadcheck.php" class="btn btn-primary btn-opcao-motorista w-100 d-flex align-items-center justify-content-center gap-2 shadow-sm">
+                    <a href="cadcheck.php" class="btn btn-primary btn-opcao-motorista w-100 d-flex align-items-center justify-content-center gap-2 shadow-sm mb-2">
                         <i class="bi bi-play-circle-fill fs-3"></i>
                         <span>Iniciar Nova Vistoria</span>
                     </a>
@@ -140,95 +147,182 @@ $sucesso = $_GET['sucesso'] ?? '';
                 </div>
 
             <!-- =============================================================== -->
-            <!-- VISÃO 2: GESTOR ADMINISTRADOR & SUPERVISOR                      -->
+            <!-- VISÃO 2: GESTOR ADMINISTRADOR & SUPERVISOR (5 FLUXOS DE VALOR) -->
             <!-- =============================================================== -->
             <?php else: ?>
 
-                <!-- BOTÕES DE ACESSO RÁPIDO GERENCIAIS -->
-                <div class="mb-3">
-                    <a href="dashboard.php" class="btn btn-primary w-100 fw-semibold mb-2 shadow-sm">
-                        <i class="bi bi-speedometer2 me-1"></i> Painel de Vistorias e Relatórios (Dashboard)
-                    </a>
-                    <a href="ocorrencias.php" class="btn btn-outline-danger w-100 fw-semibold mb-2">
-                        <i class="bi bi-exclamation-octagon me-1"></i> Triagem de Ocorrências (Master-Detail)
-                    </a>
-                    <a href="gestaoChecklists.php" class="btn btn-outline-success w-100 fw-semibold mb-2">
-                        <i class="bi bi-patch-check me-1"></i> Governança e Validação de Checklists
-                    </a>
-                    <a href="cadcheck.php" class="btn btn-outline-primary w-100 fw-semibold">
-                        <i class="bi bi-clipboard-plus me-1"></i> Iniciar Nova Vistoria Veicular
-                    </a>
-                </div>
+                <!-- MAPEAMENTO DOS 5 FLUXOS DE VALOR -->
+                <div class="d-flex flex-column gap-3 mb-4">
 
-                <form action="../backend/processar_opcao.php" method="post">
-                    <fieldset class="mb-4 p-3 bg-light rounded border">
-                        <legend class="form-label fw-bold small text-primary mb-2">Ações Administrativas Disponíveis:</legend>
-
-                        <!-- OPÇÃO COMUM A GESTOR E SUPERVISOR -->
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao" id="optCadUser" value="cadastrar_usuario" checked>
-                            <label class="form-check-label fw-semibold" for="optCadUser">
-                                Cadastrar Usuário <?= $perfil_usuario === 'supervisor' ? '(Motoristas / Clientes)' : '(Supervisores / Equipe)' ?>
-                            </label>
+                    <!-- FLUXO 1: GESTÃO DE USUÁRIOS E FROTA (CRUD) -->
+                    <div class="fluxo-card p-3 border-start border-4 border-primary">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary-subtle text-primary fluxo-badge">Fluxo 1 — CRUD Usuários & Veículos</span>
+                            <span class="small text-muted"><i class="bi bi-people-fill me-1"></i> Acessos & Frota</span>
                         </div>
-
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao" id="optCadCar" value="cadastrar_veiculo">
-                            <label class="form-check-label fw-semibold" for="optCadCar">Cadastrar Novo Veículo na Frota</label>
-                        </div>
-
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao" id="optCriarCheck" value="criar_checklist">
-                            <label class="form-check-label fw-semibold" for="optCriarCheck">
-                                Criar Modelo de Checklist <?= $perfil_usuario === 'supervisor' ? '<small class="text-muted">(enviará p/ aprovação do Gestor)</small>' : '' ?>
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao" id="optEditCar" value="editar_veiculo">
-                            <label class="form-check-label" for="optEditCar">Editar Veículo</label>
-                        </div>
-
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="opcao" id="optEditCheck" value="editar_checklist">
-                            <label class="form-check-label" for="optEditCheck">Editar Checklist</label>
-                        </div>
-
-                        <!-- OPÇÕES EXCLUSIVAS DO GESTOR ADMINISTRADOR -->
-                        <?php if ($perfil_usuario === 'gestor'): ?>
-                            <div class="border-top pt-2 mt-2">
-                                <span class="badge bg-danger-subtle text-danger mb-2">Privilégios Exclusivos do Gestor</span>
-                                
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="opcao" id="optEditUser" value="editar_usuario">
-                                    <label class="form-check-label" for="optEditUser">Editar / Gerenciar Usuários</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="opcao" id="optExcCar" value="excluir_veiculo">
-                                    <label class="form-check-label text-danger" for="optExcCar"><i class="bi bi-trash me-1"></i> Excluir Veículo</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="opcao" id="optExcCheck" value="excluir_checklist">
-                                    <label class="form-check-label text-danger" for="optExcCheck"><i class="bi bi-trash me-1"></i> Excluir Checklist</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="opcao" id="optExcUser" value="excluir_usuario">
-                                    <label class="form-check-label text-danger" for="optExcUser"><i class="bi bi-trash me-1"></i> Excluir Usuário</label>
+                        <h2 class="h6 fw-bold text-dark mb-2">Gestão de Usuários e Veículos</h2>
+                        
+                        <div class="row g-2">
+                            <!-- Coluna Usuários -->
+                            <div class="col-sm-6">
+                                <div class="p-2 bg-light rounded border">
+                                    <small class="text-muted d-block fw-bold mb-1"><i class="bi bi-person-gear me-1"></i> Usuários (RBAC)</small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <a href="caduser.php" class="btn btn-sm btn-primary btn-action-tile flex-fill">
+                                            <i class="bi bi-person-plus-fill"></i> Cadastrar
+                                        </a>
+                                        <?php if ($perfil_usuario === 'gestor'): ?>
+                                            <a href="editarUsuario.php" class="btn btn-sm btn-outline-secondary btn-action-tile">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </a>
+                                            <a href="excluirUsuario.php" class="btn btn-sm btn-outline-danger btn-action-tile" title="Inativação Lógica">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
-                        <?php endif; ?>
-
-                    </fieldset>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary fw-semibold py-2">
-                            <i class="bi bi-arrow-right-circle me-1"></i> Acessar Módulo Selecionado
-                        </button>
-                        <a href="../backend/logout.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-box-arrow-right me-1"></i> Sair / Voltar ao Login
-                        </a>
+                            <!-- Coluna Veículos -->
+                            <div class="col-sm-6">
+                                <div class="p-2 bg-light rounded border">
+                                    <small class="text-muted d-block fw-bold mb-1"><i class="bi bi-truck me-1"></i> Frota Patrimonial</small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <a href="cadcar.php" class="btn btn-sm btn-success btn-action-tile flex-fill">
+                                            <i class="bi bi-plus-circle-fill"></i> Cadastrar
+                                        </a>
+                                        <a href="editarVeiculo.php" class="btn btn-sm btn-outline-secondary btn-action-tile">
+                                            <i class="bi bi-pencil-square"></i> Editar
+                                        </a>
+                                        <?php if ($perfil_usuario === 'gestor'): ?>
+                                            <a href="excluirVeiculo.php" class="btn btn-sm btn-outline-danger btn-action-tile" title="Inativação Lógica">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </form>
+
+                    <!-- FLUXO 2: MODELAGEM E GOVERNANÇA DE CHECKLISTS (CRUD) -->
+                    <div class="fluxo-card p-3 border-start border-4 border-success">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-success-subtle text-success fluxo-badge">Fluxo 2 — CRUD & Governança de Checklists</span>
+                            <span class="small text-muted"><i class="bi bi-clipboard2-check-fill me-1"></i> Modelos & Validação</span>
+                        </div>
+                        <h2 class="h6 fw-bold text-dark mb-2">Modelagem & Aprovação de Checklists</h2>
+                        
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="criarChecklist.php" class="btn btn-sm btn-outline-success btn-action-tile flex-fill">
+                                <i class="bi bi-plus-circle"></i> Criar Novo Modelo
+                            </a>
+                            <a href="editarChecklist.php" class="btn btn-sm btn-outline-secondary btn-action-tile">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                            <?php if ($perfil_usuario === 'gestor'): ?>
+                                <a href="excluirChecklist.php" class="btn btn-sm btn-outline-danger btn-action-tile">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </a>
+                            <?php endif; ?>
+                            <a href="gestaoChecklists.php" class="btn btn-sm btn-success btn-action-tile flex-fill">
+                                <i class="bi bi-patch-check-fill"></i> Governança / Aprovação
+                                <?php if ($totalChecklistsPendentes > 0): ?>
+                                    <span class="badge bg-white text-success ms-1"><?= $totalChecklistsPendentes ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- FLUXO 3: INSPEÇÃO VEICULAR EM CAMPO E LAUDOS TÉCNICOS -->
+                    <div class="fluxo-card p-3 border-start border-4 border-info">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-info-subtle text-info-emphasis fluxo-badge">Fluxo 3 — Execução & Laudos</span>
+                            <span class="small text-muted"><i class="bi bi-camera-fill me-1"></i> Campo / Pátio</span>
+                        </div>
+                        <h2 class="h6 fw-bold text-dark mb-2">Inspeção Veicular no Pátio & Emissão de Laudos</h2>
+                        
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="cadcheck.php" class="btn btn-primary btn-action-tile flex-fill py-2">
+                                <i class="bi bi-play-circle-fill fs-5"></i>
+                                <span>Iniciar Nova Vistoria (Modo Campo / Lista)</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- FLUXO 4: TRIAGEM E DESPACHO DE OCORRÊNCIAS / OFICINA -->
+                    <div class="fluxo-card p-3 border-start border-4 border-danger">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-danger-subtle text-danger fluxo-badge">Fluxo 4 — Triagem & Manutenção</span>
+                            <span class="small text-muted"><i class="bi bi-wrench-adjustable me-1"></i> Oficina / Reparos</span>
+                        </div>
+                        <h2 class="h6 fw-bold text-dark mb-2">Triagem de Ocorrências e Retenção de Frota</h2>
+                        
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="ocorrencias.php" class="btn btn-outline-danger btn-action-tile flex-fill py-2">
+                                <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+                                <span>Abrir Painel Master-Detail de Ocorrências</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- FLUXO 5: AUDITORIA, KPIS & GOVERNANÇA ÁGIL -->
+                    <div class="fluxo-card p-3 border-start border-4 border-dark">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-dark-subtle text-dark fluxo-badge">Fluxo 5 — Inteligência & Auditoria</span>
+                            <span class="small text-muted"><i class="bi bi-graph-up me-1"></i> Gestão Estratégica</span>
+                        </div>
+                        <h2 class="h6 fw-bold text-dark mb-2">Dashboard Analítico, Indicadores & Auditoria RBAC</h2>
+                        
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="dashboard.php" class="btn btn-dark btn-action-tile flex-fill py-2">
+                                <i class="bi bi-speedometer2 fs-5"></i>
+                                <span>Painel Executivo de Vistorias, Histórico e PDFs</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FORMULÁRIO RÁPIDO LEGADO (COMPATIBILIDADE RETROATIVA) -->
+                <details class="mb-4">
+                    <summary class="small text-muted fw-semibold cursor-pointer mb-2">
+                        <i class="bi bi-sliders me-1"></i> Acesso alternativo por formulário rápido (Modo Legado)
+                    </summary>
+                    <form action="../backend/processar_opcao.php" method="post" class="p-3 bg-light rounded border">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-8">
+                                <select name="opcao" class="form-select form-select-sm">
+                                    <option value="dashboard">Dashboard Executivo</option>
+                                    <option value="preencher_checklist">Iniciar Vistoria</option>
+                                    <option value="ocorrencias">Triagem de Ocorrências</option>
+                                    <option value="gestao_checklists">Governança de Checklists</option>
+                                    <option value="cadastrar_usuario">Cadastrar Usuário</option>
+                                    <option value="cadastrar_veiculo">Cadastrar Veículo</option>
+                                    <option value="criar_checklist">Criar Modelo Checklist</option>
+                                    <option value="editar_veiculo">Editar Veículo</option>
+                                    <option value="editar_checklist">Editar Checklist</option>
+                                    <?php if ($perfil_usuario === 'gestor'): ?>
+                                        <option value="editar_usuario">Editar Usuário</option>
+                                        <option value="excluir_veiculo">Excluir Veículo</option>
+                                        <option value="excluir_checklist">Excluir Checklist</option>
+                                        <option value="excluir_usuario">Excluir Usuário</option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <button type="submit" class="btn btn-sm btn-secondary w-100 fw-semibold">
+                                    Ir <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </details>
+
+                <div class="d-grid gap-2 border-top pt-3">
+                    <a href="../backend/logout.php" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sair / Desconectar Sessão
+                    </a>
+                </div>
 
             <?php endif; ?>
 

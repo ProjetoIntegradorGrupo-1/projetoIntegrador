@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
 } else {
-    header("Location: ../frontend/assinaturaChecklist.html");
+    header("Location: ../frontend/cadcheck.php");
     exit;
 }
 ?>

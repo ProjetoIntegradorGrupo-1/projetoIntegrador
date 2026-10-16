@@ -1,0 +1,25 @@
+#1: fafs
+#2: Fazer a tela inicial do sistema.
+#3: Definir a linguagem do sistema.
+#4: Separar de forma definitiva as funções do grupo.
+#5: Criar um fluxograma do sistema.
+#6: Modelar usuários e permissões
+#9: Estruturar o backend
+#10: Fazer a tela inicial do Sistema.
+#11: Prototipação do Sistema
+#14: Desenvolver o CSS das telas
+#17: Edição e envio do Card Opportunity
+#18: Definir quais relatórios de revisões o administrador poderá observar 
+#19: Reorganizar o readme do projeto
+#23: Criar um fluxo de Usuários
+#32: Mudança do frontend do HTML para php
+#33: Validar o fluxo do painel administrativo
+#34: Estudar ferramentas de IA
+#35: [Task] Fazer apresentação do sistema
+#37: [Task] Normalizar as issues do Kanban
+#40: Discussão a respeito do Kanban
+#99: [Task] Alinhar a organização das atividades remotas
+#102: [Task] Provisionar o banco MySQL compartilhado na Aiven
+#117: [Task] Realizar alinhamento semanal da equipe antes da aula
+#123: [Task] Elaborar o Playbook ScrumAIDev da equipe
+#131: [Task] Exportar e organizar os scripts schema.sql e seeds.sql

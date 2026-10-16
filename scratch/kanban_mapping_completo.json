@@ -1,0 +1,1332 @@
+[
+  {
+    "number": 1,
+    "title": "fafs",
+    "assignees": "",
+    "state": "open",
+    "priority": "P2",
+    "size": "XS (0,5h)",
+    "estimate_hours": 0.5,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 2,
+    "title": "Fazer a tela inicial do sistema.",
+    "assignees": "estelanv2025, ProjetoIntegradorGrupo-1",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 3,
+    "title": "Definir a linguagem do sistema.",
+    "assignees": "Isabelatech, ProjetoIntegradorGrupo-1",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 4,
+    "title": "Separar de forma definitiva as funções do grupo.",
+    "assignees": "ProjetoIntegradorGrupo-1",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 5,
+    "title": "Criar um fluxograma do sistema.",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 6,
+    "title": "Modelar usuários e permissões",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 7,
+    "title": "Definir estrutura do banco de dados",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 8,
+    "title": "Criar checklist de veículos com perguntas prontas para o sistema.",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 9,
+    "title": "Estruturar o backend",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 10,
+    "title": "Fazer a tela inicial do Sistema.",
+    "assignees": "",
+    "state": "open",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 11,
+    "title": "Prototipação do Sistema",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 12,
+    "title": "Revisar a avaliação anterior e identificar pontos de melhoria",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 13,
+    "title": "Definir identidade visual do sistema",
+    "assignees": "estelanv2025, Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 14,
+    "title": "Desenvolver o CSS das telas",
+    "assignees": "estelanv2025, Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 15,
+    "title": "Revisar a navegação e os fluxos do frontend",
+    "assignees": "estelanv2025, Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 16,
+    "title": "Remodelar o banco de dados",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 17,
+    "title": "Edição e envio do Card Opportunity",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 18,
+    "title": "Definir quais relatórios de revisões o administrador poderá observar ",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 19,
+    "title": "Reorganizar o readme do projeto",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 20,
+    "title": "Criação e edição de apresentação sobre andamento do projeto",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 21,
+    "title": "Criar botões dinâmico e de pagina animações",
+    "assignees": "estelanv2025",
+    "state": "closed",
+    "priority": "P2",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 22,
+    "title": "Diagrama básico de arquitetura do sistema",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 23,
+    "title": "Criar um fluxo de Usuários",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 24,
+    "title": "Implementar rotinas de exclusão e gestão de utilizadores e veículos no backend",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 25,
+    "title": "Criar o painel de navegação centralizado e controlo de sessões",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 26,
+    "title": "Criar o painel de navegação centralizado e controlo de sessões",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 27,
+    "title": "Desenvolver os scripts de processamento e conexões seguras com o banco de dados",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 28,
+    "title": "Implementar canvas de assinatura digital para motorista e vistoriador com conversão Base64",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 29,
+    "title": "Popular base de dados MySQL com dados simulados para apresentação",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 30,
+    "title": "Criar interface dinâmica para submissão de perguntas de inspeção (cadcheck.html)",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 31,
+    "title": "Aplicar design system e acessibilidade nos formulários de Veículos e Usuários",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 32,
+    "title": "Mudança do frontend do HTML para php",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 33,
+    "title": "Validar o fluxo do painel administrativo",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 34,
+    "title": "Estudar ferramentas de IA",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 35,
+    "title": "[Task] Fazer apresentação do sistema",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 36,
+    "title": "[Task] Apoio a correcção de bugs visuais e logicos",
+    "assignees": "estelanv2025",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 37,
+    "title": "[Task] Normalizar as issues do Kanban",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 38,
+    "title": "[Task] Desenvolver Dashboard analítico de vistorias com KPIs e filtros",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 39,
+    "title": "[Task] Implementar emissão e impressão de laudo Oficial de vistoria em PDF",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 40,
+    "title": "Discussão a respeito do Kanban",
+    "assignees": "ProjetoIntegradorGrupo-1",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 41,
+    "title": "[Task] Configuração de sala de reunião online para a equipe",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 42,
+    "title": "[Task] Pesquisa e ideação inicial do escopo do projeto usando IA",
+    "assignees": "estelanv2025",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 43,
+    "title": "[Task] Task Pesquisa e protoƟpação de botões animados e microinterações em CSS",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P2",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 44,
+    "title": "[Task] Gerenciar membros, auditoria de convites e permissões no GitHub",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 45,
+    "title": "[Task] Criação e estruturação inicial do quadro Kanban no GitHub Projects",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 46,
+    "title": "[Task] Inicializar documentação do repositório com criação do README.md",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 47,
+    "title": "[Task] Capacitação técnica da equipe em Git e GitHub (LEDS Academy)",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 48,
+    "title": "[Task] Desenvolvimento das interfaces e páginas estáticas em HTML",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 49,
+    "title": "[Task] Finalização das páginas HTML pendentes e envio para repositório",
+    "assignees": "Informmagic, Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 50,
+    "title": "[Task] Integração e versionamento das telas do sistema no repositório GitHub",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 51,
+    "title": "[Task] Elaboração do documento técnico de Modelagem do Banco de Dados",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 52,
+    "title": "[Task] Criação do script DDL inicial com comandos SQL das tabelas (comandos.md)",
+    "assignees": "Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 53,
+    "title": "[Task] Revisão técnica de cardinalidades (1:1 e 0:N) e migração para Docs colaboraƟvo",
+    "assignees": "Informmagic, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 54,
+    "title": "[Task] Criação do modelo da Daily com reporte de bloqueios e alinhamento ",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 55,
+    "title": "[Task] Modelagem conceitual do banco de dados relacional no brmodelo Web",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 56,
+    "title": "[Task] Refatoração da arquitetura de banco de dados para a regra de 5 enƟdades do IFES",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 57,
+    "title": "[Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo",
+    "assignees": "Informmagic, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 58,
+    "title": "[Task] Construção do novo modelo conceitual simplificado (5 enƟdades) no brmodelo Web",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 59,
+    "title": "[Task] Prototipação dinâmica de criação de checklists com perguntas flexíveis",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 60,
+    "title": "[Task] Compartilhamento e centralização da documentação de banco no Google Docs",
+    "assignees": "meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 61,
+    "title": "[Task] Alinhamento e padronização do fluxo de comandos Git (add, commit, push)",
+    "assignees": "estelanv2025",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 62,
+    "title": "[Task] Estudo prático de estruturação semântica em HTML5 e boas práticas de CSS",
+    "assignees": "Informmagic, Isabelatech",
+    "state": "closed",
+    "priority": "P2",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 63,
+    "title": "[Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 64,
+    "title": "[Task] Auditoria de estrutura de pastas e correção de branch no repositório GitHub",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 65,
+    "title": "[Task] Suporte técnico de comandos Git remotos e sincronização de branches",
+    "assignees": "estelanv2025",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 66,
+    "title": "[Task] Atualização e inclusão de diretrizes do professor no README.md do repositório",
+    "assignees": "Isabelatech, Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 67,
+    "title": "[Task]  Refinamento do DER no brmodelo e exportação do diagrama conceitual em PDF",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 68,
+    "title": "[Task] Elaboração de apresentação/documento de diagnóstico de ajustes e melhorias",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 69,
+    "title": "[Task] Realização da reunião geral de alinhamento da Sprint",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 70,
+    "title": "[Task] Criação do documento oficial de Documentação do Projeto Integrador no Drive",
+    "assignees": "Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 71,
+    "title": "[Task] Elaboração do script DDL final do banco axion_db com as 5 tabelas principais",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 72,
+    "title": "[Task] Implementação de integridade referencial com ON DELETE RESTRICT e CASCADE",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 73,
+    "title": "[Task] Criação do script de seed inicial do Gestor Master com hash seguro BCrypt",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 74,
+    "title": "[Task] Alinhar cronograma e entregas com o professor orientador",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 75,
+    "title": "[Task] Levantar e priorizar demandas para trabalho no laboratório do IFES",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 76,
+    "title": "[Task] Publicar e exportar o modelo conceitual elaborado por Vanderci",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 77,
+    "title": "[Task] Comparar e revisar os modelos conceituais de Ana e Vanderci",
+    "assignees": "Informmagic, Isabelatech, Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 78,
+    "title": "[Task] Elaborar ata e registrar perguntas da Sprint Review",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 79,
+    "title": "[Task] Elaborar guia ilustrado do ambiente local com XAMPP e DBeaver",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 80,
+    "title": "[Task] Configurar e validar o banco axion_db no ambiente local de Isabela",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 81,
+    "title": "[Task] Planejar a semana e acompanhar a capacidade da equipe",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "open",
+    "priority": "P1",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 82,
+    "title": "[Task] Mapear e documentar as personas do sistema",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 83,
+    "title": "[Task] Realizar e documentar a retrospectiva da Sprint",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 84,
+    "title": "[Task] Empacotar a versão consolidada do código de 11/09",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 85,
+    "title": "[Task] Analisar os requisitos de avaliação disponibilizados no AVA",
+    "assignees": "estelanv2025, Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 86,
+    "title": "[Task] Auditar o Kanban e identificar lacunas de documentação",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 87,
+    "title": "[Task] Prototipar a tela de seleção de perfis",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 88,
+    "title": "[Task] Elaborar e aplicar o formulário de pesquisa de mercado",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 89,
+    "title": "[Task] Consolidar e analisar as respostas da pesquisa de validação",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 90,
+    "title": "[Task] Documentar limites do Lovable e ajustar o escopo do protótipo",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 91,
+    "title": "[Task] Acompanhar a meta de respostas da pesquisa de mercado",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 92,
+    "title": "[Task] Configurar e validar permissões de acesso aos slides no Canva",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 93,
+    "title": "[Task] Estruturar o roteiro da apresentação em cinco blocos",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 94,
+    "title": "[Task] Ensaiar a apresentação e definir a ordem das falas",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 95,
+    "title": "[Task] Apresentar o Trabalho 1 à banca do IFES",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 96,
+    "title": "[Task] Definir acordos de autoria e compartilhamento dos slides",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 97,
+    "title": "[Task] Validar o link público do modelo conceitual nos slides",
+    "assignees": "Informmagic, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 98,
+    "title": "[Task] Compilar e submeter o relatório final AXION em PDF",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 99,
+    "title": "[Task] Alinhar a organização das atividades remotas",
+    "assignees": "Informmagic, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 100,
+    "title": "[Task] Documentar a decisão de escopo entre aplicação web e mobile nativa",
+    "assignees": "Informmagic, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 101,
+    "title": "[Task] Registrar a rotação de Scrum Master da Sprint para Vanderci",
+    "assignees": "estelanv2025, Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 102,
+    "title": "[Task] Provisionar o banco MySQL compartilhado na Aiven",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 103,
+    "title": "[Task] Configurar o certificado ca.pem para conexão SSL com a Aiven",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 104,
+    "title": "[Task] Elaborar guia de conexão SSL à Aiven no DBeaver",
+    "assignees": "Informmagic, Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 105,
+    "title": "[Task] Comparar alternativas de hospedagem para a aplicação PHP",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 106,
+    "title": "[Task] Criar e sincronizar branch de desenvolvimento no GitHub",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 107,
+    "title": "[Task] Analisar o feedback da Profa. Marta sobre o Trabalho 1",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 108,
+    "title": "[Task] Reorganizar tarefas e prazos diante de impedimentos da Sprint",
+    "assignees": "Isabelatech, Ana-Klara-Jardim",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 109,
+    "title": "[Task] Refinar os fluxos de telas durante trabalho no laboratório",
+    "assignees": "Informmagic, Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 110,
+    "title": "[Task] Definir padrões de templates e componentes do frontend",
+    "assignees": "Isabelatech, Ana-Klara-Jardim",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 111,
+    "title": "[Task] Preencher a planilha de acompanhamento semanal e mensal do PI",
+    "assignees": "Ana-Klara-Jardim",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 112,
+    "title": "[Task] Registrar reunião presencial de planejamento com o orientador",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 113,
+    "title": "[Task] Registrar a eleição e transição de Scrum Master para Isabela",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 114,
+    "title": "[Task] Definir diretrizes de revisão humana para uso de IA",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 115,
+    "title": "[Task] Documentar acordos de comunicação e prazos da equipe",
+    "assignees": "Isabelatech",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 116,
+    "title": "[Task] Estudar e sintetizar as orientações de metodologia ágil do professor",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 117,
+    "title": "[Task] Realizar alinhamento semanal da equipe antes da aula",
+    "assignees": "estelanv2025, Informmagic, Isabelatech, Ana-Klara-Jardim, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 118,
+    "title": "[Task] Alinhar o protótipo de alta fidelidade com o painel do funcionário",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 3"
+  },
+  {
+    "number": 119,
+    "title": "[Task] Preparar roteiro e storyboard do vídeo de demonstração",
+    "assignees": "meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 3"
+  },
+  {
+    "number": 120,
+    "title": "[Task] Diferenciar tarefas internas e entregas acadêmicas no backlog",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 121,
+    "title": "[Task] Alinhar a integração de telas, backend e banco de forma assíncrona",
+    "assignees": "Informmagic, Ana-Klara-Jardim",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 122,
+    "title": "[Task] Preparar o áudio da aula de ScrumAIDev para consulta da equipe",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 123,
+    "title": "[Task] Elaborar o Playbook ScrumAIDev da equipe",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 124,
+    "title": "[Task] Produzir materiais de treinamento em vídeo e podcast sobre ScrumAIDev",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 125,
+    "title": "[Task] Acompanhar a solicitação de acessos a recursos acadêmicos",
+    "assignees": "Informmagic, Isabelatech",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 126,
+    "title": "[Task] Organizar workshop interno de práticas ScrumAIDev",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 127,
+    "title": "[Task] Validar a paridade visual da tela de Login do Gestor",
+    "assignees": "Informmagic, meneifes",
+    "state": "closed",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 3"
+  },
+  {
+    "number": 128,
+    "title": "[Task] Documentar contas de teste para validação dos perfis",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P0",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 129,
+    "title": "[Task] Documentar a solicitação de alteração do banco na Aiven",
+    "assignees": "Informmagic, Isabelatech",
+    "state": "closed",
+    "priority": "P0",
+    "size": "L (4h)",
+    "estimate_hours": 4.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 130,
+    "title": "[Task] Elaborar o Guia Axion de execução local e homologação",
+    "assignees": "Informmagic",
+    "state": "open",
+    "priority": "P1",
+    "size": "M (2h)",
+    "estimate_hours": 2.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 131,
+    "title": "[Task] Exportar e organizar os scripts schema.sql e seeds.sql",
+    "assignees": "Informmagic, meneifes",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 132,
+    "title": "[Task] Conferir o cronograma de entregas e reuniões de acompanhamento",
+    "assignees": "Isabelatech, meneifes",
+    "state": "open",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  },
+  {
+    "number": 133,
+    "title": "[Task] Transformar recomendações de ProgWeb em ações de melhoria",
+    "assignees": "Informmagic",
+    "state": "closed",
+    "priority": "P1",
+    "size": "S (1h)",
+    "estimate_hours": 1.0,
+    "fluxo": "Fluxo 1"
+  }
+]

@@ -1,0 +1,102 @@
+#40: Discussão a respeito do Kanban
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 264278140
+#57: [Task] Especificação das regras de negócio e cardinalidades conceituais do novo modelo
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265356966
+#58: [Task] Construção do novo modelo conceitual simplificado (5 enƟdades) no brmodelo Web
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265357819
+#63: [Task] Teste funcional exploratório ponta a ponta e gravação de vídeo de homologação
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265380939
+#64: [Task] Auditoria de estrutura de pastas e correção de branch no repositório GitHub
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265381582
+#66: [Task] Atualização e inclusão de diretrizes do professor no README.md do repositório
+   Priority: P0 | Size: L (4h) | Fluxo: Fluxo 1 | ItemId: 265383064
+#67: [Task]  Refinamento do DER no brmodelo e exportação do diagrama conceitual em PDF
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265384151
+#68: [Task] Elaboração de apresentação/documento de diagnóstico de ajustes e melhorias
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265385251
+#71: [Task] Elaboração do script DDL final do banco axion_db com as 5 tabelas principais
+   Priority: P0 | Size: M (2h) | Fluxo: Fluxo 1 | ItemId: 265388635
+#72: [Task] Implementação de integridade referencial com ON DELETE RESTRICT e CASCADE
+   Priority: P0 | Size: S (1h) | Fluxo: Fluxo 1 | ItemId: 265389176
+#73: [Task] Criação do script de seed inicial do Gestor Master com hash seguro BCrypt
+   Priority: P0 | Size: S (1h) | Fluxo: Fluxo 1 | ItemId: 265390282
+#76: [Task] Publicar e exportar o modelo conceitual elaborado por Vanderci
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266066943
+#77: [Task] Comparar e revisar os modelos conceituais de Ana e Vanderci
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266067050
+#78: [Task] Elaborar ata e registrar perguntas da Sprint Review
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266067127
+#80: [Task] Configurar e validar o banco axion_db no ambiente local de Isabela
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266067298
+#81: [Task] Planejar a semana e acompanhar a capacidade da equipe
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266067507
+#82: [Task] Mapear e documentar as personas do sistema
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266067616
+#83: [Task] Realizar e documentar a retrospectiva da Sprint
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266067714
+#84: [Task] Empacotar a versão consolidada do código de 11/09
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266067837
+#85: [Task] Analisar os requisitos de avaliação disponibilizados no AVA
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266067929
+#86: [Task] Auditar o Kanban e identificar lacunas de documentação
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266068069
+#87: [Task] Prototipar a tela de seleção de perfis
+   Priority: P1 | Size: M (2h) | Fluxo: None | ItemId: 266068182
+#88: [Task] Elaborar e aplicar o formulário de pesquisa de mercado
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266068344
+#89: [Task] Consolidar e analisar as respostas da pesquisa de validação
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266068478
+#90: [Task] Documentar limites do Lovable e ajustar o escopo do protótipo
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266068626
+#91: [Task] Acompanhar a meta de respostas da pesquisa de mercado
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266068836
+#92: [Task] Configurar e validar permissões de acesso aos slides no Canva
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266068932
+#93: [Task] Estruturar o roteiro da apresentação em cinco blocos
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266069018
+#94: [Task] Ensaiar a apresentação e definir a ordem das falas
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266069106
+#95: [Task] Apresentar o Trabalho 1 à banca do IFES
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266069190
+#96: [Task] Definir acordos de autoria e compartilhamento dos slides
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266069283
+#97: [Task] Validar o link público do modelo conceitual nos slides
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266069367
+#98: [Task] Compilar e submeter o relatório final AXION em PDF
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266069455
+#100: [Task] Documentar a decisão de escopo entre aplicação web e mobile nativa
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266069640
+#102: [Task] Provisionar o banco MySQL compartilhado na Aiven
+   Priority: P0 | Size: L (4h) | Fluxo: None | ItemId: 266069793
+#103: [Task] Configurar o certificado ca.pem para conexão SSL com a Aiven
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266069890
+#104: [Task] Elaborar guia de conexão SSL à Aiven no DBeaver
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266069996
+#105: [Task] Comparar alternativas de hospedagem para a aplicação PHP
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266070075
+#106: [Task] Criar e sincronizar branch de desenvolvimento no GitHub
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266070163
+#107: [Task] Analisar o feedback da Profa. Marta sobre o Trabalho 1
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266070266
+#108: [Task] Reorganizar tarefas e prazos diante de impedimentos da Sprint
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266070364
+#110: [Task] Definir padrões de templates e componentes do frontend
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266070603
+#111: [Task] Preencher a planilha de acompanhamento semanal e mensal do PI
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266070693
+#114: [Task] Definir diretrizes de revisão humana para uso de IA
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266070959
+#115: [Task] Documentar acordos de comunicação e prazos da equipe
+   Priority: P1 | Size: S (1h) | Fluxo: None | ItemId: 266071042
+#118: [Task] Alinhar o protótipo de alta fidelidade com o painel do funcionário
+   Priority: P1 | Size: L (4h) | Fluxo: None | ItemId: 266071318
+#122: [Task] Preparar o áudio da aula de ScrumAIDev para consulta da equipe
+   Priority: P0 | Size: L (4h) | Fluxo: None | ItemId: 266071801
+#123: [Task] Elaborar o Playbook ScrumAIDev da equipe
+   Priority: P0 | Size: L (4h) | Fluxo: None | ItemId: 266071927
+#128: [Task] Documentar contas de teste para validação dos perfis
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266072436
+#129: [Task] Documentar a solicitação de alteração do banco na Aiven
+   Priority: P0 | Size: S (1h) | Fluxo: None | ItemId: 266072535
+#131: [Task] Exportar e organizar os scripts schema.sql e seeds.sql
+   Priority: P0 | Size: M (2h) | Fluxo: None | ItemId: 266072748
