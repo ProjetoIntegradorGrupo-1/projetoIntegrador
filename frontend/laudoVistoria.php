@@ -182,6 +182,18 @@ $badgeCor = match($vistoria['status']) {
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 576px) {
+            .laudo-container {
+                margin: 10px 8px;
+                padding: 18px 14px;
+            }
+            .tabela-dados th, .tabela-dados td {
+                font-size: 0.78rem !important;
+                padding: 0.45rem !important;
+            }
         }
 
         .header-laudo {
@@ -222,6 +234,7 @@ $badgeCor = match($vistoria['status']) {
 
         .img-assinatura {
             max-height: 80px;
+            max-width: 100%;
             display: block;
             margin: 0 auto -10px auto;
         }
@@ -263,14 +276,14 @@ $badgeCor = match($vistoria['status']) {
 <body>
 
     <!-- BARRA DE AÇÕES (NÃO VISÍVEL NA IMPRESSÃO/PDF) -->
-    <div class="container-fluid bg-dark text-white py-2 px-4 no-print shadow-sm sticky-top">
-        <div class="d-flex justify-content-between align-items-center max-w-900 mx-auto" style="max-width: 900px;">
+    <div class="container-fluid bg-dark text-white py-2 px-3 px-md-4 no-print shadow-sm sticky-top">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 max-w-900 mx-auto" style="max-width: 900px;">
             <div>
                 <a href="<?= $linkRetorno ?>" class="btn btn-outline-light btn-sm">
                     <i class="bi bi-arrow-left me-1"></i> Voltar ao <?= in_array($perfilLogado, ['gestor', 'supervisor']) ? 'Dashboard' : 'Menu Principal' ?>
                 </a>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 <button onclick="window.print()" class="btn btn-success btn-sm fw-semibold">
                     <i class="bi bi-printer me-1"></i> Imprimir / Salvar em PDF
                 </button>
@@ -282,13 +295,13 @@ $badgeCor = match($vistoria['status']) {
     <div class="laudo-container">
 
         <!-- CABEÇALHO OFICIAL -->
-        <div class="header-laudo d-flex justify-content-between align-items-center">
+        <div class="header-laudo d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
                 <h1 class="h3 fw-bold text-dark mb-1">AXION FROTAS • LAUDO OFICIAL DE VISTORIA</h1>
                 <p class="text-muted small mb-0">Sistema Corporativo de Vistoria e Inspeção Veicular</p>
                 <p class="text-muted small mb-0">CNPJ: 00.000.000/0001-00 • Operação Brasil</p>
             </div>
-            <div class="text-end">
+            <div class="text-start text-sm-end">
                 <span class="badge bg-primary fs-6 px-3 py-2 mb-1">LAUDO TÉCNICO</span>
                 <p class="fw-bold mb-0 text-dark font-mono">Nº #<?= str_pad($vistoria['id_vistoria'], 6, '0', STR_PAD_LEFT) ?></p>
                 <small class="text-muted">Emissão: <span class="font-mono"><?= date('d/m/Y H:i:s') ?></span></small>
@@ -303,99 +316,105 @@ $badgeCor = match($vistoria['status']) {
 
         <!-- 1. DADOS DO VEÍCULO -->
         <div class="section-title">1. Dados do Veículo Inspecionado</div>
-        <table class="table table-bordered tabela-dados mb-4">
-            <tbody>
-                <tr>
-                    <th>Placa do Veículo</th>
-                    <td class="fw-bold text-primary font-mono"><?= sanitizar_utf8($vistoria['placa_veiculo']) ?></td>
-                    <th>Marca / Modelo</th>
-                    <td><?= sanitizar_utf8($vistoria['marca_modelo'] ?? ($vistoria['marca'] . ' ' . $vistoria['modelo'])) ?></td>
-                </tr>
-                <tr>
-                    <th>Ano de Fabricação</th>
-                    <td class="font-mono"><?= sanitizar_utf8($vistoria['ano_veiculo'] ?? 'N/D') ?></td>
-                    <th>Cor Predominante</th>
-                    <td><?= sanitizar_utf8($vistoria['cor_veiculo'] ?? 'N/D') ?></td>
-                </tr>
-                <tr>
-                    <th>Quilometragem (Odômetro)</th>
-                    <td class="fw-bold font-mono"><?= number_format($vistoria['km_rodado'], 0, ',', '.') ?> km</td>
-                    <th>Renavam</th>
-                    <td class="font-mono"><?= sanitizar_utf8($vistoria['renavam'] ?? 'N/D') ?></td>
-                </tr>
-                <tr>
-                    <th>Número do Chassi</th>
-                    <td colspan="3" class="text-uppercase font-mono"><?= sanitizar_utf8($vistoria['chassi'] ?? 'N/D') ?></td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered tabela-dados mb-0">
+                <tbody>
+                    <tr>
+                        <th>Placa do Veículo</th>
+                        <td class="fw-bold text-primary font-mono"><?= sanitizar_utf8($vistoria['placa_veiculo']) ?></td>
+                        <th>Marca / Modelo</th>
+                        <td><?= sanitizar_utf8($vistoria['marca_modelo'] ?? ($vistoria['marca'] . ' ' . $vistoria['modelo'])) ?></td>
+                    </tr>
+                    <tr>
+                        <th>Ano de Fabricação</th>
+                        <td class="font-mono"><?= sanitizar_utf8($vistoria['ano_veiculo'] ?? 'N/D') ?></td>
+                        <th>Cor Predominante</th>
+                        <td><?= sanitizar_utf8($vistoria['cor_veiculo'] ?? 'N/D') ?></td>
+                    </tr>
+                    <tr>
+                        <th>Quilometragem (Odômetro)</th>
+                        <td class="fw-bold font-mono"><?= number_format($vistoria['km_rodado'], 0, ',', '.') ?> km</td>
+                        <th>Renavam</th>
+                        <td class="font-mono"><?= sanitizar_utf8($vistoria['renavam'] ?? 'N/D') ?></td>
+                    </tr>
+                    <tr>
+                        <th>Número do Chassi</th>
+                        <td colspan="3" class="text-uppercase font-mono text-break"><?= sanitizar_utf8($vistoria['chassi'] ?? 'N/D') ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <!-- 2. DADOS DA OPERAÇÃO E INSPETORES -->
         <div class="section-title">2. Dados da Inspeção e Operadores</div>
-        <table class="table table-bordered tabela-dados mb-4">
-            <tbody>
-                <tr>
-                    <th>Data da Vistoria</th>
-                    <td class="font-mono"><?= date('d/m/Y', strtotime($vistoria['data_vistoria'])) ?></td>
-                    <th>Horário da Vistoria</th>
-                    <td class="font-mono"><?= substr($vistoria['hora_vistoria'], 0, 5) ?> hrs</td>
-                </tr>
-                <tr>
-                    <th>Modelo de Checklist</th>
-                    <td><?= sanitizar_utf8($vistoria['titulo_checklist'] ?? 'Vistoria Geral') ?></td>
-                    <th>Categoria</th>
-                    <td><?= ucfirst(sanitizar_utf8($vistoria['categoria_checklist'] ?? 'Geral')) ?></td>
-                </tr>
-                <tr>
-                    <th>Motorista Condutor</th>
-                    <td>
-                        <?= sanitizar_utf8($vistoria['nome_motorista']) ?><br>
-                        <small class="text-muted">CPF/Doc: <?= sanitizar_utf8($vistoria['cpf_motorista'] ?? 'Registrado') ?></small>
-                    </td>
-                    <th>Vistoriador Responsável</th>
-                    <td>
-                        <?= sanitizar_utf8($vistoria['nome_vistoriador']) ?><br>
-                        <small class="text-muted">Matrícula: #<?= sanitizar_utf8($vistoria['id_vistoriador']) ?></small>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered tabela-dados mb-0">
+                <tbody>
+                    <tr>
+                        <th>Data da Vistoria</th>
+                        <td class="font-mono"><?= date('d/m/Y', strtotime($vistoria['data_vistoria'])) ?></td>
+                        <th>Horário da Vistoria</th>
+                        <td class="font-mono"><?= substr($vistoria['hora_vistoria'], 0, 5) ?> hrs</td>
+                    </tr>
+                    <tr>
+                        <th>Modelo de Checklist</th>
+                        <td><?= sanitizar_utf8($vistoria['titulo_checklist'] ?? 'Vistoria Geral') ?></td>
+                        <th>Categoria</th>
+                        <td><?= ucfirst(sanitizar_utf8($vistoria['categoria_checklist'] ?? 'Geral')) ?></td>
+                    </tr>
+                    <tr>
+                        <th>Motorista Condutor</th>
+                        <td>
+                            <?= sanitizar_utf8($vistoria['nome_motorista']) ?><br>
+                            <small class="text-muted">CPF/Doc: <?= sanitizar_utf8($vistoria['cpf_motorista'] ?? 'Registrado') ?></small>
+                        </td>
+                        <th>Vistoriador Responsável</th>
+                        <td>
+                            <?= sanitizar_utf8($vistoria['nome_vistoriador']) ?><br>
+                            <small class="text-muted">Matrícula: #<?= sanitizar_utf8($vistoria['id_vistoriador']) ?></small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <!-- 3. ITENS INSPECIONADOS (ESPELHO DO CHECKLIST) -->
         <?php if (!empty($itensRespondidos)): ?>
             <div class="section-title">3. Itens Inspecionados (Espelho do Checklist)</div>
-            <table class="table table-bordered table-sm align-middle mb-4">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 50px;" class="text-center">#</th>
-                        <th>ITEM / PERGUNTA AVALIADA</th>
-                        <th style="width: 130px;">CATEGORIA</th>
-                        <th style="width: 140px;" class="text-center">AVALIAÇÃO</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($itensRespondidos as $idx => $item): 
-                        $conforme = $item['conforme'];
-                        $badgeResp = match($conforme) {
-                            1, '1' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-lg me-1"></i>Conforme</span>',
-                            0, '0' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-lg me-1"></i>Não Conforme</span>',
-                            default => '<span class="badge bg-secondary-subtle text-secondary border">N/A</span>'
-                        };
-                    ?>
-                    <tr>
-                        <td class="text-center font-mono text-muted small"><?= $idx + 1 ?></td>
-                        <td>
-                            <strong class="text-dark small d-block"><?= sanitizar_utf8($item['texto_pergunta']) ?></strong>
-                            <?php if ($conforme === 0 || $conforme === '0'): ?>
-                                <small class="text-danger"><i class="bi bi-arrow-return-right me-1"></i>Registro: <?= sanitizar_utf8($item['valor_resposta']) ?></small>
-                            <?php endif; ?>
-                        </td>
-                        <td><span class="badge bg-light text-dark border small text-uppercase"><?= sanitizar_utf8($item['categoria'] ?? 'Geral') ?></span></td>
-                        <td class="text-center"><?= $badgeResp ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;" class="text-center">#</th>
+                            <th>ITEM / PERGUNTA AVALIADA</th>
+                            <th style="width: 130px;">CATEGORIA</th>
+                            <th style="width: 140px;" class="text-center">AVALIAÇÃO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($itensRespondidos as $idx => $item): 
+                            $conforme = $item['conforme'];
+                            $badgeResp = match($conforme) {
+                                1, '1' => '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-lg me-1"></i>Conforme</span>',
+                                0, '0' => '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-lg me-1"></i>Não Conforme</span>',
+                                default => '<span class="badge bg-secondary-subtle text-secondary border">N/A</span>'
+                            };
+                        ?>
+                        <tr>
+                            <td class="text-center font-mono text-muted small"><?= $idx + 1 ?></td>
+                            <td>
+                                <strong class="text-dark small d-block"><?= sanitizar_utf8($item['texto_pergunta']) ?></strong>
+                                <?php if ($conforme === 0 || $conforme === '0'): ?>
+                                    <small class="text-danger"><i class="bi bi-arrow-return-right me-1"></i>Registro: <?= sanitizar_utf8($item['valor_resposta']) ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td><span class="badge bg-light text-dark border small text-uppercase"><?= sanitizar_utf8($item['categoria'] ?? 'Geral') ?></span></td>
+                            <td class="text-center"><?= $badgeResp ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php endif; ?>
 
         <!-- 4. PARECER TÉCNICO E NÃO CONFORMIDADES -->
@@ -442,9 +461,9 @@ $badgeCor = match($vistoria['status']) {
             Declaramos para os devidos fins de direito e controle de conformidade que o veículo acima qualificado foi vistoriado nos termos deste laudo, estando as partes cientes das condições mecânicas, elétricas e estéticas apontadas neste documento. As assinaturas abaixo foram colhidas digitalmente através de dispositivo eletrônico em tela sensível.
         </p>
 
-        <div class="row mt-4">
+        <div class="row mt-4 g-3">
             <!-- Assinatura do Motorista -->
-            <div class="col-6">
+            <div class="col-12 col-sm-6">
                 <div class="text-center">
                     <?php if (!empty($vistoria['assinatura_motorista'])): ?>
                         <img src="<?= $vistoria['assinatura_motorista'] ?>" alt="Assinatura Motorista" class="img-assinatura">
@@ -461,7 +480,7 @@ $badgeCor = match($vistoria['status']) {
             </div>
 
             <!-- Assinatura do Vistoriador -->
-            <div class="col-6">
+            <div class="col-12 col-sm-6">
                 <div class="text-center">
                     <?php if (!empty($vistoria['assinatura_vistoriador'])): ?>
                         <img src="<?= $vistoria['assinatura_vistoriador'] ?>" alt="Assinatura Vistoriador" class="img-assinatura">
@@ -479,7 +498,7 @@ $badgeCor = match($vistoria['status']) {
         </div>
 
         <!-- RODAPÉ DE CERTIFICAÇÃO DIGITAL -->
-        <div class="mt-5 pt-3 border-top text-center text-muted small">
+        <div class="mt-5 pt-3 border-top text-center text-muted small text-break">
             <span>Documento emitido eletronicamente pela Plataforma Axion • Hash de Validação: <code class="font-mono text-dark fw-semibold"><?= md5($vistoria['id_vistoria'] . $vistoria['data_vistoria'] . $vistoria['placa_veiculo']) ?></code></span>
         </div>
 

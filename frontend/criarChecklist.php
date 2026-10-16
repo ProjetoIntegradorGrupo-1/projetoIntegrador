@@ -22,13 +22,13 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
 </head>
 
 <body class="bg-light">
-    <div class="container py-4" style="max-width: 820px;">
-        <div class="card shadow-sm p-4 border-0">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="container py-3 py-sm-4 px-2 px-sm-3" style="max-width: 820px;">
+        <div class="card shadow-sm p-3 p-sm-4 border-0">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <a href="oqfazer.php" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Voltar ao Menu
                 </a>
-                <span class="badge <?php echo $perfilLogado === 'gestor' ? 'bg-danger' : 'bg-primary'; ?> px-3 py-2 text-uppercase">
+                <span class="badge <?php echo $perfilLogado === 'gestor' ? 'bg-danger' : 'bg-primary'; ?> px-3 py-2 text-uppercase text-wrap">
                     <i class="bi <?php echo $perfilLogado === 'gestor' ? 'bi-shield-check' : 'bi-person-badge'; ?>"></i>
                     Sessão: <?php echo htmlspecialchars($perfilLogado); ?>
                 </span>
@@ -62,7 +62,7 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
                 </div>
 
                 <hr class="mb-4">
-                <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-3 d-flex flex-wrap align-items-center justify-content-between gap-1">
                     <span>Perguntas do Checklist</span>
                     <small class="text-muted fw-normal fs-6">Configure perguntas e subcondições</small>
                 </h5>
@@ -72,7 +72,7 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
                     
                     <!-- Bloco da Pergunta 1 -->
                     <div class="card mb-3 p-3 border pergunta-item" data-index="0">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                             <span class="badge bg-primary fs-6">Pergunta 1</span>
                             <button type="button" class="btn btn-sm btn-outline-danger btn-remover-pergunta" disabled>Excluir Pergunta 1</button>
                         </div>
@@ -117,7 +117,7 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
                         <div class="container-subperguntas border-top pt-2 mt-2"></div>
                         
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-add-subpergunta">+ Adicionar Subpergunta (Condicional)</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-add-subpergunta text-wrap">+ Adicionar Subpergunta (Condicional)</button>
                         </div>
                     </div>
                 </div>
@@ -148,7 +148,7 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
             novaPergunta.setAttribute('data-index', perguntaIndex);
 
             novaPergunta.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                     <span class="badge bg-primary fs-6">Pergunta ${perguntaIndex + 1}</span>
                     <button type="button" class="btn btn-sm btn-outline-danger btn-remover-pergunta">Excluir Pergunta ${perguntaIndex + 1}</button>
                 </div>

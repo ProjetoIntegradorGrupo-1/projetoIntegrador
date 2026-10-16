@@ -56,16 +56,16 @@ if ($checklistAtual) {
 
 <body class="bg-light">
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm border-danger" style="max-width: 550px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card p-3 p-sm-4 shadow-sm border-danger" style="max-width: 550px; width: 100%;">
             <h1 class="h4 text-center text-danger mb-1">Excluir Modelo de Checklist</h1>
             <p class="text-muted text-center small mb-4">Inative o formulário para que não seja mais utilizado em vistorias</p>
 
             <!-- Seleção do Checklist Dinâmica -->
             <form action="excluirChecklist.php" method="get" class="mb-4">
                 <label for="select-checklist" class="form-label fw-bold">Selecione o Modelo de Checklist</label>
-                <div class="input-group">
-                    <select id="select-checklist" name="id_checklist" class="form-select" onchange="this.form.submit()" required>
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <select id="select-checklist" name="id_checklist" class="form-select" style="min-width: 0;" onchange="this.form.submit()" required>
                         <?php if (empty($listaChecklists)): ?>
                             <option value="" disabled selected>Nenhum checklist ativo cadastrado</option>
                         <?php else: ?>
@@ -76,7 +76,7 @@ if ($checklistAtual) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <button class="btn btn-outline-danger" type="submit">Carregar</button>
+                    <button class="btn btn-outline-danger flex-shrink-0" type="submit">Carregar</button>
                 </div>
             </form>
 
@@ -89,7 +89,7 @@ if ($checklistAtual) {
 
                 <div class="card bg-danger-subtle border-danger p-3 mb-4">
                     <h2 class="h6 text-danger fw-bold mb-2">Resumo do Checklist Selecionado:</h2>
-                    <ul class="mb-0 small text-dark ps-3">
+                    <ul class="mb-0 small text-dark ps-3 text-break">
                         <li><strong>Título:</strong> <?= htmlspecialchars($checklistAtual['titulo']) ?></li>
                         <li><strong>Categoria:</strong> <?= ucfirst(htmlspecialchars($checklistAtual['categoria'] ?? 'Geral')) ?></li>
                         <li><strong>Total de Perguntas:</strong> <?= $totalPerguntas ?> pergunta(s) vinculada(s)</li>

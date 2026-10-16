@@ -44,15 +44,15 @@ if ($id_selecionado > 0) {
 
 <body class="bg-light">
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 650px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card p-3 p-sm-4 shadow-sm" style="max-width: 650px; width: 100%;">
             <h1 class="h4 text-center mb-4">Editar Veículo</h1>
 
             <!-- 1. BLOCO DE BUSCA DINÂMICA DO VEÍCULO -->
             <form action="editarVeiculo.php" method="get" class="mb-4 p-3 bg-light border rounded">
                 <label for="select-veiculo" class="form-label fw-bold">Selecione o Veículo para Editar</label>
-                <div class="input-group">
-                    <select id="select-veiculo" name="id_veiculo" class="form-select" onchange="this.form.submit()" required>
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <select id="select-veiculo" name="id_veiculo" class="form-select" style="min-width: 0;" onchange="this.form.submit()" required>
                         <?php if (empty($listaVeiculos)): ?>
                             <option value="" disabled selected>Nenhum veículo ativo encontrado</option>
                         <?php else: ?>
@@ -63,7 +63,7 @@ if ($id_selecionado > 0) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <button class="btn btn-outline-primary" type="submit">Carregar Dados</button>
+                    <button class="btn btn-outline-primary flex-shrink-0" type="submit">Carregar Dados</button>
                 </div>
             </form>
 

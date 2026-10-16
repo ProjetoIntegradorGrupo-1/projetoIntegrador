@@ -68,12 +68,12 @@ foreach ($todasPerguntas as $p) {
 
     <!-- NAVBAR SUPERIOR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2 px-3 shadow-sm sticky-top">
-        <div class="container-fluid max-w-1200 mx-auto" style="max-width: 1200px;">
+        <div class="container-fluid max-w-1200 mx-auto d-flex flex-wrap justify-content-between align-items-center gap-2" style="max-width: 1200px;">
             <div class="d-flex align-items-center gap-2">
                 <a href="oqfazer.php" class="btn btn-outline-light btn-sm px-2 py-1" title="Voltar ao Menu">
                     <i class="bi bi-arrow-left"></i>
                 </a>
-                <span class="navbar-brand fw-bold mb-0 fs-5">AXION • Governança de Checklists</span>
+                <span class="navbar-brand fw-bold mb-0 fs-6 fs-sm-5 text-wrap">AXION • Governança de Checklists</span>
             </div>
             <div class="d-flex align-items-center gap-2 text-white small">
                 <span class="badge <?= $perfilUsuario === 'gestor' ? 'bg-primary' : 'bg-info text-dark' ?> text-uppercase">
@@ -84,7 +84,7 @@ foreach ($todasPerguntas as $p) {
         </div>
     </nav>
 
-    <div class="container py-4" style="max-width: 1200px;">
+    <div class="container py-4 px-3" style="max-width: 1200px;">
 
         <!-- TÍTULO E AÇÕES -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -129,16 +129,16 @@ foreach ($todasPerguntas as $p) {
                     $status = $c['status'];
 
                     $badgeStatus = match($status) {
-                        'pendente_aprovacao' => '<span class="badge badge-pendente px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Pendente de Validação</span>',
-                        'ativo' => '<span class="badge badge-ativo px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Ativo (Em Produção)</span>',
-                        'ajuste_solicitado' => '<span class="badge badge-ajuste px-2 py-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Ajuste Solicitado</span>',
+                        'pendente_aprovacao' => '<span class="badge badge-pendente px-2 py-1 text-wrap"><i class="bi bi-hourglass-split me-1"></i>Pendente de Validação</span>',
+                        'ativo' => '<span class="badge badge-ativo px-2 py-1 text-wrap"><i class="bi bi-check-circle-fill me-1"></i>Ativo (Em Produção)</span>',
+                        'ajuste_solicitado' => '<span class="badge badge-ajuste px-2 py-1 text-wrap"><i class="bi bi-exclamation-triangle-fill me-1"></i>Ajuste Solicitado</span>',
                         default => '<span class="badge bg-secondary px-2 py-1">Inativo</span>'
                     };
                 ?>
                 <div class="col-lg-6" id="cardChecklist_<?= $idC ?>">
-                    <div class="card card-checklist h-100 bg-white p-4">
+                    <div class="card card-checklist h-100 bg-white p-3 p-sm-4">
                         
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
                             <div>
                                 <span class="badge bg-light text-dark border small text-uppercase mb-1"><?= htmlspecialchars($c['categoria'] ?? 'Geral') ?></span>
                                 <h2 class="h5 fw-bold text-dark mb-0"><?= htmlspecialchars($c['titulo']) ?></h2>
@@ -167,9 +167,9 @@ foreach ($todasPerguntas as $p) {
                                     <li class="list-group-item text-muted">Nenhuma pergunta associada.</li>
                                 <?php else: ?>
                                     <?php foreach ($perguntas as $idx => $p): ?>
-                                        <li class="list-group-item py-2 d-flex justify-content-between align-items-center">
-                                            <span><strong>#<?= $idx + 1 ?></strong> <?= htmlspecialchars($p['texto_pergunta']) ?></span>
-                                            <span class="badge bg-secondary-subtle text-secondary font-mono" style="font-size: 0.68rem;"><?= $p['tipo_resposta'] ?></span>
+                                        <li class="list-group-item py-2 d-flex justify-content-between align-items-center gap-2">
+                                            <span class="text-break"><strong>#<?= $idx + 1 ?></strong> <?= htmlspecialchars($p['texto_pergunta']) ?></span>
+                                            <span class="badge bg-secondary-subtle text-secondary font-mono flex-shrink-0" style="font-size: 0.68rem;"><?= $p['tipo_resposta'] ?></span>
                                         </li>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -178,11 +178,11 @@ foreach ($todasPerguntas as $p) {
 
                         <!-- AÇÕES DO GESTOR (SE ESTIVER PENDENTE) -->
                         <?php if ($perfilUsuario === 'gestor' && $status === 'pendente_aprovacao'): ?>
-                            <div class="mt-auto pt-3 border-top d-flex gap-2 justify-content-end">
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="abrirModalAjuste(<?= $idC ?>, '<?= htmlspecialchars(addslashes($c['titulo'])) ?>')">
+                            <div class="mt-auto pt-3 border-top d-flex flex-wrap gap-2 justify-content-end">
+                                <button type="button" class="btn btn-outline-danger btn-sm flex-fill flex-sm-grow-0" onclick="abrirModalAjuste(<?= $idC ?>, '<?= htmlspecialchars(addslashes($c['titulo'])) ?>')">
                                     <i class="bi bi-arrow-return-left me-1"></i> Solicitar Ajustes
                                 </button>
-                                <button type="button" class="btn btn-success btn-sm fw-semibold" onclick="aprovarChecklist(<?= $idC ?>)">
+                                <button type="button" class="btn btn-success btn-sm fw-semibold flex-fill flex-sm-grow-0" onclick="aprovarChecklist(<?= $idC ?>)">
                                     <i class="bi bi-check2-circle me-1"></i> Validar e Ativar Modelo
                                 </button>
                             </div>

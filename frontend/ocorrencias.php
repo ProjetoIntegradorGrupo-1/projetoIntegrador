@@ -178,19 +178,22 @@ foreach ($ocorrencias as $oc) {
 <body>
 
     <!-- Barra de Navegação Superior -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3 mb-4 shadow-sm">
-        <div class="container-fluid">
-            <span class="navbar-brand fw-bold fs-4">Axion <span class="badge bg-danger fs-6">Triagem de Ocorrências</span></span>
-            <div class="d-flex align-items-center text-white gap-2">
-                <span class="me-3 small"><i class="bi bi-person-circle me-1"></i> Olá, <?= htmlspecialchars($nome_usuario) ?></span>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 px-md-4 py-3 mb-4 shadow-sm">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="navbar-brand fw-bold fs-4 mb-0 d-flex flex-wrap align-items-center gap-2">
+                <span>Axion</span>
+                <span class="badge bg-danger fs-6">Triagem de Ocorrências</span>
+            </span>
+            <div class="d-flex flex-wrap align-items-center text-white gap-2">
+                <span class="me-1 small"><i class="bi bi-person-circle me-1"></i> Olá, <?= htmlspecialchars($nome_usuario) ?></span>
                 <a href="dashboard.php" class="btn btn-outline-light btn-sm"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
-                <a href="oqfazer.php" class="btn btn-outline-light btn-sm me-2">Menu Principal</a>
+                <a href="oqfazer.php" class="btn btn-outline-light btn-sm">Menu Principal</a>
                 <a href="../backend/logout.php" class="btn btn-danger btn-sm">Sair</a>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid px-4 pb-5">
+    <div class="container-fluid px-3 px-md-4 pb-5">
 
         <!-- TÍTULO E RESUMO DE KPIs -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
@@ -296,9 +299,9 @@ foreach ($ocorrencias as $oc) {
                                  data-info='<?= $jsonOcorrencia ?>'
                                  onclick="selecionarOcorrencia(this)">
                                 
-                                <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center gap-2 gap-sm-3">
                                     <!-- Miniatura da Foto -->
-                                    <div>
+                                    <div class="flex-shrink-0">
                                         <?php if ($fotoExiste): ?>
                                             <img src="<?= htmlspecialchars($caminhoFoto) ?>" alt="Evidência" class="foto-thumb">
                                         <?php else: ?>
@@ -310,7 +313,7 @@ foreach ($ocorrencias as $oc) {
 
                                     <!-- Dados Centrais -->
                                     <div class="flex-grow-1" style="min-width: 0;">
-                                        <div class="d-flex align-items-baseline gap-2">
+                                        <div class="d-flex flex-wrap align-items-baseline gap-1 gap-sm-2">
                                             <strong class="text-dark text-truncate d-block mb-0"><?= htmlspecialchars($oc['modelo_veiculo']) ?></strong>
                                             <span class="font-mono text-muted small"><?= htmlspecialchars($oc['placa_veiculo']) ?></span>
                                         </div>
@@ -318,14 +321,14 @@ foreach ($ocorrencias as $oc) {
                                             <?= htmlspecialchars($oc['descricao_falha']) ?>
                                         </p>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted" style="font-size: 0.75rem;">
+                                            <small class="text-muted text-truncate" style="font-size: 0.75rem;">
                                                 <?= $dataFmt ?> • Fiscal: <?= htmlspecialchars($oc['fiscal_responsavel']) ?>
                                             </small>
                                         </div>
                                     </div>
 
                                     <!-- Badges Laterais (Criticidade e Status) -->
-                                    <div class="text-end d-flex flex-column gap-1">
+                                    <div class="text-end d-flex flex-column gap-1 flex-shrink-0">
                                         <span class="badge <?= $critClass ?> px-2 py-1" style="font-size: 0.75rem;"><?= $critLabel ?></span>
                                         <span class="badge <?= $statusClass ?> px-2 py-1" style="font-size: 0.72rem;"><?= $statusLabel ?></span>
                                     </div>
@@ -339,10 +342,10 @@ foreach ($ocorrencias as $oc) {
 
             <!-- COLUNA DIREITA: PAINEL DE INSPEÇÃO RÁPIDA (DETAIL VIEW) -->
             <div class="col-lg-7">
-                <div class="card card-master-detail p-4 sticky-top" style="top: 20px;">
+                <div class="card card-master-detail p-3 p-sm-4 sticky-top" style="top: 20px;">
                     
                     <!-- Cabeçalho do Detalhe -->
-                    <div class="d-flex justify-content-between align-items-start mb-3 pb-2 border-bottom">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3 pb-2 border-bottom">
                         <div>
                             <div class="section-header-detail mb-1">Painel de Inspeção Técnica</div>
                             <h2 class="h5 fw-bold text-dark mb-0" id="detalheTituloHeader">
@@ -357,7 +360,7 @@ foreach ($ocorrencias as $oc) {
                     </div>
 
                     <!-- Indicador de Gravidade -->
-                    <div class="p-2 px-3 rounded mb-3 bg-light border d-flex justify-content-between align-items-center">
+                    <div class="p-2 px-3 rounded mb-3 bg-light border d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <span class="small fw-semibold text-secondary">Avaliação de Risco Operacional:</span>
                         <span id="detalheBadgeGravidade" class="badge badge-crit-critica px-3 py-2 fw-bold">
                             Gravidade: <?= !empty($ocorrencias[0]) ? ucfirst($ocorrencias[0]['criticidade']) : 'N/D' ?>
@@ -371,7 +374,7 @@ foreach ($ocorrencias as $oc) {
                             <i class="bi bi-camera-slash fs-1 d-block mb-1"></i>
                             Evidência sem anexo fotográfico digital.
                         </div>
-                        <div class="bg-dark bg-opacity-75 text-white px-3 py-1 text-start d-flex justify-content-between align-items-center">
+                        <div class="bg-dark bg-opacity-75 text-white px-3 py-1 text-start d-flex flex-wrap justify-content-between align-items-center gap-1">
                             <small class="fw-semibold"><i class="bi bi-camera me-1"></i> Evidência Fotográfica</small>
                             <small class="font-mono text-light opacity-75" id="detalheLocalPatio">GPS Pátio Sul</small>
                         </div>
@@ -383,7 +386,7 @@ foreach ($ocorrencias as $oc) {
                         <p class="text-dark bg-light p-3 rounded border mb-2" id="detalheDescricaoFalha" style="white-space: pre-line;">
                             <?= !empty($ocorrencias[0]) ? htmlspecialchars($ocorrencias[0]['descricao_falha']) : '' ?>
                         </p>
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex flex-wrap justify-content-between gap-2 text-muted small">
                             <span>Subsistema: <strong class="text-dark" id="detalheSubsistema"><?= !empty($ocorrencias[0]) ? htmlspecialchars($ocorrencias[0]['subsistema']) : 'Geral' ?></strong></span>
                             <span>Laudo Vinculado: <a href="#" id="detalheLinkLaudo" class="font-mono text-primary fw-semibold" target="_blank">VST-#<?= !empty($ocorrencias[0]) ? $ocorrencias[0]['id_vistoria'] : '1' ?></a></span>
                         </div>
@@ -397,9 +400,9 @@ foreach ($ocorrencias as $oc) {
                         <p class="mb-2 small" id="detalheAcaoRecomendada">
                             <?= !empty($ocorrencias[0]) ? htmlspecialchars($ocorrencias[0]['acao_recomendada'] ?? 'Veículo impedido de circular até avaliação e despacho.') : '' ?>
                         </p>
-                        <div class="pt-2 border-top border-warning-subtle d-flex justify-content-between align-items-center small">
+                        <div class="pt-2 border-top border-warning-subtle d-flex flex-wrap justify-content-between align-items-center gap-1 small">
                             <span>Condição de Circulação:</span>
-                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-mono" id="detalheStatusVeiculo">
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-mono text-wrap text-start" id="detalheStatusVeiculo">
                                 Impedido de Circular / Retido na Oficina
                             </span>
                         </div>
@@ -409,13 +412,13 @@ foreach ($ocorrencias as $oc) {
                     <div class="pt-3 border-top">
                         <span class="small fw-bold text-muted text-uppercase d-block mb-2">Ações de Despacho Operacional:</span>
                         <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-primary fw-semibold d-flex align-items-center gap-1" id="btnEnviarOficina" onclick="executarDespacho('enviar_oficina')">
+                            <button type="button" class="btn btn-primary fw-semibold d-flex align-items-center justify-content-center gap-1 flex-fill flex-sm-grow-0" id="btnEnviarOficina" onclick="executarDespacho('enviar_oficina')">
                                 <i class="bi bi-tools"></i> Enviar p/ Oficina
                             </button>
-                            <button type="button" class="btn btn-success fw-semibold d-flex align-items-center gap-1" id="btnAprovarReparo" onclick="executarDespacho('aprovar_reparo')">
+                            <button type="button" class="btn btn-success fw-semibold d-flex align-items-center justify-content-center gap-1 flex-fill flex-sm-grow-0" id="btnAprovarReparo" onclick="executarDespacho('aprovar_reparo')">
                                 <i class="bi bi-check2-circle"></i> Aprovar Reparo
                             </button>
-                            <a href="#" id="btnLaudoPdf" target="_blank" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                            <a href="#" id="btnLaudoPdf" target="_blank" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1 flex-fill flex-sm-grow-0">
                                 <i class="bi bi-file-earmark-pdf"></i> Ver Laudo Completo em PDF
                             </a>
                         </div>
@@ -499,10 +502,10 @@ foreach ($ocorrencias as $oc) {
             // Status do Veículo
             const stVeiculo = document.getElementById('detalheStatusVeiculo');
             if (info.status_veiculo === 'retido_oficina') {
-                stVeiculo.className = 'badge bg-danger-subtle text-danger border border-danger-subtle font-mono';
+                stVeiculo.className = 'badge bg-danger-subtle text-danger border border-danger-subtle font-mono text-wrap text-start';
                 stVeiculo.textContent = 'Impedido de Circular / Retido na Oficina';
             } else {
-                stVeiculo.className = 'badge bg-success-subtle text-success border border-success-subtle font-mono';
+                stVeiculo.className = 'badge bg-success-subtle text-success border border-success-subtle font-mono text-wrap text-start';
                 stVeiculo.textContent = 'Liberado para Circulação';
             }
 

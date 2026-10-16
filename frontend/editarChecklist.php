@@ -56,16 +56,16 @@ if ($checklistAtual) {
 
 <body class="bg-light">
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 800px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card p-3 p-sm-4 shadow-sm" style="max-width: 800px; width: 100%;">
             <h1 class="h4 text-center mb-1">Editar Checklist</h1>
             <p class="text-muted text-center small mb-4">Altere dados do modelo, perguntas e categorias associadas</p>
 
             <!-- 1. BLOCO DE SELEÇÃO DINÂMICA DO CHECKLIST -->
             <form action="editarChecklist.php" method="get" class="mb-4 p-3 bg-light border rounded">
                 <label for="select-checklist" class="form-label fw-bold">Selecione o Modelo de Checklist</label>
-                <div class="input-group">
-                    <select id="select-checklist" name="id_checklist" class="form-select" onchange="this.form.submit()" required>
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <select id="select-checklist" name="id_checklist" class="form-select flex-grow-1" style="min-width: 0;" onchange="this.form.submit()" required>
                         <?php if (empty($listaChecklists)): ?>
                             <option value="" disabled selected>Nenhum checklist ativo cadastrado</option>
                         <?php else: ?>
@@ -82,7 +82,7 @@ if ($checklistAtual) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <button class="btn btn-outline-primary" type="submit">Carregar Formulário</button>
+                    <button class="btn btn-outline-primary flex-shrink-0" type="submit">Carregar Formulário</button>
                 </div>
             </form>
 

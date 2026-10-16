@@ -177,18 +177,21 @@ $vistorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body class="bg-light">
 
     <!-- Barra Superior -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3 mb-4 shadow-sm">
-        <div class="container-fluid">
-            <span class="navbar-brand fw-bold fs-4">Axion <span class="badge bg-primary fs-6">Gestão de Frotas</span></span>
-            <div class="d-flex align-items-center text-white">
-                <span class="me-3 small"><i class="bi bi-person-circle me-1"></i> Olá, <?= htmlspecialchars($nome_usuario) ?></span>
-                <a href="oqfazer.php" class="btn btn-outline-light btn-sm me-2">Menu Principal</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3 px-md-4 py-3 mb-4 shadow-sm">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="navbar-brand fw-bold fs-4 mb-0 d-flex flex-wrap align-items-center gap-2">
+                <span>Axion</span>
+                <span class="badge bg-primary fs-6">Gestão de Frotas</span>
+            </span>
+            <div class="d-flex flex-wrap align-items-center text-white gap-2">
+                <span class="me-1 small"><i class="bi bi-person-circle me-1"></i> Olá, <?= htmlspecialchars($nome_usuario) ?></span>
+                <a href="oqfazer.php" class="btn btn-outline-light btn-sm">Menu Principal</a>
                 <a href="../backend/logout.php" class="btn btn-danger btn-sm">Sair</a>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid px-4 pb-5">
+    <div class="container-fluid px-3 px-md-4 pb-5">
 
         <!-- Título e Subtítulo -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -196,7 +199,7 @@ $vistorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h1 class="h3 fw-bold text-dark mb-1">Painel de Vistorias e Conformidade</h1>
                 <p class="text-muted small mb-0">Acompanhamento operacional em tempo real da frota e laudos emitidos</p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 <a href="ocorrencias.php" class="btn btn-outline-danger shadow-sm fw-semibold">
                     <i class="bi bi-exclamation-octagon me-1"></i> Triagem de Ocorrências
                 </a>
@@ -338,7 +341,7 @@ $vistorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <!-- 3. TABELA DE VISTORIAS (CONFORME FIGURA 1 - WCAG & PROFA. MARTA) -->
         <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex flex-wrap align-items-center gap-2 gap-sm-3">
                     <div class="form-check mb-0 d-flex align-items-center">
                         <input type="checkbox" id="checkAllVistorias" class="form-check-input mt-0 me-2" onchange="toggleSelectAll(this)">
                         <label class="form-check-label small fw-semibold text-secondary" for="checkAllVistorias" id="lblCountSelecionadas">0 vistorias selecionadas</label>

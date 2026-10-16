@@ -61,15 +61,15 @@ $linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.ph
 
 <body>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card form-card p-4 bg-white" style="max-width: 680px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card form-card p-3 p-sm-4 bg-white" style="max-width: 680px; width: 100%;">
             
-            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
                 <div>
                     <h1 class="h4 fw-bold text-dark mb-0">Nova Inspeção Veicular</h1>
                     <small class="text-muted">Abertura de checklist operacional de frota</small>
                 </div>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 text-wrap">
                     <i class="bi bi-shield-check me-1"></i> Auditoria Digital
                 </span>
             </div>
@@ -163,11 +163,11 @@ $linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.ph
                 </div>
 
                 <!-- Botões de Ação -->
-                <div class="d-flex gap-2 mt-4">
+                <div class="d-flex flex-wrap gap-2 mt-4">
                     <button type="submit" class="btn btn-primary flex-fill fw-semibold">
                         <i class="bi bi-arrow-right-circle me-1"></i> Prosseguir para Itens de Vistoria
                     </button>
-                    <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary">Cancelar</a>
+                    <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary flex-fill flex-sm-grow-0">Cancelar</a>
                 </div>
             </form>
         </div>

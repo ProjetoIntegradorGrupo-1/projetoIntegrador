@@ -39,13 +39,13 @@ $nomeLogado   = $_SESSION['nome_usuario'] ?? 'Operador';
 
 <body class="bg-light">
 
-    <div class="container py-4" style="max-width: 800px;">
-        <div class="card p-4 shadow-sm border-0">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="container py-3 py-sm-4 px-2 px-sm-3" style="max-width: 800px;">
+        <div class="card p-3 p-sm-4 shadow-sm border-0">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <a href="oqfazer.php" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Voltar ao Painel
                 </a>
-                <span class="badge <?php echo $perfilLogado === 'gestor' ? 'bg-danger' : 'bg-primary'; ?> role-badge px-3 py-2 text-uppercase">
+                <span class="badge <?php echo $perfilLogado === 'gestor' ? 'bg-danger' : 'bg-primary'; ?> role-badge px-3 py-2 text-uppercase text-wrap">
                     <i class="bi <?php echo $perfilLogado === 'gestor' ? 'bi-shield-lock-fill' : 'bi-person-badge-fill'; ?>"></i>
                     Sessão: <?php echo htmlspecialchars($perfilLogado); ?> (<?php echo htmlspecialchars($nomeLogado); ?>)
                 </span>

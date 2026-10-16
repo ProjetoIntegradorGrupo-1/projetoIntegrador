@@ -23,13 +23,13 @@ $perfilLogado = $_SESSION['perfil_usuario'] ?? 'supervisor';
 
 <body class="bg-light">
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm border-0" style="max-width: 650px; width: 100%;">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card p-3 p-sm-4 shadow-sm border-0" style="max-width: 650px; width: 100%;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <a href="oqfazer.php" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Voltar ao Menu
                 </a>
-                <span class="badge bg-primary px-3 py-2 text-uppercase">
+                <span class="badge bg-primary px-3 py-2 text-uppercase text-wrap">
                     <i class="bi bi-car-front-fill"></i> Cadastro de Frota
                 </span>
             </div>

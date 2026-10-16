@@ -43,16 +43,16 @@ if ($id_selecionado > 0) {
 
 <body class="bg-light">
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm border-danger" style="max-width: 550px; width: 100%;">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-3 py-sm-4 px-2 px-sm-3">
+        <div class="card p-3 p-sm-4 shadow-sm border-danger" style="max-width: 550px; width: 100%;">
             <h1 class="h4 text-center text-danger mb-1">Excluir Veículo</h1>
             <p class="text-muted text-center small mb-4">Inative o cadastro do veículo da frota ativa</p>
 
             <!-- Seleção do Veículo Dinâmica -->
             <form action="excluirVeiculo.php" method="get" class="mb-4">
                 <label for="select-veiculo" class="form-label fw-bold">Selecione o Veículo</label>
-                <div class="input-group">
-                    <select id="select-veiculo" name="id_veiculo" class="form-select" onchange="this.form.submit()" required>
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <select id="select-veiculo" name="id_veiculo" class="form-select" style="min-width: 0;" onchange="this.form.submit()" required>
                         <?php if (empty($listaVeiculos)): ?>
                             <option value="" disabled selected>Nenhum veículo ativo cadastrado</option>
                         <?php else: ?>
@@ -63,7 +63,7 @@ if ($id_selecionado > 0) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-                    <button class="btn btn-outline-danger" type="submit">Carregar</button>
+                    <button class="btn btn-outline-danger flex-shrink-0" type="submit">Carregar</button>
                 </div>
             </form>
 
@@ -76,7 +76,7 @@ if ($id_selecionado > 0) {
 
                 <div class="card bg-danger-subtle border-danger p-3 mb-4">
                     <h2 class="h6 text-danger fw-bold mb-2">Dados do Veículo Selecionado:</h2>
-                    <ul class="mb-0 small text-dark ps-3">
+                    <ul class="mb-0 small text-dark ps-3 text-break">
                         <li><strong>Placa:</strong> <?= htmlspecialchars($veiculoAtual['placa']) ?></li>
                         <li><strong>Modelo/Marca:</strong> <?= htmlspecialchars($veiculoAtual['marca_modelo']) ?></li>
                         <li><strong>Ano:</strong> <?= htmlspecialchars($veiculoAtual['ano'] ?? 'N/D') ?></li>

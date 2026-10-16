@@ -400,26 +400,39 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
             height: 150px;
             touch-action: none;
         }
+
+        @media (max-width: 576px) {
+            .btn-acao-gigante {
+                font-size: 1rem;
+                min-height: 64px;
+                padding: 10px 12px;
+                white-space: normal;
+            }
+            .toggle-hybrid-btn {
+                padding: 5px 10px;
+                font-size: 0.76rem;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <!-- 1. BARRA SUPERIOR DE CONTROLE E STATUS -->
-    <header class="top-app-bar px-3 py-2">
+    <header class="top-app-bar px-2 px-sm-3 py-2">
         <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-2 max-w-1000 mx-auto" style="max-width: 900px;">
             
             <!-- Identificação do Veículo -->
-            <div class="d-flex align-items-center gap-2">
-                <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary btn-sm px-2 py-1" title="Sair da Vistoria" onclick="return confirm('Deseja sair? Suas respostas preenchidas serão salvas.')">
+            <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                <a href="<?= $linkRetorno ?>" class="btn btn-outline-secondary btn-sm px-2 py-1 flex-shrink-0" title="Sair da Vistoria" onclick="return confirm('Deseja sair? Suas respostas preenchidas serão salvas.')">
                     <i class="bi bi-arrow-left"></i>
                 </a>
-                <div>
-                    <div class="d-flex align-items-center gap-2">
+                <div style="min-width: 0;">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span class="badge bg-dark font-mono px-2 py-1 fs-6"><?= sanitizar($vistoria['placa_veiculo']) ?></span>
-                        <strong class="text-dark small d-none d-sm-inline"><?= sanitizar($modeloVeiculo) ?></strong>
+                        <strong class="text-dark small d-none d-sm-inline text-truncate"><?= sanitizar($modeloVeiculo) ?></strong>
                     </div>
-                    <small class="text-muted d-block" style="font-size: 0.72rem;">
+                    <small class="text-muted d-block text-truncate" style="font-size: 0.72rem;">
                         Odômetro: <span class="font-mono"><?= number_format($vistoria['km_rodado'], 0, ',', '.') ?> km</span> • Motorista: <?= sanitizar($vistoria['nome_motorista']) ?>
                     </small>
                 </div>
@@ -448,9 +461,9 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
     </header>
 
     <!-- SUB-BARRA DE ESTATÍSTICA E CONTROLE DE AVANÇO -->
-    <div class="bg-white border-bottom py-1 px-3 mb-3">
-        <div class="d-flex justify-content-between align-items-center max-w-1000 mx-auto small text-muted" style="max-width: 900px;">
-            <div>
+    <div class="bg-white border-bottom py-1 px-2 px-sm-3 mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 max-w-1000 mx-auto small text-muted" style="max-width: 900px;">
+            <div class="d-flex flex-wrap align-items-center gap-1">
                 <span id="badgeProgressoTexto" class="fw-semibold text-primary">Item 1 de <?= count($perguntas) ?> (0%)</span>
                 <span class="mx-1">•</span>
                 <span id="badgeCategoriaAtual" class="badge bg-secondary-subtle text-secondary text-uppercase" style="font-size: 0.7rem;">Mecânica</span>
@@ -463,18 +476,18 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
     </div>
 
     <!-- CORPO PRINCIPAL -->
-    <main class="container py-2 pb-5" style="max-width: 900px;">
+    <main class="container py-2 pb-5 px-2 px-sm-3" style="max-width: 900px;">
 
         <!-- =================================================================== -->
         <!-- MODO 1: MODO CAMPO (1 PERGUNTA POR TELA COM BOTÕES GIGANTES)        -->
         <!-- =================================================================== -->
         <section id="secaoModoCampo" class="d-block">
             
-            <div class="card card-modo-campo p-4 p-md-5">
+            <div class="card card-modo-campo p-3 p-sm-4 p-md-5">
 
                 <!-- Cabeçalho do Card de Pergunta -->
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span id="campoCategoriaBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fs-6">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <span id="campoCategoriaBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fs-6 text-wrap">
                         <i class="bi bi-tools me-1"></i> <span id="campoCategoriaNome">Categoria</span>
                     </span>
                     <span id="campoNumeroItem" class="font-mono text-muted small fw-bold">ITEM #1 / <?= count($perguntas) ?></span>
@@ -522,7 +535,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
 
                 <!-- GAVETA DE EVIDÊNCIA FOTOGRÁFICA (Abre quando seleciona Não Conforme) -->
                 <div id="campoGavetaEvidencia" class="gaveta-evidencia d-none">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-2">
                         <strong class="text-danger small">
                             <i class="bi bi-camera-fill me-1"></i> Registrar Evidência da Não Conformidade
                         </strong>
@@ -531,7 +544,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
 
                     <!-- Botão de Captura de Câmera / Foto -->
                     <div class="mb-3">
-                        <label for="campoInputFoto" class="btn btn-outline-danger btn-lg w-100 d-flex align-items-center justify-content-center gap-2 py-3">
+                        <label for="campoInputFoto" class="btn btn-outline-danger btn-lg w-100 d-flex align-items-center justify-content-center gap-2 py-3 text-wrap">
                             <i class="bi bi-camera-fill fs-3"></i>
                             <span id="campoLabelFoto">Tirar Foto com a Câmera</span>
                         </label>
@@ -551,7 +564,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
                     <!-- Nível de Criticidade da Avaria -->
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-dark mb-1">Gravidade / Criticidade:</label>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex flex-wrap gap-2">
                             <button type="button" class="btn btn-sm btn-outline-secondary flex-fill btn-crit" onclick="definirCriticidadeCampo('baixa', this)">Baixa</button>
                             <button type="button" class="btn btn-sm btn-outline-warning text-dark flex-fill btn-crit active" onclick="definirCriticidadeCampo('media', this)">Média</button>
                             <button type="button" class="btn btn-sm btn-outline-danger flex-fill btn-crit" onclick="definirCriticidadeCampo('alta', this)">Alta</button>
@@ -566,21 +579,21 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
                     </div>
 
                     <div class="text-end">
-                        <button type="button" class="btn btn-sm btn-danger px-3" onclick="confirmarAvariaCampo()">
+                        <button type="button" class="btn btn-sm btn-danger px-3 w-100 w-sm-auto" onclick="confirmarAvariaCampo()">
                             Salvar Avaria e Continuar <i class="bi bi-arrow-right ms-1"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- NAVEGAÇÃO INFERIOR NO MODO CAMPO -->
-                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                    <button type="button" id="btnCampoAnterior" class="btn btn-outline-secondary px-3 py-2 fw-semibold" onclick="navegarCampo(-1)">
+                <div class="d-flex justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+                    <button type="button" id="btnCampoAnterior" class="btn btn-outline-secondary px-2 px-sm-3 py-2 fw-semibold" onclick="navegarCampo(-1)">
                         <i class="bi bi-chevron-left me-1"></i> Anterior
                     </button>
                     
-                    <span id="campoContadorRodape" class="small text-muted font-mono">1 de <?= count($perguntas) ?></span>
+                    <span id="campoContadorRodape" class="small text-muted font-mono text-center">1 de <?= count($perguntas) ?></span>
 
-                    <button type="button" id="btnCampoProximo" class="btn btn-primary px-3 py-2 fw-semibold" onclick="navegarCampo(+1)">
+                    <button type="button" id="btnCampoProximo" class="btn btn-primary px-2 px-sm-3 py-2 fw-semibold" onclick="navegarCampo(+1)">
                         Próximo <i class="bi bi-chevron-right ms-1"></i>
                     </button>
                 </div>
@@ -594,7 +607,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
         <!-- =================================================================== -->
         <section id="secaoModoLista" class="d-none">
             
-            <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <h2 class="h5 fw-bold text-dark mb-0">Checklist Completo de Itens</h2>
                 <span class="badge bg-light text-dark border font-mono">Total: <?= count($perguntas) ?> itens</span>
             </div>
@@ -605,7 +618,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
 
             <!-- Botão no Fim do Modo Lista -->
             <div class="text-center py-4">
-                <button type="button" class="btn btn-success btn-lg px-5 py-3 fw-bold shadow-sm" onclick="abrirModalAssinatura()">
+                <button type="button" class="btn btn-success btn-lg px-3 px-sm-5 py-3 fw-bold shadow-sm w-100 w-sm-auto text-wrap" onclick="abrirModalAssinatura()">
                     <i class="bi bi-pen-fill me-2"></i> Concluir Checklist e Ir para Assinaturas
                 </button>
             </div>
@@ -628,25 +641,25 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
 
-                <div class="modal-body p-4">
+                <div class="modal-body p-3 p-sm-4">
 
                     <!-- RESUMO ESTATÍSTICO -->
                     <div class="row g-2 text-center mb-4">
                         <div class="col-4">
-                            <div class="p-3 bg-light rounded border">
-                                <span class="d-block text-muted small fw-bold text-uppercase">Total Itens</span>
+                            <div class="p-2 p-sm-3 bg-light rounded border h-100 d-flex flex-column justify-content-center">
+                                <span class="d-block text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Total Itens</span>
                                 <span class="fs-4 fw-bold text-dark font-mono" id="revTotalItens"><?= count($perguntas) ?></span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="p-3 bg-success-subtle rounded border border-success-subtle">
-                                <span class="d-block text-success small fw-bold text-uppercase">Conformes</span>
+                            <div class="p-2 p-sm-3 bg-success-subtle rounded border border-success-subtle h-100 d-flex flex-column justify-content-center">
+                                <span class="d-block text-success small fw-bold text-uppercase" style="font-size: 0.7rem;">Conformes</span>
                                 <span class="fs-4 fw-bold text-success font-mono" id="revConformes">0</span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="p-3 bg-danger-subtle rounded border border-danger-subtle">
-                                <span class="d-block text-danger small fw-bold text-uppercase">Não Conformes</span>
+                            <div class="p-2 p-sm-3 bg-danger-subtle rounded border border-danger-subtle h-100 d-flex flex-column justify-content-center">
+                                <span class="d-block text-danger small fw-bold text-uppercase" style="font-size: 0.7rem;">Não Conformes</span>
                                 <span class="fs-4 fw-bold text-danger font-mono" id="revNaoConformes">0</span>
                             </div>
                         </div>
@@ -668,7 +681,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
                     <div class="row g-3">
                         <!-- Assinatura do Motorista -->
                         <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1">
                                 <label class="form-label small fw-bold mb-0">Assinatura do Motorista (<?= sanitizar($vistoria['nome_motorista']) ?>):</label>
                                 <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="limparCanvas('canvasMotorista')">
                                     <i class="bi bi-eraser"></i> Limpar
@@ -679,7 +692,7 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
 
                         <!-- Assinatura do Vistoriador -->
                         <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1">
                                 <label class="form-label small fw-bold mb-0">Assinatura do Vistoriador (<?= sanitizar($_SESSION['nome_usuario'] ?? $vistoria['nome_vistoriador']) ?>):</label>
                                 <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="limparCanvas('canvasVistoriador')">
                                     <i class="bi bi-eraser"></i> Limpar
@@ -691,9 +704,9 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
 
                 </div>
 
-                <div class="modal-footer border-top bg-light p-3">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Revisar Perguntas</button>
-                    <button type="button" id="btnSalvarFinal" class="btn btn-success fw-bold px-4 py-2" onclick="transmitirVistoria()">
+                <div class="modal-footer border-top bg-light p-3 d-flex flex-wrap gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-secondary flex-fill flex-sm-grow-0" data-bs-dismiss="modal">Revisar Perguntas</button>
+                    <button type="button" id="btnSalvarFinal" class="btn btn-success fw-bold px-3 px-sm-4 py-2 flex-fill flex-sm-grow-0 text-wrap" onclick="transmitirVistoria()">
                         <i class="bi bi-check2-circle me-1"></i> Finalizar Vistoria e Emitir Laudo
                     </button>
                 </div>
@@ -1052,14 +1065,14 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
                     const gavetaAberta = (resp && resp.conforme === 0) ? '' : 'd-none';
 
                     htmlResposta = `
-                        <div class="btn-group w-100 my-2" role="group">
-                            <button type="button" class="btn ${isConf} py-2 fw-semibold" onclick="responderLista(${p.id_pergunta}, 1)">
+                        <div class="d-flex flex-wrap gap-1 w-100 my-2" role="group">
+                            <button type="button" class="btn ${isConf} py-2 fw-semibold flex-fill" onclick="responderLista(${p.id_pergunta}, 1)">
                                 <i class="bi bi-check-lg me-1"></i> Conforme
                             </button>
-                            <button type="button" class="btn ${isNConf} py-2 fw-semibold" onclick="responderLista(${p.id_pergunta}, 0)">
+                            <button type="button" class="btn ${isNConf} py-2 fw-semibold flex-fill" onclick="responderLista(${p.id_pergunta}, 0)">
                                 <i class="bi bi-x-lg me-1"></i> Não Conforme
                             </button>
-                            <button type="button" class="btn ${isNA} py-2" onclick="responderLista(${p.id_pergunta}, null)">
+                            <button type="button" class="btn ${isNA} py-2 flex-fill" onclick="responderLista(${p.id_pergunta}, null)">
                                 N/A
                             </button>
                         </div>
@@ -1191,9 +1204,9 @@ if (empty(trim($modeloVeiculo))) $modeloVeiculo = 'Veículo Inspecionado';
             const gaveta = document.getElementById(`gavetaLista_${idPergunta}`);
 
             if (btnConf && btnNConf && btnNA) {
-                btnConf.className = resp.conforme === 1 ? 'btn btn-success text-white py-2 fw-semibold' : 'btn btn-outline-success py-2 fw-semibold';
-                btnNConf.className = resp.conforme === 0 ? 'btn btn-danger text-white py-2 fw-semibold' : 'btn btn-outline-danger py-2 fw-semibold';
-                btnNA.className = resp.conforme === null ? 'btn btn-secondary text-white py-2' : 'btn btn-outline-secondary py-2';
+                btnConf.className = resp.conforme === 1 ? 'btn btn-success text-white py-2 fw-semibold flex-fill' : 'btn btn-outline-success py-2 fw-semibold flex-fill';
+                btnNConf.className = resp.conforme === 0 ? 'btn btn-danger text-white py-2 fw-semibold flex-fill' : 'btn btn-outline-danger py-2 fw-semibold flex-fill';
+                btnNA.className = resp.conforme === null ? 'btn btn-secondary text-white py-2 flex-fill' : 'btn btn-outline-secondary py-2 flex-fill';
             }
 
             if (gaveta) {
