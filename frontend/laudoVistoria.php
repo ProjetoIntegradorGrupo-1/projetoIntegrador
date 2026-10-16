@@ -67,6 +67,8 @@ $sql = "SELECT v.*,
 $stmt = $pdo->prepare($sql);
 $stmt->bindParam(':id', $id_vistoria, PDO::PARAM_INT);
 $stmt->execute();
+$vistoria = $stmt->fetch(PDO::FETCH_ASSOC);
+
 $perfilLogado = $_SESSION['perfil_usuario'] ?? 'motorista';
 $idUsuarioLogado = intval($_SESSION['id_usuario'] ?? 0);
 $linkRetorno = in_array($perfilLogado, ['gestor', 'supervisor']) ? 'dashboard.php' : 'oqfazer.php';
