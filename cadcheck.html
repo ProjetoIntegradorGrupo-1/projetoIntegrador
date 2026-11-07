@@ -4,71 +4,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preencher Checklist</title>
-    <!-- CSS do Bootstrap -->
+    <title>Preencher Checklist / Vistoria - Axion Web</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body class="bg-light">
+<body>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
-            <h1 class="h4 text-center mb-4">Preencher Checklist</h1>
+    <nav class="axion-navbar text-white">
+        <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
+            <a href="oqfazer.php" class="axion-brand">
+                <i class="bi bi-truck-front-fill fs-4"></i>
+                <span>AXION</span>
+                <span class="axion-brand-badge">Preencher Vistoria</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="oqfazer.php?aba=checklists" class="btn btn-sm btn-light fw-semibold"><i class="bi bi-search me-1"></i>Histórico de Vistorias</a>
+                <a href="oqfazer.php" class="btn btn-sm btn-outline-light"><i class="bi bi-grid-1x2 me-1"></i>Painel Principal</a>
+            </div>
+        </div>
+    </nav>
 
-            <form action="processar_cadastro_checklist.php" method="post">
+    <main class="axion-web-container">
+        <div class="axion-form-card" style="max-width: 920px;">
+            <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Preencher Checklist de Vistoria</h1>
+            <p class="text-muted small mb-4">Selecione o modelo de checklist, informe os dados do veículo e responda aos itens inspecionados.</p>
+
+            <form action="backend/api.php?acao=registrar_vistoria" method="post">
+                <div class="axion-section-title"><i class="bi bi-car-front"></i> 1. Identificação da Vistoria</div>
                 <div class="row">
-                    <!-- Placa do Veículo -->
                     <div class="col-md-6 mb-3">
-                        <label for="placadoveiculo" class="form-label">Placa do Veículo</label>
-                        <input type="text" id="placadoveiculo" name="placadoveiculo" class="form-control text-uppercase" placeholder="Ex: ABC1D23" maxlength="7" required autofocus>
+                        <label for="id_checklist" class="form-label fw-semibold">Modelo de Checklist</label>
+                        <select id="id_checklist" name="id_checklist" class="form-select" onchange="carregarPerguntasModelo(this.value)" required>
+                            <option value="1">Carregando modelos de checklist...</option>
+                        </select>
                     </div>
-
-                    <!-- Nome do Motorista -->
-                    <div class="col-md-6 mb-3">
-                        <label for="nomedomotorista" class="form-label">Nome do Motorista</label>
-                        <input type="text" id="nomedomotorista" name="nomedomotorista" class="form-control" placeholder="Nome do motorista" required>
+                    <div class="col-md-3 mb-3">
+                        <label for="placadoveiculo" class="form-label fw-semibold">Placa do Veículo</label>
+                        <input type="text" id="placadoveiculo" name="placadoveiculo" data-mask="placa" list="lista-placas" class="form-control text-uppercase font-monospace" placeholder="Ex: ABC1D23" maxlength="7" required autofocus>
+                        <datalist id="lista-placas"></datalist>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="kmrodado" class="form-label fw-semibold">Km Atual</label>
+                        <input type="number" id="kmrodado" name="kmrodado" class="form-control" placeholder="Ex: 45000" min="0" required>
                     </div>
                 </div>
 
                 <div class="row">
-                    <!-- Data da Vistoria -->
-                    <div class="col-md-6 mb-3">
-                        <label for="datavistoria" class="form-label">Data da Vistoria</label>
+                    <div class="col-md-4 mb-3">
+                        <label for="nomedomotorista" class="form-label fw-semibold">Nome do Motorista</label>
+                        <input type="text" id="nomedomotorista" name="nomedomotorista" list="lista-motoristas" class="form-control" placeholder="Selecione ou digite o motorista" required>
+                        <datalist id="lista-motoristas"></datalist>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="nomevistoriador" class="form-label fw-semibold">Nome do Vistoriador / Supervisor</label>
+                        <input type="text" id="nomevistoriador" name="nomevistoriador" class="form-control" placeholder="Nome do vistoriador" value="Ricardo Almeida (Supervisor)" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="datavistoria" class="form-label fw-semibold">Data</label>
                         <input type="date" id="datavistoria" name="datavistoria" class="form-control" required>
                     </div>
-
-                    <!-- Hora da Vistoria -->
-                    <div class="col-md-6 mb-3">
-                        <label for="horavistoria" class="form-label">Hora da Vistoria</label>
+                    <div class="col-md-2 mb-3">
+                        <label for="horavistoria" class="form-label fw-semibold">Hora</label>
                         <input type="time" id="horavistoria" name="horavistoria" class="form-control" required>
                     </div>
                 </div>
 
-                <div class="row">
-                    <!-- Km Rodado -->
-                    <div class="col-md-6 mb-3">
-                        <label for="kmrodado" class="form-label">Km Rodado</label>
-                        <input type="number" id="kmrodado" name="kmrodado" class="form-control" placeholder="Ex: 45000" min="0" required>
-                    </div>
+                <div class="axion-section-title mt-3"><i class="bi bi-list-check"></i> 2. Itens do Checklist Selecionado</div>
+                <div id="perguntas-dinamicas-vistoria" class="mb-3">
+                    <div class="text-muted small py-2">Carregando perguntas do modelo...</div>
+                </div>
 
-                    <!-- Nome do Vistoriador -->
-                    <div class="col-md-6 mb-3">
-                        <label for="nomevistoriador" class="form-label">Nome do Vistoriador</label>
-                        <input type="text" id="nomevistoriador" name="nomevistoriador" class="form-control" placeholder="Nome do vistoriador" required>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="status_conformidade" class="form-label fw-semibold">Resultado Geral da Vistoria</label>
+                        <select id="status_conformidade" name="status_conformidade" class="form-select" required>
+                            <option value="conforme" selected>Conforme (Seguir para Assinatura)</option>
+                            <option value="nao_conforme">Não Conforme (Registrar Avaria/Fotos)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8 mb-3">
+                        <label for="observacoes" class="form-label fw-semibold">Observações Gerais</label>
+                        <input type="text" id="observacoes" name="observacoes" class="form-control" placeholder="Observações adicionais sobre o estado do veículo...">
                     </div>
                 </div>
 
-                <!-- Botões de Ação -->
-                <div class="d-grid gap-2 mt-3">
-                    <input type="submit" value="Cadastrar" class="btn btn-primary">
-                    <a href="oqfazer.html" class="btn btn-outline-secondary">Voltar ao Menu</a>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="oqfazer.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar ao Painel</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-arrow-right-circle me-1"></i>Registrar e Prosseguir</button>
                 </div>
             </form>
         </div>
-    </div>
+    </main>
 
-    <!-- JS do Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
+    <script>
+        document.getElementById('datavistoria').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('horavistoria').value = new Date().toTimeString().slice(0, 5);
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('placa')) document.getElementById('placadoveiculo').value = params.get('placa');
+        if (params.get('km')) document.getElementById('kmrodado').value = params.get('km');
+
+        async function inicializarVistoria() {
+            // Carrega modelos de checklist
+            const rChk = await fetch('backend/api.php?acao=buscar&tipo=checklists');
+            const jChk = await rChk.json();
+            const sel = document.getElementById('id_checklist');
+            if (jChk.dados && jChk.dados.length > 0) {
+                sel.innerHTML = jChk.dados.map(c => `<option value="${c.id_checklist}">${c.titulo} [${c.categoria.toUpperCase()}]</option>`).join('');
+                const idPre = params.get('id_checklist') || jChk.dados[0].id_checklist;
+                sel.value = idPre;
+                carregarPerguntasModelo(idPre);
+            }
+
+            // Carrega sugestões de placas
+            const rVeic = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=200');
+            const jVeic = await rVeic.json();
+            if (jVeic.dados) {
+                document.getElementById('lista-placas').innerHTML = jVeic.dados.map(v => `<option value="${v.placa}">${v.marca_modelo}</option>`).join('');
+            }
+
+            // Carrega sugestões de motoristas
+            const rMot = await fetch('backend/api.php?acao=buscar&tipo=usuarios&filtro=motorista&limite=100');
+            const jMot = await rMot.json();
+            if (jMot.dados) {
+                document.getElementById('lista-motoristas').innerHTML = jMot.dados.map(m => `<option value="${m.nome}">CNH: ${m.categoria_cnh || 'B'}</option>`).join('');
+            }
+        }
+
+        async function carregarPerguntasModelo(id) {
+            const resp = await fetch(`backend/api.php?acao=obter_checklist&id=${id}`);
+            const json = await resp.json();
+            const box = document.getElementById('perguntas-dinamicas-vistoria');
+            if (!json.dados || !json.dados.perguntas || json.dados.perguntas.length === 0) {
+                box.innerHTML = '<div class="alert alert-light border small">Este modelo não possui perguntas específicas cadastradas.</div>';
+                return;
+            }
+            box.innerHTML = json.dados.perguntas.map((p, idx) => `
+                <div class="p-3 mb-2 bg-light border rounded">
+                    <label class="form-label fw-semibold small mb-1">${idx + 1}. ${p.texto}</label>
+                    ${p.tipo === 'sim_nao' ? `
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="resp_${p.id_pergunta}" value="sim" checked>
+                                <label class="form-check-label small">Sim (Conforme)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="resp_${p.id_pergunta}" value="nao" onchange="document.getElementById('status_conformidade').value='nao_conforme'">
+                                <label class="form-check-label small text-danger">Não (Fora do Padrão)</label>
+                            </div>
+                        </div>
+                    ` : `<input type="${p.tipo === 'numero' ? 'number' : 'text'}" class="form-control form-control-sm" placeholder="Informe a resposta...">`}
+                </div>
+            `).join('');
+        }
+
+        document.addEventListener('DOMContentLoaded', inicializarVistoria);
+    </script>
 </body>
 
 </html>

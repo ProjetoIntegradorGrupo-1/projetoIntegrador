@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['opcao'])) {
             header("Location: excluirChecklist.html");
             break;
         case 'preencher_checklist':
-            header("Location: preencherChecklist.html");
+            header("Location: cadcheck.html");
             break;
         default:
             header("Location: oqfazer.php?erro=opcao_invalida");

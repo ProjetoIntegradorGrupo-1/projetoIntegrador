@@ -1,0 +1,229 @@
+/* frontend/css/axion-web.css — Estilo Web Desktop & Mobile Responsivo do Sistema Axion */
+
+:root {
+    --axion-primary: #0f4c81;
+    --axion-primary-dark: #0a355c;
+    --axion-accent: #2563eb;
+    --axion-bg: #f1f5f9;
+    --axion-surface: #ffffff;
+    --axion-border: #e2e8f0;
+    --axion-text: #0f172a;
+    --axion-muted: #64748b;
+}
+
+body {
+    background-color: var(--axion-bg) !important;
+    color: var(--axion-text);
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top Navbar Web */
+.axion-navbar {
+    background: linear-gradient(135deg, var(--axion-primary-dark) 0%, var(--axion-primary) 55%, var(--axion-accent) 100%);
+    box-shadow: 0 4px 16px rgba(15, 76, 129, 0.18);
+    padding: 0.75rem 0;
+}
+
+.axion-brand {
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    font-size: 1.35rem;
+    color: #fff !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.axion-brand-badge {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Containers Web largos no Desktop e fluidos no Mobile */
+.axion-web-container {
+    max-width: 1320px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.75rem 1.25rem;
+    flex: 1;
+}
+
+.axion-form-card {
+    background: var(--axion-surface);
+    border: 1px solid var(--axion-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    padding: 2rem;
+    width: 100%;
+    max-width: 1040px;
+    margin: 0 auto;
+}
+
+/* Cards de KPI / Estatísticas */
+.axion-stat-card {
+    background: var(--axion-surface);
+    border: 1px solid var(--axion-border);
+    border-radius: 14px;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+}
+
+.axion-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.axion-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+/* Abas de Navegação Principais */
+.axion-nav-tabs {
+    border-bottom: 2px solid var(--axion-border);
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1px;
+}
+
+.axion-nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 10px 10px 0 0;
+    color: var(--axion-muted);
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.axion-nav-tabs .nav-link:hover {
+    color: var(--axion-primary);
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.axion-nav-tabs .nav-link.active {
+    color: var(--axion-accent);
+    background: var(--axion-surface);
+    border-bottom-color: var(--axion-accent);
+    box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.03);
+}
+
+/* Botões de Ação Direta (Substitutos dos antigos Radio Buttons) */
+.axion-action-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--axion-surface);
+    border: 1px solid var(--axion-border);
+    border-radius: 14px;
+    padding: 1.35rem;
+    text-decoration: none;
+    color: var(--axion-text);
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.axion-action-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--axion-accent);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+    color: var(--axion-text);
+}
+
+.axion-action-card .action-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    margin-bottom: 0.9rem;
+}
+
+.axion-action-card .action-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.35rem;
+}
+
+.axion-action-card .action-desc {
+    color: var(--axion-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+/* Tabelas de Busca e Listagem */
+.axion-table-wrapper {
+    background: var(--axion-surface);
+    border: 1px solid var(--axion-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.axion-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--axion-border);
+}
+
+.axion-table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    font-size: 0.92rem;
+}
+
+/* Seções de formulário agrupadas */
+.axion-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--axion-primary);
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.45rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .axion-form-card {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+    .axion-web-container {
+        padding: 1rem 0.75rem;
+    }
+}

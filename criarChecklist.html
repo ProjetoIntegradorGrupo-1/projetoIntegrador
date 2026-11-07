@@ -4,44 +4,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar Checklist Inteligente - Axion</title>
-    <!-- CSS do Bootstrap -->
+    <title>Criar Checklist Inteligente - Axion Web</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body class="bg-light">
+<body>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 800px; width: 100%;">
-            <h1 class="h4 text-center mb-1">Criar Novo Checklist</h1>
-            <p class="text-muted text-center small mb-4">Monte as perguntas principais e adicione subperguntas condicionais</p>
+    <nav class="axion-navbar text-white">
+        <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
+            <a href="oqfazer.php" class="axion-brand">
+                <i class="bi bi-truck-front-fill fs-4"></i>
+                <span>AXION</span>
+                <span class="axion-brand-badge">Criar Checklist</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="oqfazer.php?aba=checklists" class="btn btn-sm btn-light fw-semibold"><i class="bi bi-search me-1"></i>Buscar Checklists</a>
+                <a href="oqfazer.php" class="btn btn-sm btn-outline-light"><i class="bi bi-grid-1x2 me-1"></i>Painel Principal</a>
+            </div>
+        </div>
+    </nav>
 
-            <form action="salvar_checklist_dinamico.php" method="post" id="formCriarChecklist">
-                <!-- Informações Básicas do Checklist -->
-                <div class="mb-3">
-                    <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
-                    <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Vistoria Diária de Segurança" required>
+    <main class="axion-web-container">
+        <div class="axion-form-card" style="max-width: 960px;">
+            <h1 class="h4 fw-bold mb-1"><i class="bi bi-file-earmark-plus-fill text-primary me-2"></i>Criar Novo Modelo de Checklist</h1>
+            <p class="text-muted small mb-4">Monte as perguntas principais e adicione subperguntas condicionais para orientar as vistorias.</p>
+
+            <form action="criar_checklist_dinamico.php" method="post" id="formCriarChecklist">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
+                        <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Vistoria Diária de Segurança" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
+                        <select id="categoriaChecklist" name="categoria" class="form-select" required>
+                            <option value="" selected disabled>Selecione...</option>
+                            <option value="eletrico">Elétrico</option>
+                            <option value="mecanico">Mecânico</option>
+                            <option value="estetico">Estético</option>
+                            <option value="seguranca">Segurança</option>
+                            <option value="pre_viagem">Pré-Viagem</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="descricaoChecklist" class="form-label fw-bold">Descrição Resumida</label>
+                        <input type="text" id="descricaoChecklist" name="descricao" class="form-control" placeholder="Ex: Inspeção de rotina pré-turno">
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
-                    <select id="categoriaChecklist" name="categoria" class="form-select" required>
-                        <option value="" selected disabled>Selecione uma categoria...</option>
-                        <option value="eletrico">Elétrico</option>
-                        <option value="mecanico">Mecânico</option>
-                        <option value="estetico">Estético</option>
-                        <option value="outros">Outros</option>
-                    </select>
-                </div>
-
-                <hr class="my-4">
-
+                <hr class="my-3">
                 <h2 class="h6 fw-bold mb-3">Perguntas do Checklist</h2>
 
-                <!-- Área onde as perguntas dinâmicas serão inseridas -->
                 <div id="containerPerguntas">
-                    
-                    <!-- PERGUNTA 1 (PAI) -->
                     <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_1">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge bg-primary fs-6">Pergunta 1</span>
@@ -70,62 +87,48 @@
                             </div>
                         </div>
 
-                        <!-- CONTAINER DE SUBPERGUNTAS DA PERGUNTA 1 -->
-                        <div id="subperguntas_container_1" class="ms-4 ps-3 border-start border-3 border-primary mb-3">
-                            <!-- As subperguntas serão inseridas aqui dinamicamente -->
-                        </div>
+                        <div id="subperguntas_container_1" class="ms-4 ps-3 border-start border-3 border-primary mb-3"></div>
 
-                        <!-- Botão para Inserir Subpergunta -->
                         <div class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarSubpergunta(1)">
                                 + Adicionar Subpergunta (Condicional)
                             </button>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- Botão para Adicionar Pergunta Principal -->
                 <div class="mb-4 text-center">
                     <button type="button" class="btn btn-outline-success w-100" onclick="adicionarPergunta()">
                         + Adicionar Nova Pergunta Principal
                     </button>
                 </div>
 
-                <!-- Botões de Ação -->
-                <div class="d-grid gap-2">
-                    <input type="submit" value="Salvar Checklist" class="btn btn-primary">
-                    <a href="oqfazer.php" class="btn btn-outline-secondary">Cancelar e Voltar</a>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="oqfazer.php?aba=checklists" class="btn btn-outline-secondary">Cancelar e Voltar</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check2-circle me-1"></i>Salvar Checklist</button>
                 </div>
             </form>
         </div>
-    </div>
+    </main>
 
-    <!-- Script JavaScript Dinâmico -->
     <script>
         let contadorPerguntas = 1;
-        // Objeto para controlar a contagem independente de subperguntas de cada pergunta pai
         let contadoresSubperguntas = { 1: 0 };
 
-        // Adiciona uma Pergunta Principal (Pai)
         function adicionarPergunta() {
             contadorPerguntas++;
-            contadoresSubperguntas[contadorPerguntas] = 0; // Inicializa o contador de filhas da nova pergunta
-
+            contadoresSubperguntas[contadorPerguntas] = 0;
             const container = document.getElementById('containerPerguntas');
-            
             const novoHtml = `
                 <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_${contadorPerguntas}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="badge bg-primary fs-6">Pergunta ${contadorPerguntas}</span>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_${contadorPerguntas}')">Excluir Pergunta ${contadorPerguntas}</button>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Texto da Pergunta</label>
                         <input type="text" name="perguntas[${contadorPerguntas}][texto]" class="form-control" placeholder="Digite a pergunta principal..." required>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2">
                             <label class="form-label fw-semibold">Tipo de Resposta</label>
@@ -142,11 +145,7 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- CONTAINER DE SUBPERGUNTAS -->
                     <div id="subperguntas_container_${contadorPerguntas}" class="ms-4 ps-3 border-start border-3 border-primary mb-3"></div>
-
-                    <!-- Botão para Inserir Subpergunta -->
                     <div class="text-end">
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarSubpergunta(${contadorPerguntas})">
                             + Adicionar Subpergunta (Condicional)
@@ -154,23 +153,19 @@
                     </div>
                 </div>
             `;
-            
             container.insertAdjacentHTML('beforeend', novoHtml);
         }
 
-        // Adiciona uma Subpergunta (Filha) aninhada à pergunta pai correspondente
         function adicionarSubpergunta(idPai) {
             contadoresSubperguntas[idPai]++;
             const subId = contadoresSubperguntas[idPai];
             const containerSub = document.getElementById(`subperguntas_container_${idPai}`);
-
             const subHtml = `
                 <div class="card p-3 mb-2 bg-light border subpergunta-item" id="subpergunta_${idPai}_${subId}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="badge bg-info text-dark">Subpergunta ${idPai}.${subId}</span>
                         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0" onclick="removerElemento('subpergunta_${idPai}_${subId}')">Remover Subpergunta</button>
                     </div>
-
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <label class="form-label small fw-bold text-primary">Exibir se Pergunta ${idPai} for:</label>
@@ -184,7 +179,6 @@
                             <input type="text" name="perguntas[${idPai}][subperguntas][${subId}][texto]" class="form-control form-control-sm" placeholder="Ex: Qual o local e tamanho da avaria?" required>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-2">
                             <label class="form-label small fw-semibold">Tipo de Resposta</label>
@@ -203,13 +197,11 @@
                     </div>
                 </div>
             `;
-
             containerSub.insertAdjacentHTML('beforeend', subHtml);
         }
 
         function removerPergunta(idElemento) {
-            const listaPerguntas = document.querySelectorAll('.pergunta-item');
-            if (listaPerguntas.length > 1) {
+            if (document.querySelectorAll('.pergunta-item').length > 1) {
                 document.getElementById(idElemento).remove();
             } else {
                 alert('O checklist deve conter pelo menos uma pergunta principal.');
@@ -220,8 +212,6 @@
             document.getElementById(idElemento).remove();
         }
     </script>
-
-    <!-- JS do Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

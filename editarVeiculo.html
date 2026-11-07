@@ -4,104 +4,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Veículo - Axion</title>
-    <!-- CSS do Bootstrap -->
+    <title>Editar Veículo - Axion Web</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body class="bg-light">
+<body>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
-            <h1 class="h4 text-center mb-4">Editar Veículo</h1>
+    <nav class="axion-navbar text-white">
+        <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
+            <a href="oqfazer.php" class="axion-brand">
+                <i class="bi bi-truck-front-fill fs-4"></i>
+                <span>AXION</span>
+                <span class="axion-brand-badge">Editar Veículo</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="oqfazer.php?aba=veiculos" class="btn btn-sm btn-light fw-semibold"><i class="bi bi-search me-1"></i>Buscar Carros</a>
+                <a href="oqfazer.php" class="btn btn-sm btn-outline-light"><i class="bi bi-grid-1x2 me-1"></i>Painel Principal</a>
+            </div>
+        </div>
+    </nav>
 
-            <!-- 1. BLOCO DE BUSCA DO VEÍCULO -->
-            <form action="buscar_veiculo.php" method="get" class="mb-4 p-3 bg-light border rounded">
-                <label for="select-veiculo" class="form-label fw-bold">Selecione o Veículo para Editar</label>
-                <div class="input-group">
-                    <select id="select-veiculo" name="id_veiculo" class="form-select" required>
-                        <option value="" selected disabled>Escolha um veículo cadastrado...</option>
-                        <option value="1">ABC-1D23 | VW Gol - Prata</option>
-                        <option value="2">XYZ-9876 | Fiat Uno - Branco</option>
-                    </select>
-                    <button class="btn btn-outline-primary" type="submit">Carregar Dados</button>
-                </div>
-            </form>
+    <main class="axion-web-container">
+        <div class="axion-form-card" style="max-width: 860px;">
+            <h1 class="h4 fw-bold mb-3"><i class="bi bi-wrench-adjustable-circle text-primary me-2"></i>Editar Veículo da Frota</h1>
 
-            <hr class="my-4">
-
-            <!-- 2. FORMULÁRIO DE EDIÇÃO DO VEÍCULO -->
-            <form action="processar_edicao_veiculo.php" method="post">
-                <!-- ID Oculto do Veículo para o Backend -->
-                <input type="hidden" name="id_veiculo" value="1">
-
-                <div class="row">
-                    <!-- Marca -->
-                    <div class="col-md-6 mb-3">
-                        <label for="marca" class="form-label">Marca</label>
-                        <input type="text" id="marca" name="marca" class="form-control" value="Volkswagen" required>
+            <!-- 1. BUSCA E SELEÇÃO DO VEÍCULO -->
+            <div class="mb-4 p-3 bg-light border rounded">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label for="filtro-veiculo" class="form-label small fw-bold mb-1">Filtrar por Placa ou Modelo</label>
+                        <input type="text" id="filtro-veiculo" class="form-control" placeholder="Ex: ABC1D23, Hilux, Gol..." oninput="carregarListaVeiculos(this.value)">
                     </div>
-
-                    <!-- Modelo -->
-                    <div class="col-md-6 mb-3">
-                        <label for="modelo" class="form-label">Modelo</label>
-                        <input type="text" id="modelo" name="modelo" class="form-control" value="Gol 1.0" required>
+                    <div class="col-md-7">
+                        <label for="select-veiculo" class="form-label small fw-bold mb-1">Selecione o Veículo</label>
+                        <select id="select-veiculo" class="form-select" onchange="carregarVeiculoPorId(this.value)">
+                            <option value="">Carregando frota...</option>
+                        </select>
                     </div>
                 </div>
+            </div>
+
+            <!-- 2. FORMULÁRIO DE EDIÇÃO -->
+            <form action="backend/api.php?acao=salvar_edicao_veiculo" method="post">
+                <input type="hidden" name="id_veiculo" id="id_veiculo" value="1">
 
                 <div class="row">
-                    <!-- Ano -->
-                    <div class="col-md-6 mb-3">
-                        <label for="ano" class="form-label">Ano</label>
-                        <input type="number" id="ano" name="ano" class="form-control" value="2022" min="1900" max="2099" required>
+                    <div class="col-md-4 mb-3">
+                        <label for="marca" class="form-label fw-semibold">Marca</label>
+                        <input type="text" id="marca" name="marca" class="form-control" required>
                     </div>
-
-                    <!-- Placa -->
-                    <div class="col-md-6 mb-3">
-                        <label for="placa" class="form-label">Placa</label>
-                        <input type="text" id="placa" name="placa" class="form-control text-uppercase" value="ABC1D23" maxlength="7" required>
+                    <div class="col-md-5 mb-3">
+                        <label for="modelo" class="form-label fw-semibold">Modelo</label>
+                        <input type="text" id="modelo" name="modelo" class="form-control" required>
                     </div>
-                </div>
-
-                <div class="row">
-                    <!-- Cor -->
-                    <div class="col-md-6 mb-3">
-                        <label for="cor" class="form-label">Cor</label>
-                        <input type="text" id="cor" name="cor" class="form-control" value="Prata" required>
-                    </div>
-
-                    <!-- Km Rodado -->
-                    <div class="col-md-6 mb-3">
-                        <label for="kmrodado" class="form-label">Km Rodado</label>
-                        <input type="number" id="kmrodado" name="kmrodado" class="form-control" value="45000" min="0" required>
+                    <div class="col-md-3 mb-3">
+                        <label for="ano" class="form-label fw-semibold">Ano</label>
+                        <input type="number" id="ano" name="ano" class="form-control" min="1980" max="2030" required>
                     </div>
                 </div>
 
                 <div class="row">
-                    <!-- Renavam -->
-                    <div class="col-md-6 mb-3">
-                        <label for="renavam" class="form-label">Renavam</label>
-                        <input type="text" id="renavam" name="renavam" class="form-control" value="12345678901" required>
+                    <div class="col-md-4 mb-3">
+                        <label for="placa" class="form-label fw-semibold">Placa</label>
+                        <input type="text" id="placa" name="placa" data-mask="placa" class="form-control text-uppercase font-monospace" maxlength="7" required>
                     </div>
-
-                    <!-- Chassi -->
-                    <div class="col-md-6 mb-3">
-                        <label for="chassi" class="form-label">Chassi</label>
-                        <input type="text" id="chassi" name="chassi" class="form-control text-uppercase" value="9BWZZZ377VT000000" required>
+                    <div class="col-md-4 mb-3">
+                        <label for="cor" class="form-label fw-semibold">Cor</label>
+                        <input type="text" id="cor" name="cor" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="kmrodado" class="form-label fw-semibold">Km Rodado</label>
+                        <input type="number" id="kmrodado" name="kmrodado" class="form-control" min="0" required>
                     </div>
                 </div>
 
-                <!-- Botões de Ação -->
-                <div class="d-grid gap-2 mt-3">
-                    <input type="submit" value="Salvar Alterações" class="btn btn-primary">
-                    <a href="oqfazer.php" class="btn btn-outline-secondary">Cancelar e Voltar</a>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="renavam" class="form-label fw-semibold">Renavam</label>
+                        <input type="text" id="renavam" name="renavam" data-mask="renavam" class="form-control font-monospace" maxlength="11" required>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="chassi" class="form-label fw-semibold">Chassi</label>
+                        <input type="text" id="chassi" name="chassi" data-mask="chassi" class="form-control text-uppercase font-monospace" maxlength="17" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="status" class="form-label fw-semibold">Status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="ativo">Ativo</option>
+                            <option value="em_rota">Em Rota</option>
+                            <option value="manutencao">Manutenção</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="oqfazer.php?aba=veiculos" class="btn btn-outline-secondary">Cancelar e Voltar</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
                 </div>
             </form>
         </div>
-    </div>
+    </main>
 
-    <!-- JS do Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
+    <script>
+        async function carregarListaVeiculos(termo = '') {
+            const resp = await fetch(`backend/api.php?acao=buscar&tipo=veiculos&q=${encodeURIComponent(termo)}&limite=200`);
+            const json = await resp.json();
+            const sel = document.getElementById('select-veiculo');
+            if (!json.dados || json.dados.length === 0) {
+                sel.innerHTML = '<option value="">Nenhum veículo encontrado</option>';
+                return;
+            }
+            sel.innerHTML = json.dados.map(v =>
+                `<option value="${v.id_veiculo}">${v.placa} | ${v.marca_modelo} (${v.cor || '-'}) - ${v.status.toUpperCase()}</option>`
+            ).join('');
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId && !termo) {
+                sel.value = urlId;
+                carregarVeiculoPorId(urlId);
+            } else if (json.dados[0]) {
+                carregarVeiculoPorId(json.dados[0].id_veiculo);
+            }
+        }
+
+        async function carregarVeiculoPorId(id) {
+            if (!id) return;
+            const resp = await fetch(`backend/api.php?acao=obter_veiculo&id=${id}`);
+            const json = await resp.json();
+            if (!json.dados) return;
+            const v = json.dados;
+            document.getElementById('id_veiculo').value = v.id_veiculo;
+            document.getElementById('marca').value = v.marca || (v.marca_modelo || '').split(' ')[0] || '';
+            document.getElementById('modelo').value = v.modelo || v.marca_modelo || '';
+            document.getElementById('ano').value = v.ano || 2023;
+            document.getElementById('placa').value = v.placa || '';
+            document.getElementById('cor').value = v.cor || 'Branco';
+            document.getElementById('kmrodado').value = v.km_rodado || 0;
+            document.getElementById('renavam').value = v.renavam || '';
+            document.getElementById('chassi').value = v.chassi || '';
+            document.getElementById('status').value = v.status || 'ativo';
+        }
+        document.addEventListener('DOMContentLoaded', () => carregarListaVeiculos());
+    </script>
 </body>
 
 </html>

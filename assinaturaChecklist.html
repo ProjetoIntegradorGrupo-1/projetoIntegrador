@@ -173,11 +173,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             setTimeout(function () {
-                // Envia o formulário para o backend (ou diretamente redireciona para a página principal)
-                document.getElementById('formAssinaturas').submit();
-                // Redirecionamento de segurança para o fluxo da interface
-                window.location.href = "oqfazer.html";
-            }, 2000);
+                // Redireciona para o painel web de checklists após concluir
+                window.location.href = "oqfazer.php?aba=checklists&sucesso=checklist_criado";
+            }, 1500);
         }
 
         // Inicializa a captura de ambos os quadros de assinatura ao carregar a tela

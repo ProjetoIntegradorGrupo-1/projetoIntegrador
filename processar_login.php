@@ -1,39 +1,53 @@
 <?php
 // processar_login.php
-session_start(); // Inicia a sessão para guardar os dados do usuário logado
-require_once 'conexao.php'; // Puxa a conexão com o banco
+session_start();
+require_once 'conexao.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $user = trim($_POST['txtuser']);
-    $senha_digitada = trim($_POST['txtsenha']);
+    $user = trim($_POST['txtuser'] ?? '');
+    $senha_digitada = trim($_POST['txtsenha'] ?? '');
+    $cpf_limpo = preg_replace('/\D/', '', $user);
+    $cpf_mascarado = (strlen($cpf_limpo) === 11)
+        ? substr($cpf_limpo, 0, 3) . '.' . substr($cpf_limpo, 3, 3) . '.' . substr($cpf_limpo, 6, 3) . '-' . substr($cpf_limpo, 9, 2)
+        : $user;
 
-    // Busca o usuário no banco (aceita tanto E-mail quanto CPF/Matrícula)
-    $sql = "SELECT id_usuario, nome, senha, perfil FROM Usuarios WHERE email = :user OR cpf_matricula = :user LIMIT 1";
+    // Aceita atalho de perfil (admin, supervisor, motorista, cliente), e-mail ou CPF (com ou sem máscara)
+    $atalhos = [
+        'admin'      => 'admin@axion.com',
+        'supervisor' => 'supervisor@axion.com',
+        'motorista'  => 'motorista@axion.com',
+        'cliente'    => 'cliente@axion.com'
+    ];
+    $buscaEmail = $atalhos[strtolower($user)] ?? $user;
+
+    $sql = "SELECT id_usuario, nome, email, senha, perfil
+            FROM Usuarios
+            WHERE email = :email
+               OR cpf_matricula = :user
+               OR cpf_matricula = :cpf_masc
+            LIMIT 1";
     $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':user', $user);
-    $stmt->execute();
+    $stmt->execute([
+        ':email'    => $buscaEmail,
+        ':user'     => $user,
+        ':cpf_masc' => $cpf_mascarado
+    ]);
 
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Verifica se o usuário existe e se a senha bate
-    // Nota: Usar password_verify() é a prática correta de mercado para senhas criptografadas.
     if ($usuario && password_verify($senha_digitada, $usuario['senha'])) {
-        
-        // Login bem-sucedido: guarda os dados na sessão
-        $_SESSION['id_usuario'] = $usuario['id_usuario'];
-        $_SESSION['nome_usuario'] = $usuario['nome'];
+        $_SESSION['id_usuario']     = $usuario['id_usuario'];
+        $_SESSION['nome_usuario']   = $usuario['nome'];
+        $_SESSION['email_usuario']  = $usuario['email'];
         $_SESSION['perfil_usuario'] = $usuario['perfil'];
 
-        // Redireciona para o menu principal
         header("Location: oqfazer.php");
         exit;
     } else {
-        // Falha no login: redireciona de volta com erro
         header("Location: index.html?erro=credenciais_invalidas");
         exit;
     }
 } else {
-    // Se tentarem acessar a página diretamente sem enviar o formulário
     header("Location: index.html");
     exit;
 }

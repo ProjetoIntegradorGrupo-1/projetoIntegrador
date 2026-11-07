@@ -1,13 +1,13 @@
 # Project Manifest
 
 **Framework:** ScrumAIDev
-**Status do projeto:** UNDEFINED
-**Projeto atual:** A definir
-**Origem do contexto:** A definir (figma | código | usuário | híbrido)
-**Confiança do contexto:** baixa
-**Contexto processado:** não
-**Estado operacional:** Pré-inicialização — sem sprint ativa, sem backlog gerado
-**Última atualização:** N/A
+**Status do projeto:** ACTIVE
+**Projeto atual:** Axion — Sistema Web de Gestão de Frota, Usuários e Checklists
+**Origem do contexto:** híbrido (código PHP/HTML existente + requisitos do usuário/professor)
+**Confiança do contexto:** alta
+**Contexto processado:** sim
+**Estado operacional:** Implementação das melhorias pós-entrega concluída (`docs/discovery/melhorias-axion-pos-entrega.md`)
+**Última atualização:** 2026-11-07
 
 ## GitHub Planning Defaults
 

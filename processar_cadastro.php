@@ -3,58 +3,90 @@
 session_start();
 require_once 'conexao.php';
 
-// Verifica se a requisição foi feita via POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    
-    // Captura e limpa os dados enviados pelo formulário
-    $nome          = trim($_POST['nome']);
-    $sobrenome     = trim($_POST['sobrenome']);
-    $nome_completo = $nome . ' ' . $sobrenome; // Unimos nome e sobrenome para a coluna 'nome' da tabela
-    $email         = trim($_POST['email']);
-    $cpf           = trim($_POST['cpf']);
-    
-    // Define uma senha padrão temporária para o novo usuário cadastrado (ex: 'mudar123')
-    // e usa password_hash() para criptografá-la de forma segura
-    $senha_padrao  = 'mudar123';
-    $senha_cripto  = password_hash($senha_padrao, PASSWORD_DEFAULT);
-    
-    // Define o perfil com base na URL de ação ou padrão 'motorista'
-    // Como a tabela unificada aceita os perfis, definimos 'motorista' como padrão geral
-    $perfil        = 'motorista'; 
+    $nome          = trim($_POST['nome'] ?? '');
+    $sobrenome     = trim($_POST['sobrenome'] ?? '');
+    $nome_completo = trim($nome . ($sobrenome !== '' ? ' ' . $sobrenome : ''));
+    $email         = trim($_POST['email'] ?? '');
+    $cpf           = trim($_POST['cpf'] ?? '');
+    $dt_nasc       = !empty($_POST['dtNascimento']) ? $_POST['dtNascimento'] : null;
+    $genero        = trim($_POST['genero'] ?? '');
+    $cnh           = preg_replace('/\D/', '', $_POST['cnh'] ?? '');
+    $validade_cnh  = !empty($_POST['validade-cnh']) ? $_POST['validade-cnh'] : null;
+    $categoria_cnh = strtoupper(trim($_POST['categoria-cnh'] ?? 'B'));
+    $cep           = trim($_POST['cep'] ?? '');
+    $logradouro    = trim($_POST['logradouro'] ?? '');
+    $numero        = trim($_POST['numero'] ?? '');
+    $bairro        = trim($_POST['bairro'] ?? '');
+    $cidade        = trim($_POST['cidade'] ?? '');
+    $estado        = strtoupper(trim($_POST['estado'] ?? ''));
+    $telefone      = trim($_POST['telefone'] ?? '');
 
-    try {
-        // Prepara a instrução SQL para inserir na tabela 'Usuarios' que criamos no DBeaver
-        $sql = "INSERT INTO Usuarios (nome, email, senha, cpf_matricula, perfil) 
-                VALUES (:nome, :email, :senha, :cpf_matricula, :perfil)";
-        
-        $stmt = $pdo->prepare($sql);
-        
-        // Associa os parâmetros com segurança (proteção contra SQL Injection)
-        $stmt->bindParam(':nome', $nome_completo);
-        $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':senha', $senha_cripto);
-        $stmt->bindParam(':cpf_matricula', $cpf);
-        $stmt->bindParam(':perfil', $perfil);
-        
-        // Executa o comando no banco de dados
-        $stmt->execute();
-
-        // Sucesso: redireciona de volta ao menu com uma mensagem ou alerta de sucesso
-        header("Location: oqfazer.php?sucesso=usuario_cadastrado");
-        exit;
-
-    } catch (PDOException $e) {
-        // Se houver erro (por exemplo, CPF ou E-mail duplicado no banco)
-        // Redireciona com a mensagem de erro
+    // Validação redundante de CPF no Backend
+    if (!axion_validar_cpf($cpf)) {
         echo "<script>
-                alert('Erro ao cadastrar usuário: " . addslashes($e->getMessage()) . "');
-                window.location.href = 'cadastrarUsuario.html';
+                alert('CPF inválido! Verifique os dígitos verificadores informados.');
+                window.history.back();
               </script>";
         exit;
     }
 
+    // Formata CPF no padrão 000.000.000-00
+    $cpf_digitos = preg_replace('/\D/', '', $cpf);
+    $cpf_formatado = substr($cpf_digitos, 0, 3) . '.' . substr($cpf_digitos, 3, 3) . '.' . substr($cpf_digitos, 6, 3) . '-' . substr($cpf_digitos, 9, 2);
+
+    $senha_padrao = !empty($_POST['senha']) ? trim($_POST['senha']) : 'mudar123';
+    $senha_cripto = password_hash($senha_padrao, PASSWORD_DEFAULT);
+
+    $perfil_solicitado = strtolower(trim($_POST['perfil'] ?? ($perfil_forcado ?? 'motorista')));
+    if (!in_array($perfil_solicitado, ['admin', 'supervisor', 'motorista', 'cliente'], true)) {
+        $perfil_solicitado = 'motorista';
+    }
+
+    try {
+        $sql = "INSERT INTO Usuarios (
+                    nome, sobrenome, email, senha, cpf_matricula, perfil,
+                    data_nascimento, genero, cnh, validade_cnh, categoria_cnh,
+                    cep, logradouro, numero, bairro, cidade, estado, telefone, status
+                ) VALUES (
+                    :nome, :sobrenome, :email, :senha, :cpf_matricula, :perfil,
+                    :dt_nasc, :genero, :cnh, :val_cnh, :cat_cnh,
+                    :cep, :logradouro, :numero, :bairro, :cidade, :estado, :telefone, 'ativo'
+                )";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':nome'          => $nome_completo,
+            ':sobrenome'     => $sobrenome,
+            ':email'         => $email,
+            ':senha'         => $senha_cripto,
+            ':cpf_matricula' => $cpf_formatado,
+            ':perfil'        => $perfil_solicitado,
+            ':dt_nasc'       => $dt_nasc,
+            ':genero'        => $genero,
+            ':cnh'           => $cnh,
+            ':val_cnh'       => $validade_cnh,
+            ':cat_cnh'       => $categoria_cnh,
+            ':cep'           => $cep,
+            ':logradouro'    => $logradouro,
+            ':numero'        => $numero,
+            ':bairro'        => $bairro,
+            ':cidade'        => $cidade,
+            ':estado'        => $estado,
+            ':telefone'      => $telefone
+        ]);
+
+        header("Location: oqfazer.php?aba=usuarios&sucesso={$perfil_solicitado}_cadastrado");
+        exit;
+
+    } catch (PDOException $e) {
+        echo "<script>
+                alert('Erro ao cadastrar usuário (CPF ou E-mail já existente?): " . addslashes($e->getMessage()) . "');
+                window.history.back();
+              </script>";
+        exit;
+    }
 } else {
-    // Se acessado diretamente sem enviar o formulário, redireciona para o menu
     header("Location: oqfazer.php");
     exit;
 }
