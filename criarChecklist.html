@@ -209,19 +209,23 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-2">
+                        <div class="col-md-5 mb-2">
                             <label class="form-label small fw-semibold">Tipo de Resposta</label>
                             <select name="perguntas[${idPai}][subperguntas][${subId}][tipo]" class="form-select form-select-sm" required>
-                                <option value="texto" selected>Texto Curto (Observação)</option>
+                                <option value="texto_foto" selected>Texto + Foto da Não Conformidade (Câmera/Anexo)</option>
+                                <option value="texto">Apenas Texto Curto (Observação)</option>
                                 <option value="sim_nao">Sim / Não</option>
                                 <option value="numero">Número</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                        <div class="col-md-7 mb-2 d-flex align-items-end gap-3">
                             <div class="form-check mb-1">
                                 <input class="form-check-input" type="checkbox" name="perguntas[${idPai}][subperguntas][${subId}][obrigatorio]" value="1" id="sub_req_${idPai}_${subId}" checked>
                                 <label class="form-check-label small" for="sub_req_${idPai}_${subId}">Obrigatória se visível</label>
                             </div>
+                            <span class="badge bg-warning-subtle text-dark border border-warning small mb-1">
+                                <i class="bi bi-camera-fill text-danger me-1"></i>Abre botão de Foto/Anexo na vistoria
+                            </span>
                         </div>
                     </div>
                 </div>
