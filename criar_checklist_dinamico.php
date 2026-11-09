@@ -11,39 +11,39 @@ if (!isset($_SESSION['id_usuario'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_criador = (int)$_SESSION['id_usuario'];
     $titulo     = trim($_POST['titulo'] ?? '');
-    $categoria  = trim($_POST['categoria'] ?? 'outros');
-    $descricao  = trim($_POST['descricao'] ?? "Checklist operacional da categoria $categoria");
+    $descricao  = trim($_POST['descricao'] ?? 'Checklist completo multicategoria de vistoria veicular');
 
     try {
         $pdo->beginTransaction();
 
         $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo)
-                VALUES (:id_criador, :titulo, :categoria, :descricao, 1)";
+                VALUES (:id_criador, :titulo, 'multicategoria', :descricao, 1)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':id_criador' => $id_criador,
             ':titulo'     => $titulo,
-            ':categoria'  => $categoria,
             ':descricao'  => $descricao
         ]);
         $idChecklist = (int)$pdo->lastInsertId();
 
-        // Salva perguntas principais e subperguntas condicionais
+        // Salva perguntas principais (cada uma com sua própria Categoria) e subperguntas condicionais
         if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
             $stmtPerg = $pdo->prepare("
                 INSERT INTO Checklist_Perguntas (
-                    id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
+                    id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
                 ) VALUES (
-                    :id_chk, :id_pai, :cond, :ordem, :texto, :tipo, :obrig, :esp, :ori
+                    :id_chk, :cat, :id_pai, :cond, :ordem, :texto, :tipo, :obrig, :esp, :ori
                 )
             ");
             $ordem = 1;
             foreach ($_POST['perguntas'] as $p) {
                 $textoP = trim($p['texto'] ?? '');
                 if ($textoP === '') continue;
+                $catPerg = trim($p['categoria'] ?? 'mecanico');
 
                 $stmtPerg->execute([
                     ':id_chk' => $idChecklist,
+                    ':cat'    => $catPerg,
                     ':id_pai' => null,
                     ':cond'   => null,
                     ':ordem'  => $ordem++,
@@ -62,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         if ($textoSub === '') continue;
                         $stmtPerg->execute([
                             ':id_chk' => $idChecklist,
+                            ':cat'    => $sub['categoria'] ?? $catPerg,
                             ':id_pai' => $idPai,
-                            ':cond'   => $sub['condicao'] ?? 'sim',
+                            ':cond'   => $sub['condicao'] ?? 'nao',
                             ':ordem'  => $subOrdem++,
                             ':texto'  => $textoSub,
                             ':tipo'   => $sub['tipo'] ?? 'texto',

@@ -15,6 +15,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $chassi       = strtoupper(trim($_POST['chassi'] ?? ''));
     $status       = isset($_POST['status']) ? trim($_POST['status']) : 'ativo';
 
+    if (strlen($renavam) !== 11) {
+        echo "<script>alert('Renavam inválido! O Renavam deve conter exatamente 11 dígitos.'); window.history.back();</script>";
+        exit;
+    }
+    if (strlen($chassi) !== 17) {
+        echo "<script>alert('Chassi inválido! O Chassi deve conter exatamente 17 caracteres.'); window.history.back();</script>";
+        exit;
+    }
+
     try {
         $sql = "INSERT INTO Veiculos (placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status)
                 VALUES (:placa, :marca, :modelo, :marca_modelo, :ano, :cor, :km_rodado, :renavam, :chassi, :status)";

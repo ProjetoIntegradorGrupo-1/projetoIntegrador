@@ -63,7 +63,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         async function inicializarExclusaoVeiculo() {
-            const resp = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=200');
+            const resp = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=0');
             const json = await resp.json();
             const sel = document.getElementById('select-veiculo');
             if (!json.dados || json.dados.length === 0) return;

@@ -1,20 +1,21 @@
 <?php
 /**
  * backend/api.php
- * Endpoints JSON e processadores de Busca, Edição, Exclusão e Vistoria para o Sistema Axion.
+ * Endpoints JSON e processadores de Busca (sem limite artificial), Edição, Exclusão e Vistoria para o Sistema Axion.
  */
 session_start();
 require_once __DIR__ . '/../conexao.php';
 
 $acao = $_REQUEST['acao'] ?? '';
 
-// 1. BUSCA GERAL / FILTRADA (JSON)
+// 1. BUSCA GERAL / FILTRADA (JSON — Retorna TODOS os registros por padrão)
 if ($acao === 'buscar') {
     header('Content-Type: application/json; charset=utf-8');
     $tipo = $_GET['tipo'] ?? 'veiculos';
     $termo = trim($_GET['q'] ?? '');
     $filtroExtra = trim($_GET['filtro'] ?? '');
-    $limite = min(250, max(10, (int)($_GET['limite'] ?? 100)));
+    $limiteParam = isset($_GET['limite']) ? (int)$_GET['limite'] : 0;
+    $sqlLimit = ($limiteParam > 0) ? " LIMIT $limiteParam" : " LIMIT 50000";
 
     if ($tipo === 'veiculos') {
         $sql = "SELECT id_veiculo, placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status
@@ -28,10 +29,11 @@ if ($acao === 'buscar') {
             $sql .= " AND status = :status";
             $params[':status'] = $filtroExtra;
         }
-        $sql .= " ORDER BY id_veiculo DESC LIMIT $limite";
+        $sql .= " ORDER BY id_veiculo DESC" . $sqlLimit;
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = $stmt->fetchAll();
+        echo json_encode(['sucesso' => true, 'total' => count($dados), 'dados' => $dados]);
         exit;
     }
 
@@ -48,10 +50,11 @@ if ($acao === 'buscar') {
             $sql .= " AND perfil = :perfil";
             $params[':perfil'] = $filtroExtra;
         }
-        $sql .= " ORDER BY FIELD(perfil, 'admin', 'supervisor', 'motorista', 'cliente'), id_usuario ASC LIMIT $limite";
+        $sql .= " ORDER BY FIELD(perfil, 'admin', 'supervisor', 'motorista', 'cliente'), id_usuario DESC" . $sqlLimit;
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = $stmt->fetchAll();
+        echo json_encode(['sucesso' => true, 'total' => count($dados), 'dados' => $dados]);
         exit;
     }
 
@@ -59,29 +62,31 @@ if ($acao === 'buscar') {
         $sql = "SELECT c.id_checklist, c.titulo, c.categoria, c.descricao, c.ativo, c.criado_em,
                        COALESCE(u.nome, 'Sistema Axion') AS criador_nome,
                        (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS total_perguntas,
+                       (SELECT GROUP_CONCAT(DISTINCT p.categoria SEPARATOR ',') FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS categorias_perguntas,
                        (SELECT COUNT(*) FROM Checklist_Execucoes e WHERE e.id_checklist = c.id_checklist) AS total_execucoes
                 FROM Checklists c
                 LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador
                 WHERE 1=1";
         $params = [];
         if ($termo !== '') {
-            $sql .= " AND (c.titulo LIKE :q OR c.categoria LIKE :q OR c.descricao LIKE :q)";
+            $sql .= " AND (c.titulo LIKE :q OR c.descricao LIKE :q OR EXISTS (SELECT 1 FROM Checklist_Perguntas pq WHERE pq.id_checklist = c.id_checklist AND pq.texto LIKE :q))";
             $params[':q'] = "%$termo%";
         }
         if ($filtroExtra !== '') {
-            $sql .= " AND c.categoria = :cat";
+            $sql .= " AND (c.categoria = :cat OR EXISTS (SELECT 1 FROM Checklist_Perguntas pf WHERE pf.id_checklist = c.id_checklist AND pf.categoria = :cat))";
             $params[':cat'] = $filtroExtra;
         }
-        $sql .= " ORDER BY c.id_checklist DESC LIMIT $limite";
+        $sql .= " ORDER BY c.id_checklist DESC" . $sqlLimit;
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = $stmt->fetchAll();
+        echo json_encode(['sucesso' => true, 'total' => count($dados), 'dados' => $dados]);
         exit;
     }
 
     if ($tipo === 'vistorias') {
         $sql = "SELECT e.*, COALESCE(c.titulo, 'Vistoria Geral de Frota') AS checklist_titulo,
-                       COALESCE(c.categoria, 'mecanico') AS checklist_categoria
+                       COALESCE(c.categoria, 'multicategoria') AS checklist_categoria
                 FROM Checklist_Execucoes e
                 LEFT JOIN Checklists c ON c.id_checklist = e.id_checklist
                 WHERE 1=1";
@@ -94,10 +99,11 @@ if ($acao === 'buscar') {
             $sql .= " AND e.status_conformidade = :st";
             $params[':st'] = $filtroExtra;
         }
-        $sql .= " ORDER BY e.data_vistoria DESC, e.id_execucao DESC LIMIT $limite";
+        $sql .= " ORDER BY e.data_vistoria DESC, e.id_execucao DESC" . $sqlLimit;
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        echo json_encode(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = $stmt->fetchAll();
+        echo json_encode(['sucesso' => true, 'total' => count($dados), 'dados' => $dados]);
         exit;
     }
 
@@ -114,6 +120,17 @@ if ($acao === 'obter_usuario') {
                            FROM Usuarios WHERE id_usuario = :id LIMIT 1");
     $stmt->execute([':id' => $id]);
     $user = $stmt->fetch();
+    if ($user) {
+        // Separa o primeiro nome caso a coluna nome guarde nome + sobrenome
+        $partesNome = preg_split('/\s+/', trim($user['nome'] ?? ''));
+        $userPrimeiroNome = $partesNome[0] ?? '';
+        $sobrenomeSalvo = trim($user['sobrenome'] ?? '');
+        if ($sobrenomeSalvo === '' && count($partesNome) > 1) {
+            $sobrenomeSalvo = implode(' ', array_slice($partesNome, 1));
+        }
+        $user['primeiro_nome'] = $userPrimeiroNome;
+        $user['sobrenome_calculado'] = $sobrenomeSalvo;
+    }
     echo json_encode(['sucesso' => (bool)$user, 'dados' => $user]);
     exit;
 }
@@ -135,7 +152,7 @@ if ($acao === 'obter_checklist') {
     $stmt->execute([':id' => $id]);
     $chk = $stmt->fetch();
     if ($chk) {
-        $stmtP = $pdo->prepare("SELECT * FROM Checklist_Perguntas WHERE id_checklist = :id ORDER BY ordem ASC, id_pergunta ASC");
+        $stmtP = $pdo->prepare("SELECT * FROM Checklist_Perguntas WHERE id_checklist = :id ORDER BY COALESCE(id_pergunta_pai, id_pergunta) ASC, id_pergunta_pai IS NOT NULL ASC, ordem ASC, id_pergunta ASC");
         $stmtP->execute([':id' => $id]);
         $chk['perguntas'] = $stmtP->fetchAll();
     }
@@ -166,7 +183,24 @@ if ($acao === 'salvar_edicao_usuario' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $telefone      = trim($_POST['telefone'] ?? '');
 
     if (!axion_validar_cpf($cpf)) {
-        header("Location: ../editarUsuario.html?id=$id&erro=cpf_invalido");
+        echo "<script>alert('CPF inválido!'); window.history.back();</script>";
+        exit;
+    }
+    if (strpos($email, '@') === false || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('E-mail inválido! Deve conter @ e um domínio válido.'); window.history.back();</script>";
+        exit;
+    }
+    if ($cnh !== '' && strlen($cnh) !== 11) {
+        echo "<script>alert('A CNH deve conter exatamente 11 dígitos!'); window.history.back();</script>";
+        exit;
+    }
+    $anoAtual = (int)date('Y');
+    if ($dtNasc && ((int)substr($dtNasc, 0, 4) < ($anoAtual - 100) || $dtNasc > date('Y-m-d'))) {
+        echo "<script>alert('Data de nascimento inválida: deve estar dentro dos últimos 100 anos.'); window.history.back();</script>";
+        exit;
+    }
+    if ($valCnh && (int)substr($valCnh, 0, 4) > ($anoAtual + 20)) {
+        echo "<script>alert('A validade da CNH não pode ultrapassar 20 anos à frente da data atual!'); window.history.back();</script>";
         exit;
     }
 
@@ -226,6 +260,15 @@ if ($acao === 'salvar_edicao_veiculo' && $_SERVER['REQUEST_METHOD'] === 'POST') 
     $chassi      = strtoupper(trim($_POST['chassi'] ?? ''));
     $status      = trim($_POST['status'] ?? 'ativo');
 
+    if (strlen($renavam) !== 11) {
+        echo "<script>alert('O Renavam deve conter exatamente 11 dígitos!'); window.history.back();</script>";
+        exit;
+    }
+    if (strlen($chassi) !== 17) {
+        echo "<script>alert('O Chassi deve conter exatamente 17 caracteres!'); window.history.back();</script>";
+        exit;
+    }
+
     $stmt = $pdo->prepare("
         UPDATE Veiculos SET
             placa = :placa, marca = :marca, modelo = :modelo, marca_modelo = :marca_modelo,
@@ -260,28 +303,31 @@ if ($acao === 'excluir_veiculo' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// 7. SALVAR EDIÇÃO DE CHECKLIST
+// 7. SALVAR EDIÇÃO DE CHECKLIST (Com Categoria por Pergunta!)
 if ($acao === 'salvar_edicao_checklist' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $id        = (int)($_POST['id_checklist'] ?? 0);
     $titulo    = trim($_POST['titulo'] ?? '');
-    $categoria = trim($_POST['categoria'] ?? 'outros');
     $descricao = trim($_POST['descricao'] ?? '');
 
     if ($id > 0 && $titulo !== '') {
-        $stmt = $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc WHERE id_checklist = :id");
-        $stmt->execute([':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':id' => $id]);
+        $stmt = $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = 'multicategoria', descricao = :desc WHERE id_checklist = :id");
+        $stmt->execute([':titulo' => $titulo, ':desc' => $descricao, ':id' => $id]);
 
         if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
             $pdo->prepare("DELETE FROM Checklist_Perguntas WHERE id_checklist = :id")->execute([':id' => $id]);
             $stmtP = $pdo->prepare("
-                INSERT INTO Checklist_Perguntas (id_checklist, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
-                VALUES (:id_chk, :ordem, :texto, :tipo, :obrig, :esp, :ori)
+                INSERT INTO Checklist_Perguntas (id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
+                VALUES (:id_chk, :cat, :id_pai, :cond, :ordem, :texto, :tipo, :obrig, :esp, :ori)
             ");
             $ordem = 1;
             foreach ($_POST['perguntas'] as $p) {
                 if (empty(trim($p['texto'] ?? ''))) continue;
+                $catPerg = trim($p['categoria'] ?? 'mecanico');
                 $stmtP->execute([
                     ':id_chk' => $id,
+                    ':cat'    => $catPerg,
+                    ':id_pai' => null,
+                    ':cond'   => null,
                     ':ordem'  => $ordem++,
                     ':texto'  => trim($p['texto']),
                     ':tipo'   => $p['tipo'] ?? 'sim_nao',
@@ -289,6 +335,26 @@ if ($acao === 'salvar_edicao_checklist' && $_SERVER['REQUEST_METHOD'] === 'POST'
                     ':esp'    => $p['resposta_esperada'] ?? 'sim',
                     ':ori'    => trim($p['orientacao'] ?? '')
                 ]);
+                $idPai = (int)$pdo->lastInsertId();
+
+                if (!empty($p['subperguntas']) && is_array($p['subperguntas'])) {
+                    $subOrdem = 1;
+                    foreach ($p['subperguntas'] as $sub) {
+                        if (empty(trim($sub['texto'] ?? ''))) continue;
+                        $stmtP->execute([
+                            ':id_chk' => $id,
+                            ':cat'    => $sub['categoria'] ?? $catPerg,
+                            ':id_pai' => $idPai,
+                            ':cond'   => $sub['condicao'] ?? 'nao',
+                            ':ordem'  => $subOrdem++,
+                            ':texto'  => trim($sub['texto']),
+                            ':tipo'   => $sub['tipo'] ?? 'texto',
+                            ':obrig'  => isset($sub['obrigatorio']) ? 1 : 0,
+                            ':esp'    => null,
+                            ':ori'    => null
+                        ]);
+                    }
+                }
             }
         }
     }
@@ -317,9 +383,19 @@ if ($acao === 'registrar_vistoria' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $horaVistoria    = $_POST['horavistoria'] ?? date('H:i:s');
     $kmRodado        = (int)($_POST['kmrodado'] ?? 0);
     $statusConf      = $_POST['status_conformidade'] ?? 'conforme';
-    $observacoes     = trim($_POST['observacoes'] ?? 'Vistoria registrada via portal web.');
+    $observacoes     = trim($_POST['observacoes'] ?? '');
 
-    // Busca id_veiculo pela placa se existir
+    // Concatena detalhes de avaria se preenchidos nas perguntas
+    if (!empty($_POST['detalhe_avaria']) && is_array($_POST['detalhe_avaria'])) {
+        $detalhesExtras = array_filter(array_map('trim', $_POST['detalhe_avaria']));
+        if (!empty($detalhesExtras)) {
+            $observacoes = trim($observacoes . ' | Detalhes de Avaria: ' . implode('; ', $detalhesExtras), ' |');
+        }
+    }
+    if ($observacoes === '') {
+        $observacoes = 'Vistoria registrada via portal web.';
+    }
+
     $stmtV = $pdo->prepare("SELECT id_veiculo FROM Veiculos WHERE placa = :placa LIMIT 1");
     $stmtV->execute([':placa' => $placa]);
     $idVeiculo = $stmtV->fetchColumn() ?: null;
@@ -353,7 +429,7 @@ if ($acao === 'registrar_vistoria' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// 10. TROCAR PERFIL DE DEMONSTRAÇÃO (Útil para o professor avaliar abas por Nível de Acesso)
+// 10. TROCAR PERFIL DE DEMONSTRAÇÃO
 if ($acao === 'trocar_perfil_demo') {
     $novoPerfil = $_GET['perfil'] ?? 'supervisor';
     if (in_array($novoPerfil, ['admin', 'supervisor', 'motorista', 'cliente'], true)) {

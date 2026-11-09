@@ -27,24 +27,63 @@
     </nav>
 
     <main class="axion-web-container">
-        <div class="axion-form-card" style="max-width: 860px;">
+        <div class="axion-form-card" style="max-width: 880px;">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
                 <div>
                     <h1 class="h4 fw-bold mb-1"><i class="bi bi-car-front-fill text-success me-2"></i>Cadastro de Veículos da Frota</h1>
-                    <p class="text-muted small mb-0">Informe os dados do veículo com conferência automática de Placa Mercosul, Renavam e Chassi.</p>
+                    <p class="text-muted small mb-0">Conferência automática de grafia de Marca/Modelo, idade da frota (10 anos), Placa Mercosul, Renavam (11 dígitos) e Chassi (17 caracteres).</p>
                 </div>
             </div>
 
             <form action="processar_cadastro_veiculo.php" method="post">
-                <div class="axion-section-title"><i class="bi bi-info-circle"></i> 1. Identificação do Veículo</div>
+                <div class="axion-section-title"><i class="bi bi-info-circle"></i> 1. Identificação do Veículo (Com Conferência de Grafia)</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="marca" class="form-label fw-semibold">Marca</label>
-                        <input type="text" id="marca" name="marca" class="form-control" placeholder="Ex: Volkswagen, Toyota, Fiat" required autofocus>
+                        <input type="text" id="marca" name="marca" list="datalist-marcas" class="form-control" placeholder="Ex: Hyundai, Volkswagen, Toyota" required autofocus>
+                        <datalist id="datalist-marcas">
+                            <option value="Volkswagen"></option>
+                            <option value="Hyundai"></option>
+                            <option value="Chevrolet"></option>
+                            <option value="Fiat"></option>
+                            <option value="Toyota"></option>
+                            <option value="Renault"></option>
+                            <option value="Ford"></option>
+                            <option value="Honda"></option>
+                            <option value="Nissan"></option>
+                            <option value="Jeep"></option>
+                            <option value="Peugeot"></option>
+                            <option value="Citroën"></option>
+                            <option value="Mercedes-Benz"></option>
+                            <option value="Volvo"></option>
+                            <option value="Scania"></option>
+                            <option value="Iveco"></option>
+                            <option value="Mitsubishi"></option>
+                            <option value="BYD"></option>
+                        </datalist>
                     </div>
                     <div class="col-md-5 mb-3">
                         <label for="modelo" class="form-label fw-semibold">Modelo</label>
-                        <input type="text" id="modelo" name="modelo" class="form-control" placeholder="Ex: Hilux SRV 4x4, Gol 1.6" required>
+                        <input type="text" id="modelo" name="modelo" list="datalist-modelos" class="form-control" placeholder="Ex: HB20 Sense, Hilux SRV, Gol 1.6" required>
+                        <datalist id="datalist-modelos">
+                            <option value="Gol 1.6 MSI"></option>
+                            <option value="Saveiro Robust 1.6"></option>
+                            <option value="HB20 Sense 1.0"></option>
+                            <option value="Creta Action 1.6"></option>
+                            <option value="Onix Plus 1.0 Turbo"></option>
+                            <option value="S10 Cabine Dupla 2.8"></option>
+                            <option value="Strada Endurance 1.4"></option>
+                            <option value="Fiorino Furgão 1.4"></option>
+                            <option value="Mobi Like 1.0"></option>
+                            <option value="Hilux SRV 4x4"></option>
+                            <option value="Corolla XEi 2.0"></option>
+                            <option value="Master Furgão L2H2"></option>
+                            <option value="Kwid Zen 1.0"></option>
+                            <option value="Sprinter 416 CDI"></option>
+                            <option value="FH 540 Globetrotter"></option>
+                            <option value="Ranger XLS 2.0 Diesel"></option>
+                            <option value="Compass Longitude"></option>
+                        </datalist>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="ano" class="form-label fw-semibold">Ano de Fabricação</label>
@@ -52,7 +91,7 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-2"><i class="bi bi-upc-scan"></i> 2. Documentação e Quilometragem (Com Máscaras)</div>
+                <div class="axion-section-title mt-2"><i class="bi bi-upc-scan"></i> 2. Documentação e Quilometragem (Com Máscaras e Validação)</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="placa" class="form-label fw-semibold">Placa (Mercosul / Antiga)</label>
@@ -68,6 +107,8 @@
                             <option value="Cinza">Cinza</option>
                             <option value="Azul">Azul</option>
                             <option value="Vermelho">Vermelho</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Amarelo">Amarelo</option>
                             <option value="Outro">Outro</option>
                         </select>
                     </div>

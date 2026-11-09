@@ -27,11 +27,11 @@
     </nav>
 
     <main class="axion-web-container">
-        <div class="axion-form-card" style="max-width: 920px;">
+        <div class="axion-form-card" style="max-width: 960px;">
             <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Preencher Checklist de Vistoria</h1>
-            <p class="text-muted small mb-4">Selecione o modelo de checklist, informe os dados do veículo e responda aos itens inspecionados.</p>
+            <p class="text-muted small mb-4">Selecione o modelo de checklist, informe os dados do veículo e utilize os botões de seleção para responder aos itens inspecionados.</p>
 
-            <form action="backend/api.php?acao=registrar_vistoria" method="post">
+            <form action="backend/api.php?acao=registrar_vistoria" method="post" enctype="multipart/form-data">
                 <div class="axion-section-title"><i class="bi bi-car-front"></i> 1. Identificação da Vistoria</div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-3"><i class="bi bi-list-check"></i> 2. Itens do Checklist Selecionado</div>
+                <div class="axion-section-title mt-3"><i class="bi bi-list-check"></i> 2. Itens do Checklist (Botões de Seleção + Campos Condicionais)</div>
                 <div id="perguntas-dinamicas-vistoria" class="mb-3">
                     <div class="text-muted small py-2">Carregando perguntas do modelo...</div>
                 </div>
@@ -108,30 +108,118 @@
         if (params.get('placa')) document.getElementById('placadoveiculo').value = params.get('placa');
         if (params.get('km')) document.getElementById('kmrodado').value = params.get('km');
 
+        const nomesCategoria = {
+            eletrico: 'Elétrica',
+            mecanico: 'Mecânica',
+            estetico: 'Estética / Lataria',
+            seguranca: 'Segurança / EPI',
+            pre_viagem: 'Pré-Viagem',
+            outros: 'Outros'
+        };
+
         async function inicializarVistoria() {
-            // Carrega modelos de checklist
-            const rChk = await fetch('backend/api.php?acao=buscar&tipo=checklists');
+            const rChk = await fetch('backend/api.php?acao=buscar&tipo=checklists&limite=0');
             const jChk = await rChk.json();
             const sel = document.getElementById('id_checklist');
             if (jChk.dados && jChk.dados.length > 0) {
-                sel.innerHTML = jChk.dados.map(c => `<option value="${c.id_checklist}">${c.titulo} [${c.categoria.toUpperCase()}]</option>`).join('');
+                sel.innerHTML = jChk.dados.map(c => `<option value="${c.id_checklist}">#${c.id_checklist} - ${c.titulo}</option>`).join('');
                 const idPre = params.get('id_checklist') || jChk.dados[0].id_checklist;
                 sel.value = idPre;
                 carregarPerguntasModelo(idPre);
             }
 
-            // Carrega sugestões de placas
-            const rVeic = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=200');
+            const rVeic = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=0');
             const jVeic = await rVeic.json();
             if (jVeic.dados) {
                 document.getElementById('lista-placas').innerHTML = jVeic.dados.map(v => `<option value="${v.placa}">${v.marca_modelo}</option>`).join('');
             }
 
-            // Carrega sugestões de motoristas
-            const rMot = await fetch('backend/api.php?acao=buscar&tipo=usuarios&filtro=motorista&limite=100');
+            const rMot = await fetch('backend/api.php?acao=buscar&tipo=usuarios&filtro=motorista&limite=0');
             const jMot = await rMot.json();
             if (jMot.dados) {
                 document.getElementById('lista-motoristas').innerHTML = jMot.dados.map(m => `<option value="${m.nome}">CNH: ${m.categoria_cnh || 'B'}</option>`).join('');
+            }
+        }
+
+        function selecionarBotaoResposta(idPergunta, valorEscolhido, respostaEsperada, condicaoSub) {
+            // Atualiza input hidden
+            const inputHidden = document.getElementById(`input_resp_${idPergunta}`);
+            if (inputHidden) inputHidden.value = valorEscolhido;
+
+            // Atualiza estilo dos botões de seleção (substituindo os antigos radio buttons)
+            const btnSim = document.getElementById(`btn_sim_${idPergunta}`);
+            const btnNao = document.getElementById(`btn_nao_${idPergunta}`);
+
+            if (btnSim && btnNao) {
+                btnSim.className = 'btn btn-sm px-3 fw-semibold ' + (
+                    valorEscolhido === 'sim'
+                        ? (respostaEsperada === 'sim' ? 'btn-success' : 'btn-danger')
+                        : 'btn-outline-secondary'
+                );
+                btnNao.className = 'btn btn-sm px-3 fw-semibold ' + (
+                    valorEscolhido === 'nao'
+                        ? (respostaEsperada === 'nao' ? 'btn-success' : 'btn-danger')
+                        : 'btn-outline-secondary'
+                );
+            }
+
+            // Verifica se deve exibir subpergunta condicional (ex: Pergunta 1 respondida "Não")
+            const boxSub = document.getElementById(`sub_box_${idPergunta}`);
+            if (boxSub) {
+                const gatilho = condicaoSub || (respostaEsperada === 'sim' ? 'nao' : 'sim');
+                if (valorEscolhido === gatilho) {
+                    boxSub.classList.remove('d-none');
+                    boxSub.querySelectorAll('input, textarea').forEach(el => {
+                        if (el.dataset.reqOriginal === '1') el.required = true;
+                    });
+                } else {
+                    boxSub.classList.add('d-none');
+                    boxSub.querySelectorAll('input, textarea').forEach(el => {
+                        el.required = false;
+                        if (el.type !== 'file') el.value = '';
+                    });
+                }
+            }
+
+            // Verifica se deve exibir box de Avaria + Foto (ex: Pergunta de avaria respondida "Sim", fora do conforme "Não")
+            const boxAvaria = document.getElementById(`avaria_box_${idPergunta}`);
+            if (boxAvaria) {
+                if (valorEscolhido !== respostaEsperada) {
+                    boxAvaria.classList.remove('d-none');
+                    const txt = boxAvaria.querySelector('textarea');
+                    if (txt) txt.required = true;
+                } else {
+                    boxAvaria.classList.add('d-none');
+                    const txt = boxAvaria.querySelector('textarea');
+                    if (txt) {
+                        txt.required = false;
+                        txt.value = '';
+                    }
+                }
+            }
+
+            // Atualiza status geral da vistoria automaticamente se alguma resposta estiver fora do padrão
+            recalcularConformidadeGeral();
+        }
+
+        function recalcularConformidadeGeral() {
+            let temNaoConforme = false;
+            document.querySelectorAll('.input-resposta-simnao').forEach(inp => {
+                const esp = inp.dataset.esperada || 'sim';
+                if (inp.value !== esp) temNaoConforme = true;
+            });
+            document.getElementById('status_conformidade').value = temNaoConforme ? 'nao_conforme' : 'conforme';
+        }
+
+        function mostrarPreviewFoto(input, idBadge) {
+            const badge = document.getElementById(idBadge);
+            if (badge) {
+                if (input.files && input.files[0]) {
+                    badge.textContent = `✓ Foto anexada: ${input.files[0].name}`;
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.classList.add('d-none');
+                }
             }
         }
 
@@ -143,23 +231,121 @@
                 box.innerHTML = '<div class="alert alert-light border small">Este modelo não possui perguntas específicas cadastradas.</div>';
                 return;
             }
-            box.innerHTML = json.dados.perguntas.map((p, idx) => `
-                <div class="p-3 mb-2 bg-light border rounded">
-                    <label class="form-label fw-semibold small mb-1">${idx + 1}. ${p.texto}</label>
-                    ${p.tipo === 'sim_nao' ? `
-                        <div class="d-flex gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="resp_${p.id_pergunta}" value="sim" checked>
-                                <label class="form-check-label small">Sim (Conforme)</label>
+
+            const todas = json.dados.perguntas;
+            // Separa perguntas principais (sem pai) e subperguntas condicionais (agrupadas pelo id_pergunta_pai)
+            const principais = [];
+            const mapaFilhas = {};
+
+            todas.forEach((p, idx) => {
+                // Caso o banco antigo não tivesse id_pergunta_pai preenchido mas o texto seja "Descreva qual componente...", trata como subpergunta da anterior
+                const ehSubPorTexto = !p.id_pergunta_pai && idx > 0 && /descreva qual componente/i.test(p.texto);
+                const idPaiEfetivo = p.id_pergunta_pai || (ehSubPorTexto ? todas[idx - 1].id_pergunta : null);
+
+                if (idPaiEfetivo) {
+                    if (!mapaFilhas[idPaiEfetivo]) mapaFilhas[idPaiEfetivo] = [];
+                    mapaFilhas[idPaiEfetivo].push({ ...p, condicao_pai: p.condicao_pai || 'nao' });
+                } else {
+                    principais.push(p);
+                }
+            });
+
+            box.innerHTML = principais.map((p, indexVisivel) => {
+                const numPergunta = indexVisivel + 1;
+                const catBadge = nomesCategoria[p.categoria] || (p.categoria || 'Geral').toUpperCase();
+                const filhas = mapaFilhas[p.id_pergunta] || [];
+                const condicaoSub = filhas[0]?.condicao_pai || 'nao';
+
+                // Detecta se é pergunta de existência de avaria (onde "Não" é o Conforme e "Sim" indica avaria)
+                const ehPerguntaAvaria = (p.resposta_esperada === 'nao') || /avaria|vazamento|alerta aceso|defeito/i.test(p.texto);
+                const esperada = ehPerguntaAvaria ? 'nao' : (p.resposta_esperada || 'sim');
+
+                if (p.tipo === 'sim_nao') {
+                    const labelSim = (esperada === 'sim')
+                        ? '<i class="bi bi-check-circle me-1"></i>Sim (Conforme)'
+                        : '<i class="bi bi-exclamation-triangle me-1"></i>Sim (Possui Avaria / Não Conforme)';
+                    const labelNao = (esperada === 'nao')
+                        ? '<i class="bi bi-check-circle me-1"></i>Não (Conforme — Sem Avaria)'
+                        : '<i class="bi bi-x-circle me-1"></i>Não (Não Conforme)';
+
+                    const btnSimInicial = (esperada === 'sim') ? 'btn-success' : 'btn-outline-secondary';
+                    const btnNaoInicial = (esperada === 'nao') ? 'btn-success' : 'btn-outline-secondary';
+
+                    return `
+                        <div class="p-3 mb-3 bg-white border rounded shadow-sm">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <label class="form-label fw-bold mb-0">${numPergunta}. ${p.texto}</label>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">${catBadge}</span>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="resp_${p.id_pergunta}" value="nao" onchange="document.getElementById('status_conformidade').value='nao_conforme'">
-                                <label class="form-check-label small text-danger">Não (Fora do Padrão)</label>
+
+                            <input type="hidden" name="resp_${p.id_pergunta}" id="input_resp_${p.id_pergunta}"
+                                   class="input-resposta-simnao" data-esperada="${esperada}" value="${esperada}">
+
+                            <!-- Botões de Seleção substituindo os antigos Radio Buttons -->
+                            <div class="d-flex flex-wrap gap-2 mt-2" role="group">
+                                <button type="button" id="btn_sim_${p.id_pergunta}" class="btn btn-sm px-3 fw-semibold ${btnSimInicial}"
+                                        onclick="selecionarBotaoResposta(${p.id_pergunta}, 'sim', '${esperada}', '${condicaoSub}')">
+                                    ${labelSim}
+                                </button>
+                                <button type="button" id="btn_nao_${p.id_pergunta}" class="btn btn-sm px-3 fw-semibold ${btnNaoInicial}"
+                                        onclick="selecionarBotaoResposta(${p.id_pergunta}, 'nao', '${esperada}', '${condicaoSub}')">
+                                    ${labelNao}
+                                </button>
                             </div>
+
+                            ${filhas.length > 0 ? `
+                                <!-- Subperguntas condicionais: ocultas por padrão e só aparecem se a resposta for "${condicaoSub.toUpperCase()}" -->
+                                <div id="sub_box_${p.id_pergunta}" class="mt-3 ms-3 ps-3 border-start border-3 border-danger bg-danger-subtle bg-opacity-25 p-3 rounded d-none">
+                                    ${filhas.map((sub, sIdx) => `
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold text-danger mb-1">
+                                                <i class="bi bi-arrow-return-right me-1"></i>${numPergunta}.${sIdx + 1} ${sub.texto}
+                                            </label>
+                                            <input type="text" name="detalhe_avaria[${sub.id_pergunta}]" data-req-original="1"
+                                                   class="form-control form-control-sm" placeholder="Descreva detalhadamente o componente com problema...">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
+                            ${ehPerguntaAvaria ? `
+                                <!-- Bloco condicional de Avaria + Foto (exibido ao selecionar "Sim" na pergunta de avaria) -->
+                                <div id="avaria_box_${p.id_pergunta}" class="mt-3 p-3 bg-warning-subtle border border-warning rounded d-none">
+                                    <div class="fw-bold small text-danger mb-2">
+                                        <i class="bi bi-exclamation-octagon-fill me-1"></i>Avaria identificada! Descreva a avaria e anexe foto de evidência:
+                                    </div>
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-8">
+                                            <textarea name="detalhe_avaria[avaria_${p.id_pergunta}]" class="form-control form-control-sm" rows="2"
+                                                      placeholder="Descreva o local, tipo e gravidade da avaria ou alerta no painel..."></textarea>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="btn btn-sm btn-outline-danger w-100 fw-semibold mb-1">
+                                                <i class="bi bi-camera-fill me-1"></i>Inserir Foto da Avaria
+                                                <input type="file" name="foto_avaria_${p.id_pergunta}" accept="image/*" capture="environment" class="d-none"
+                                                       onchange="mostrarPreviewFoto(this, 'badge_foto_${p.id_pergunta}')">
+                                            </label>
+                                            <div id="badge_foto_${p.id_pergunta}" class="badge bg-success w-100 d-none text-truncate"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
-                    ` : `<input type="${p.tipo === 'numero' ? 'number' : 'text'}" class="form-control form-control-sm" placeholder="Informe a resposta...">`}
-                </div>
-            `).join('');
+                    `;
+                }
+
+                // Pergunta tipo Número ou Texto
+                return `
+                    <div class="p-3 mb-3 bg-white border rounded shadow-sm">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <label class="form-label fw-bold mb-0">${numPergunta}. ${p.texto}</label>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">${catBadge}</span>
+                        </div>
+                        <input type="${p.tipo === 'numero' ? 'number' : 'text'}" name="resp_${p.id_pergunta}"
+                               class="form-control form-control-sm" placeholder="${p.tipo === 'numero' ? 'Digite o valor numérico...' : 'Digite sua observação...'}">
+                    </div>
+                `;
+            }).join('');
         }
 
         document.addEventListener('DOMContentLoaded', inicializarVistoria);

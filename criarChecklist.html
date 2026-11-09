@@ -27,51 +27,53 @@
     </nav>
 
     <main class="axion-web-container">
-        <div class="axion-form-card" style="max-width: 960px;">
+        <div class="axion-form-card" style="max-width: 980px;">
             <h1 class="h4 fw-bold mb-1"><i class="bi bi-file-earmark-plus-fill text-primary me-2"></i>Criar Novo Modelo de Checklist</h1>
-            <p class="text-muted small mb-4">Monte as perguntas principais e adicione subperguntas condicionais para orientar as vistorias.</p>
+            <p class="text-muted small mb-4">Um checklist completo pode conter perguntas de diferentes categorias (Elétrica, Mecânica, Estética, Segurança, etc.). Defina a categoria ao lado de cada pergunta.</p>
 
             <form action="criar_checklist_dinamico.php" method="post" id="formCriarChecklist">
                 <div class="row">
-                    <div class="col-md-5 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
-                        <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Vistoria Diária de Segurança" required>
+                        <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Vistoria Completa de Frota" required>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
-                        <select id="categoriaChecklist" name="categoria" class="form-select" required>
-                            <option value="" selected disabled>Selecione...</option>
-                            <option value="eletrico">Elétrico</option>
-                            <option value="mecanico">Mecânico</option>
-                            <option value="estetico">Estético</option>
-                            <option value="seguranca">Segurança</option>
-                            <option value="pre_viagem">Pré-Viagem</option>
-                            <option value="outros">Outros</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label for="descricaoChecklist" class="form-label fw-bold">Descrição Resumida</label>
-                        <input type="text" id="descricaoChecklist" name="descricao" class="form-control" placeholder="Ex: Inspeção de rotina pré-turno">
+                        <input type="text" id="descricaoChecklist" name="descricao" class="form-control" placeholder="Ex: Inspeção multicategoria pré-turno (elétrica, mecânica, estética e segurança)">
                     </div>
                 </div>
 
                 <hr class="my-3">
-                <h2 class="h6 fw-bold mb-3">Perguntas do Checklist</h2>
+                <h2 class="h6 fw-bold mb-3"><i class="bi bi-list-check me-1"></i>Perguntas do Checklist (Com Categoria por Pergunta)</h2>
 
                 <div id="containerPerguntas">
+                    <!-- PERGUNTA 1 (PAI) -->
                     <div class="card p-3 mb-3 bg-white border pergunta-item" id="pergunta_1">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="badge bg-primary fs-6">Pergunta 1</span>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_1')">Excluir Pergunta 1</button>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Texto da Pergunta</label>
-                            <input type="text" name="perguntas[1][texto]" class="form-control" placeholder="Ex: O veículo possui alguma avaria na lataria?" required>
+                        <div class="row mb-3">
+                            <div class="col-md-8 mb-2 mb-md-0">
+                                <label class="form-label fw-semibold">Texto da Pergunta</label>
+                                <input type="text" name="perguntas[1][texto]" class="form-control" placeholder="Ex: O sistema de iluminação (faróis e setas) está funcionando?" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-primary">Categoria da Pergunta</label>
+                                <select name="perguntas[1][categoria]" class="form-select" required>
+                                    <option value="eletrico" selected>Elétrica</option>
+                                    <option value="mecanico">Mecânica</option>
+                                    <option value="estetico">Estética / Lataria</option>
+                                    <option value="seguranca">Segurança / EPI</option>
+                                    <option value="pre_viagem">Pré-Viagem / Documentação</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
+                            <div class="col-md-4 mb-2">
                                 <label class="form-label fw-semibold">Tipo de Resposta</label>
                                 <select name="perguntas[1][tipo]" class="form-select" required>
                                     <option value="sim_nao" selected>Sim / Não</option>
@@ -79,7 +81,14 @@
                                     <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold text-success">Resposta Conforme (Padrão)</label>
+                                <select name="perguntas[1][resposta_esperada]" class="form-select">
+                                    <option value="sim" selected>Sim é o Conforme</option>
+                                    <option value="nao">Não é o Conforme (Ex: Avaria)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2 d-flex align-items-end">
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" name="perguntas[1][obrigatorio]" value="1" id="req_1" checked>
                                     <label class="form-check-label" for="req_1">Resposta Obrigatória</label>
@@ -125,12 +134,25 @@
                         <span class="badge bg-primary fs-6">Pergunta ${contadorPerguntas}</span>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPergunta('pergunta_${contadorPerguntas}')">Excluir Pergunta ${contadorPerguntas}</button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Texto da Pergunta</label>
-                        <input type="text" name="perguntas[${contadorPerguntas}][texto]" class="form-control" placeholder="Digite a pergunta principal..." required>
+                    <div class="row mb-3">
+                        <div class="col-md-8 mb-2 mb-md-0">
+                            <label class="form-label fw-semibold">Texto da Pergunta</label>
+                            <input type="text" name="perguntas[${contadorPerguntas}][texto]" class="form-control" placeholder="Digite a pergunta principal..." required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-primary">Categoria da Pergunta</label>
+                            <select name="perguntas[${contadorPerguntas}][categoria]" class="form-select" required>
+                                <option value="eletrico">Elétrica</option>
+                                <option value="mecanico" selected>Mecânica</option>
+                                <option value="estetico">Estética / Lataria</option>
+                                <option value="seguranca">Segurança / EPI</option>
+                                <option value="pre_viagem">Pré-Viagem / Documentação</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-2">
+                        <div class="col-md-4 mb-2">
                             <label class="form-label fw-semibold">Tipo de Resposta</label>
                             <select name="perguntas[${contadorPerguntas}][tipo]" class="form-select" required>
                                 <option value="sim_nao" selected>Sim / Não</option>
@@ -138,7 +160,14 @@
                                 <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label fw-semibold text-success">Resposta Conforme (Padrão)</label>
+                            <select name="perguntas[${contadorPerguntas}][resposta_esperada]" class="form-select">
+                                <option value="sim" selected>Sim é o Conforme</option>
+                                <option value="nao">Não é o Conforme (Ex: Avaria)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="perguntas[${contadorPerguntas}][obrigatorio]" value="1" id="req_${contadorPerguntas}" checked>
                                 <label class="form-check-label" for="req_${contadorPerguntas}">Resposta Obrigatória</label>
@@ -163,20 +192,20 @@
             const subHtml = `
                 <div class="card p-3 mb-2 bg-light border subpergunta-item" id="subpergunta_${idPai}_${subId}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-info text-dark">Subpergunta ${idPai}.${subId}</span>
+                        <span class="badge bg-info text-dark">Subpergunta Condicional ${idPai}.${subId}</span>
                         <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0" onclick="removerElemento('subpergunta_${idPai}_${subId}')">Remover Subpergunta</button>
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <label class="form-label small fw-bold text-primary">Exibir se Pergunta ${idPai} for:</label>
                             <select name="perguntas[${idPai}][subperguntas][${subId}][condicao]" class="form-select form-select-sm">
-                                <option value="sim" selected>Sim</option>
-                                <option value="nao">Não</option>
+                                <option value="nao" selected>Não</option>
+                                <option value="sim">Sim</option>
                             </select>
                         </div>
                         <div class="col-md-8 mb-2">
                             <label class="form-label small fw-bold">Texto da Subpergunta ${idPai}.${subId}</label>
-                            <input type="text" name="perguntas[${idPai}][subperguntas][${subId}][texto]" class="form-control form-control-sm" placeholder="Ex: Qual o local e tamanho da avaria?" required>
+                            <input type="text" name="perguntas[${idPai}][subperguntas][${subId}][texto]" class="form-control form-control-sm" placeholder="Ex: Descreva qual componente apresentou falha ou avaria:" required>
                         </div>
                     </div>
                     <div class="row">

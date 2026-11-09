@@ -28,20 +28,23 @@
 
     <main class="axion-web-container">
         <div class="axion-form-card">
-            <h1 class="h4 fw-bold mb-3"><i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário</h1>
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h1 class="h4 fw-bold mb-0"><i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário</h1>
+                <span id="contador-usuarios-select" class="badge bg-primary-subtle text-primary">Carregando...</span>
+            </div>
 
-            <!-- 1. BLOCO DE BUSCA E SELEÇÃO DO USUÁRIO DO BANCO -->
+            <!-- 1. BLOCO DE BUSCA E SELEÇÃO DO USUÁRIO DO BANCO (TODOS OS USUÁRIOS) -->
             <div class="mb-4 p-3 bg-light border rounded">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-5">
-                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome ou CPF</label>
+                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome, CPF ou Perfil</label>
                         <input type="text" id="filtro-rapido-usuario" class="form-control" placeholder="Digite para filtrar a lista..." oninput="carregarListaUsuarios(this.value)">
                     </div>
                     <div class="col-md-7">
-                        <label for="select-usuario" class="form-label small fw-bold mb-1">Selecione o Usuário Cadastrado</label>
+                        <label for="select-usuario" class="form-label small fw-bold mb-1">Selecione o Usuário Cadastrado (Todos)</label>
                         <div class="input-group">
                             <select id="select-usuario" class="form-select" onchange="carregarUsuarioPorId(this.value)">
-                                <option value="">Carregando usuários do banco...</option>
+                                <option value="">Carregando todos os usuários do banco...</option>
                             </select>
                             <button class="btn btn-primary" type="button" onclick="carregarUsuarioPorId(document.getElementById('select-usuario').value)">
                                 <i class="bi bi-arrow-down-circle me-1"></i>Carregar
@@ -51,19 +54,19 @@
                 </div>
             </div>
 
-            <!-- 2. FORMULÁRIO DE EDIÇÃO -->
+            <!-- 2. FORMULÁRIO DE EDIÇÃO (COM AS MESMAS VALIDAÇÕES DO CADASTRO) -->
             <form action="backend/api.php?acao=salvar_edicao_usuario" method="post" id="formEditarUsuario">
                 <input type="hidden" name="id_usuario" id="id_usuario" value="1">
 
                 <div class="axion-section-title"><i class="bi bi-person-vcard"></i> 1. Dados Pessoais e Nível de Acesso</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="nome" class="form-label fw-semibold">Nome Completo</label>
-                        <input type="text" id="nome" name="nome" class="form-control" required>
+                        <label for="nome" class="form-label fw-semibold">Nome</label>
+                        <input type="text" id="nome" name="nome" class="form-control" placeholder="Primeiro nome" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="sobrenome" class="form-label fw-semibold">Sobrenome</label>
-                        <input type="text" id="sobrenome" name="sobrenome" class="form-control">
+                        <input type="text" id="sobrenome" name="sobrenome" class="form-control" placeholder="Sobrenome" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="cpf" class="form-label fw-semibold">CPF (Com Validação)</label>
@@ -74,11 +77,11 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="dtNascimento" class="form-label fw-semibold">Data de Nascimento</label>
-                        <input type="date" name="dtNascimento" id="dtNascimento" class="form-control">
+                        <input type="date" name="dtNascimento" id="dtNascimento" class="form-control" required>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="genero" class="form-label fw-semibold">Gênero</label>
-                        <select name="genero" id="genero" class="form-select">
+                        <select name="genero" id="genero" class="form-select" required>
                             <option value="Masculino">Masculino</option>
                             <option value="Feminino">Feminino</option>
                             <option value="Outro">Outro</option>
@@ -102,26 +105,27 @@
                 <div class="axion-section-title mt-2"><i class="bi bi-card-heading"></i> 2. CNH e Contato</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="cnh" class="form-label fw-semibold">N° da CNH</label>
-                        <input type="text" name="cnh" id="cnh" data-mask="cnh" class="form-control font-monospace" maxlength="11">
+                        <label for="cnh" class="form-label fw-semibold">N° da CNH (11 dígitos)</label>
+                        <input type="text" name="cnh" id="cnh" data-mask="cnh" class="form-control font-monospace" maxlength="11" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria CNH (Dropdown)</label>
-                        <select id="categoria-cnh" name="categoria-cnh" class="form-select">
-                            <option value="A">Categoria A</option>
-                            <option value="B">Categoria B</option>
-                            <option value="C">Categoria C</option>
-                            <option value="D">Categoria D</option>
-                            <option value="E">Categoria E</option>
-                            <option value="AB">Categoria AB</option>
-                            <option value="AC">Categoria AC</option>
-                            <option value="AD">Categoria AD</option>
-                            <option value="AE">Categoria AE</option>
+                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria da CNH</label>
+                        <select id="categoria-cnh" name="categoria-cnh" class="form-select" required>
+                            <option value="" disabled>Selecione...</option>
+                            <option value="A">Cat. A (Motocicletas)</option>
+                            <option value="B">Cat. B (Carros / Leves)</option>
+                            <option value="C">Cat. C (Caminhões Leves)</option>
+                            <option value="D">Cat. D (Ônibus / Vans)</option>
+                            <option value="E">Cat. E (Carretas / Pesados)</option>
+                            <option value="AB">Cat. AB (Moto + Carro)</option>
+                            <option value="AC">Cat. AC (Moto + Caminhão)</option>
+                            <option value="AD">Cat. AD (Moto + Ônibus)</option>
+                            <option value="AE">Cat. AE (Moto + Carreta)</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="validade-cnh" class="form-label fw-semibold">Validade CNH</label>
-                        <input type="date" name="validade-cnh" id="validade-cnh" class="form-control">
+                        <label for="validade-cnh" class="form-label fw-semibold">Validade da CNH (Máx. 20 anos)</label>
+                        <input type="date" name="validade-cnh" id="validade-cnh" class="form-control" required>
                     </div>
                 </div>
 
@@ -130,36 +134,45 @@
                     <div class="col-md-3 mb-3">
                         <label for="cep" class="form-label fw-semibold">CEP</label>
                         <div class="input-group">
-                            <input type="text" id="cep" name="cep" data-mask="cep" class="form-control font-monospace" maxlength="9">
+                            <input type="text" id="cep" name="cep" data-mask="cep" class="form-control font-monospace" maxlength="9" required>
                             <button class="btn btn-outline-primary" type="button" id="btn-buscar-cep"><i class="bi bi-search"></i></button>
                         </div>
                         <div id="cep-feedback" class="form-text small"></div>
                     </div>
                     <div class="col-md-5 mb-3">
                         <label for="logradouro" class="form-label fw-semibold">Logradouro</label>
-                        <input type="text" id="logradouro" name="logradouro" class="form-control">
+                        <input type="text" id="logradouro" name="logradouro" class="form-control" required>
                     </div>
                     <div class="col-md-2 mb-3">
                         <label for="numero" class="form-label fw-semibold">Número</label>
-                        <input type="text" id="numero" name="numero" class="form-control">
+                        <input type="text" id="numero" name="numero" class="form-control" required>
                     </div>
                     <div class="col-md-2 mb-3">
                         <label for="estado" class="form-label fw-semibold">UF</label>
-                        <input type="text" id="estado" name="estado" class="form-control text-uppercase" maxlength="2">
+                        <select id="estado" name="estado" class="form-select" required>
+                            <option value="" disabled>UF</option>
+                            <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option>
+                            <option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option>
+                            <option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                            <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option>
+                            <option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option>
+                            <option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                            <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="bairro" class="form-label fw-semibold">Bairro</label>
-                        <input type="text" id="bairro" name="bairro" class="form-control">
+                        <input type="text" id="bairro" name="bairro" class="form-control" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="cidade" class="form-label fw-semibold">Cidade</label>
-                        <input type="text" id="cidade" name="cidade" class="form-control">
+                        <input type="text" id="cidade" name="cidade" class="form-control" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="email" class="form-label fw-semibold">E-mail</label>
+                        <label for="email" class="form-label fw-semibold">E-mail (Com validação @)</label>
                         <input type="email" id="email" name="email" class="form-control" required>
                     </div>
                 </div>
@@ -176,13 +189,17 @@
     <script src="frontend/js/axion.js"></script>
     <script>
         async function carregarListaUsuarios(termo = '') {
-            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=150`);
+            // limite=0 retorna TODOS os usuários cadastrados no banco sem cortar
+            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=0`);
             const json = await resp.json();
             const sel = document.getElementById('select-usuario');
+            const badge = document.getElementById('contador-usuarios-select');
             if (!json.dados || json.dados.length === 0) {
                 sel.innerHTML = '<option value="">Nenhum usuário encontrado</option>';
+                if (badge) badge.textContent = '0 usuários encontrados';
                 return;
             }
+            if (badge) badge.textContent = `${json.dados.length} usuários listados`;
             sel.innerHTML = json.dados.map(u =>
                 `<option value="${u.id_usuario}">#${u.id_usuario} - ${u.nome} (CPF: ${u.cpf_matricula}) [${u.perfil.toUpperCase()}]</option>`
             ).join('');
@@ -203,8 +220,9 @@
             if (!json.sucesso || !json.dados) return;
             const u = json.dados;
             document.getElementById('id_usuario').value = u.id_usuario;
-            document.getElementById('nome').value = u.nome || '';
-            document.getElementById('sobrenome').value = u.sobrenome || '';
+            // Preenche apenas o primeiro nome no campo Nome e o restante no campo Sobrenome
+            document.getElementById('nome').value = u.primeiro_nome || (u.nome || '').split(' ')[0] || '';
+            document.getElementById('sobrenome').value = u.sobrenome_calculado || u.sobrenome || '';
             document.getElementById('cpf').value = u.cpf_matricula || '';
             document.getElementById('dtNascimento').value = u.data_nascimento || '';
             document.getElementById('genero').value = u.genero || 'Masculino';
@@ -218,9 +236,14 @@
             document.getElementById('numero').value = u.numero || '';
             document.getElementById('bairro').value = u.bairro || '';
             document.getElementById('cidade').value = u.cidade || '';
-            document.getElementById('estado').value = u.estado || '';
+            document.getElementById('estado').value = u.estado || 'ES';
             document.getElementById('email').value = u.email || '';
-            AxionUtils.inicializarMascarasEValidacoes();
+
+            // Dispara as validações visuais para atualizar os indicadores dos campos carregados
+            ['cpf', 'email', 'dtNascimento', 'cnh', 'validade-cnh'].forEach(idCampo => {
+                const el = document.getElementById(idCampo);
+                if (el) el.dispatchEvent(new Event('input'));
+            });
         }
 
         document.addEventListener('DOMContentLoaded', () => carregarListaUsuarios());

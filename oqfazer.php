@@ -356,7 +356,7 @@ $mapaMensagens = [
             <div class="tab-pane fade <?php echo $abaAtiva === 'veiculos' ? 'show active' : ''; ?>" id="pane-veiculos" role="tabpanel">
                 <div class="card border-0 shadow-sm p-3 mb-3">
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="busca-veiculos-q" class="form-label small fw-bold mb-1"><i class="bi bi-search me-1"></i>Pesquisar Veículo (Placa, Marca, Modelo, Cor, Renavam ou Chassi)</label>
                             <input type="text" id="busca-veiculos-q" class="form-control" placeholder="Ex: ABC1D23, Hilux, Gol, Sprinter, Branco..." oninput="carregarBusca('veiculos')">
                         </div>
@@ -369,12 +369,24 @@ $mapaMensagens = [
                                 <option value="manutencao">Em Manutenção</option>
                             </select>
                         </div>
+                        <div class="col-md-2">
+                            <label for="paginacao-veiculos-tam" class="form-label small fw-bold mb-1">Exibição</label>
+                            <select id="paginacao-veiculos-tam" class="form-select" onchange="mudarTamanhoPagina('veiculos', this.value)">
+                                <option value="0" selected>Mostrar Todos</option>
+                                <option value="50">50 por página</option>
+                                <option value="100">100 por página</option>
+                            </select>
+                        </div>
                         <div class="col-md-3 d-flex gap-2">
                             <button type="button" class="btn btn-primary flex-fill" onclick="carregarBusca('veiculos')"><i class="bi bi-funnel-fill me-1"></i>Filtrar</button>
                             <?php if ($isGestor): ?>
                             <a href="cadcar.html" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Novo Carro</a>
                             <?php endif; ?>
                         </div>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top small">
+                        <span id="info-total-veiculos" class="text-muted fw-semibold">Carregando registros...</span>
+                        <div id="paginacao-veiculos-controles" class="btn-group btn-group-sm"></div>
                     </div>
                 </div>
 
@@ -407,11 +419,11 @@ $mapaMensagens = [
             <div class="tab-pane fade <?php echo $abaAtiva === 'usuarios' ? 'show active' : ''; ?>" id="pane-usuarios" role="tabpanel">
                 <div class="card border-0 shadow-sm p-3 mb-3">
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <label for="busca-usuarios-q" class="form-label small fw-bold mb-1"><i class="bi bi-search me-1"></i>Pesquisar Usuário (Nome, CPF, E-mail, CNH ou Cidade)</label>
                             <input type="text" id="busca-usuarios-q" class="form-control" placeholder="Digite nome, CPF, e-mail ou cidade..." oninput="carregarBusca('usuarios')">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="busca-usuarios-perfil" class="form-label small fw-bold mb-1">Filtrar por Perfil / Nível de Acesso</label>
                             <select id="busca-usuarios-perfil" class="form-select" onchange="carregarBusca('usuarios')">
                                 <option value="">Todos os Perfis (<?php echo $stats['motoristas'] + $stats['clientes'] + $stats['supervisores'] + $stats['admins']; ?>)</option>
@@ -421,10 +433,22 @@ $mapaMensagens = [
                                 <option value="admin">Administradores (<?php echo $stats['admins']; ?>)</option>
                             </select>
                         </div>
+                        <div class="col-md-2">
+                            <label for="paginacao-usuarios-tam" class="form-label small fw-bold mb-1">Exibição</label>
+                            <select id="paginacao-usuarios-tam" class="form-select" onchange="mudarTamanhoPagina('usuarios', this.value)">
+                                <option value="0" selected>Mostrar Todos</option>
+                                <option value="50">50 por página</option>
+                                <option value="100">100 por página</option>
+                            </select>
+                        </div>
                         <div class="col-md-3 d-flex gap-2">
                             <button type="button" class="btn btn-primary flex-fill" onclick="carregarBusca('usuarios')"><i class="bi bi-funnel-fill me-1"></i>Filtrar</button>
                             <a href="caduser.html" class="btn btn-success"><i class="bi bi-person-plus-fill me-1"></i>Novo</a>
                         </div>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 pt-2 border-top small">
+                        <span id="info-total-usuarios" class="text-muted fw-semibold">Carregando registros...</span>
+                        <div id="paginacao-usuarios-controles" class="btn-group btn-group-sm"></div>
                     </div>
                 </div>
 
@@ -492,7 +516,7 @@ $mapaMensagens = [
                                 <tr>
                                     <th>ID</th>
                                     <th>Título do Modelo de Checklist</th>
-                                    <th>Categoria</th>
+                                    <th>Categorias das Perguntas</th>
                                     <th>Perguntas</th>
                                     <th>Vistorias Realizadas</th>
                                     <th>Criado por</th>
@@ -600,6 +624,16 @@ $mapaMensagens = [
         const IS_GESTOR = <?php echo $isGestor ? 'true' : 'false'; ?>;
         const IS_MOTORISTA = <?php echo $isMotorista ? 'true' : 'false'; ?>;
 
+        // Armazena todos os registros retornados para paginação instantânea ou exibição completa
+        const cacheDados = {
+            veiculos: [],
+            usuarios: [],
+            paginaVeiculos: 1,
+            tamVeiculos: 0, // 0 = Mostrar Todos
+            paginaUsuarios: 1,
+            tamUsuarios: 0  // 0 = Mostrar Todos
+        };
+
         function badgeStatusVeiculo(st) {
             if (st === 'ativo') return '<span class="badge bg-success-subtle text-success border border-success-subtle">Ativo</span>';
             if (st === 'em_rota') return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle">Em Rota</span>';
@@ -620,38 +654,133 @@ $mapaMensagens = [
             return '<span class="badge bg-warning text-dark">Pendente</span>';
         }
 
+        function formatarBadgesCategoriasPerguntas(catsStr) {
+            const lista = (catsStr || 'eletrico,mecanico,estetico,seguranca').split(',').filter(Boolean);
+            return lista.map(cat => `<span class="badge bg-primary-subtle text-primary text-uppercase me-1 mb-1">${cat}</span>`).join('');
+        }
+
+        function mudarTamanhoPagina(tipo, novoTam) {
+            if (tipo === 'veiculos') {
+                cacheDados.tamVeiculos = parseInt(novoTam, 10) || 0;
+                cacheDados.paginaVeiculos = 1;
+                renderizarTabelaVeiculos();
+            } else if (tipo === 'usuarios') {
+                cacheDados.tamUsuarios = parseInt(novoTam, 10) || 0;
+                cacheDados.paginaUsuarios = 1;
+                renderizarTabelaUsuarios();
+            }
+        }
+
+        function irParaPagina(tipo, pag) {
+            if (tipo === 'veiculos') {
+                cacheDados.paginaVeiculos = pag;
+                renderizarTabelaVeiculos();
+            } else if (tipo === 'usuarios') {
+                cacheDados.paginaUsuarios = pag;
+                renderizarTabelaUsuarios();
+            }
+        }
+
+        function montarBotoesPaginacao(tipo, totalItens, tamPagina, pagAtual) {
+            const container = document.getElementById(`paginacao-${tipo}-controles`);
+            const infoEl = document.getElementById(`info-total-${tipo}`);
+            if (!tamPagina || tamPagina <= 0 || totalItens <= tamPagina) {
+                if (infoEl) infoEl.textContent = `Exibindo todos os ${totalItens} registros encontrados`;
+                if (container) container.innerHTML = '';
+                return { inicio: 0, fim: totalItens };
+            }
+
+            const totalPaginas = Math.ceil(totalItens / tamPagina);
+            const pagSegura = Math.min(Math.max(1, pagAtual), totalPaginas);
+            const inicio = (pagSegura - 1) * tamPagina;
+            const fim = Math.min(inicio + tamPagina, totalItens);
+
+            if (infoEl) infoEl.textContent = `Exibindo ${inicio + 1} a ${fim} de ${totalItens} registros (Página ${pagSegura}/${totalPaginas})`;
+
+            if (container) {
+                let html = `<button type="button" class="btn btn-outline-secondary" ${pagSegura === 1 ? 'disabled' : ''} onclick="irParaPagina('${tipo}', ${pagSegura - 1})">Anterior</button>`;
+                for (let p = 1; p <= totalPaginas; p++) {
+                    html += `<button type="button" class="btn ${p === pagSegura ? 'btn-primary' : 'btn-outline-secondary'}" onclick="irParaPagina('${tipo}', ${p})">${p}</button>`;
+                }
+                html += `<button type="button" class="btn btn-outline-secondary" ${pagSegura === totalPaginas ? 'disabled' : ''} onclick="irParaPagina('${tipo}', ${pagSegura + 1})">Próxima</button>`;
+                container.innerHTML = html;
+            }
+            return { inicio, fim };
+        }
+
+        function renderizarTabelaVeiculos() {
+            const tbody = document.getElementById('tbody-veiculos');
+            if (!tbody) return;
+            const todos = cacheDados.veiculos || [];
+            if (todos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhum veículo encontrado para o filtro informado.</td></tr>';
+                montarBotoesPaginacao('veiculos', 0, 0, 1);
+                return;
+            }
+            const { inicio, fim } = montarBotoesPaginacao('veiculos', todos.length, cacheDados.tamVeiculos, cacheDados.paginaVeiculos);
+            const fatia = todos.slice(inicio, fim);
+
+            tbody.innerHTML = fatia.map(v => `
+                <tr>
+                    <td class="text-muted small">#${v.id_veiculo}</td>
+                    <td><span class="badge bg-dark font-monospace fs-6">${v.placa}</span></td>
+                    <td class="fw-semibold">${v.marca_modelo}</td>
+                    <td>${v.ano}</td>
+                    <td>${v.cor || '-'}</td>
+                    <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
+                    <td class="small text-muted"><div>Ren: ${v.renavam || '-'}</div><div>Chassi: ${v.chassi || '-'}</div></td>
+                    <td>${badgeStatusVeiculo(v.status)}</td>
+                    <td class="text-end text-nowrap">
+                        ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}&km=${v.km_rodado || 0}" class="btn btn-sm btn-warning" title="Preencher Checklist"><i class="bi bi-clipboard2-check"></i></a>` : ''}
+                        ${IS_GESTOR ? `
+                            <a href="editarVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-primary" title="Editar Veículo"><i class="bi bi-pencil"></i></a>
+                            <a href="excluirVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-danger" title="Excluir Veículo"><i class="bi bi-trash"></i></a>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarTabelaUsuarios() {
+            const tbody = document.getElementById('tbody-usuarios');
+            if (!tbody) return;
+            const todos = cacheDados.usuarios || [];
+            if (todos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum usuário encontrado.</td></tr>';
+                montarBotoesPaginacao('usuarios', 0, 0, 1);
+                return;
+            }
+            const { inicio, fim } = montarBotoesPaginacao('usuarios', todos.length, cacheDados.tamUsuarios, cacheDados.paginaUsuarios);
+            const fatia = todos.slice(inicio, fim);
+
+            tbody.innerHTML = fatia.map(u => `
+                <tr>
+                    <td class="text-muted small">#${u.id_usuario}</td>
+                    <td class="fw-semibold">${u.nome}</td>
+                    <td class="font-monospace small">${u.cpf_matricula}</td>
+                    <td>${badgePerfilUsuario(u.perfil)}</td>
+                    <td class="small">${u.cnh ? `${u.cnh} <span class="badge bg-secondary">${u.categoria_cnh || 'B'}</span>` : '-'}</td>
+                    <td class="small">${u.cidade ? `${u.cidade}/${u.estado} <div class="text-muted">${u.cep || ''}</div>` : '-'}</td>
+                    <td class="small"><div>${u.email}</div><div class="text-muted">${u.telefone || ''}</div></td>
+                    <td class="text-end text-nowrap">
+                        <a href="editarUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
         async function carregarBusca(tipo) {
             try {
                 if (tipo === 'veiculos') {
                     const q = document.getElementById('busca-veiculos-q')?.value || '';
                     const filtro = document.getElementById('busca-veiculos-status')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=veiculos&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=200`);
+                    // limite=0 traz TODOS os veículos cadastrados (ex: 201+)
+                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=veiculos&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=0`);
                     const json = await resp.json();
-                    const tbody = document.getElementById('tbody-veiculos');
-                    if (!tbody) return;
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhum veículo encontrado para o filtro informado.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(v => `
-                        <tr>
-                            <td class="text-muted small">#${v.id_veiculo}</td>
-                            <td><span class="badge bg-dark font-monospace fs-6">${v.placa}</span></td>
-                            <td class="fw-semibold">${v.marca_modelo}</td>
-                            <td>${v.ano}</td>
-                            <td>${v.cor || '-'}</td>
-                            <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td class="small text-muted"><div>Ren: ${v.renavam || '-'}</div><div>Chassi: ${v.chassi || '-'}</div></td>
-                            <td>${badgeStatusVeiculo(v.status)}</td>
-                            <td class="text-end text-nowrap">
-                                ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}&km=${v.km_rodado || 0}" class="btn btn-sm btn-warning" title="Preencher Checklist"><i class="bi bi-clipboard2-check"></i></a>` : ''}
-                                ${IS_GESTOR ? `
-                                    <a href="editarVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-primary" title="Editar Veículo"><i class="bi bi-pencil"></i></a>
-                                    <a href="excluirVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-danger" title="Excluir Veículo"><i class="bi bi-trash"></i></a>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
+                    cacheDados.veiculos = json.dados || [];
+                    cacheDados.paginaVeiculos = 1;
+                    renderizarTabelaVeiculos();
                 }
 
                 if (tipo === 'usuarios') {
@@ -659,27 +788,12 @@ $mapaMensagens = [
                     if (!tbody) return;
                     const q = document.getElementById('busca-usuarios-q')?.value || '';
                     const filtro = document.getElementById('busca-usuarios-perfil')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=250`);
+                    // limite=0 traz TODOS os usuários cadastrados (ex: 364+)
+                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=0`);
                     const json = await resp.json();
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum usuário encontrado.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(u => `
-                        <tr>
-                            <td class="text-muted small">#${u.id_usuario}</td>
-                            <td class="fw-semibold">${u.nome}</td>
-                            <td class="font-monospace small">${u.cpf_matricula}</td>
-                            <td>${badgePerfilUsuario(u.perfil)}</td>
-                            <td class="small">${u.cnh ? `${u.cnh} <span class="badge bg-secondary">${u.categoria_cnh || 'B'}</span>` : '-'}</td>
-                            <td class="small">${u.cidade ? `${u.cidade}/${u.estado} <div class="text-muted">${u.cep || ''}</div>` : '-'}</td>
-                            <td class="small"><div>${u.email}</div><div class="text-muted">${u.telefone || ''}</div></td>
-                            <td class="text-end text-nowrap">
-                                <a href="editarUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                <a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
-                            </td>
-                        </tr>
-                    `).join('');
+                    cacheDados.usuarios = json.dados || [];
+                    cacheDados.paginaUsuarios = 1;
+                    renderizarTabelaUsuarios();
                 }
 
                 if (tipo === 'checklists') {
@@ -687,7 +801,7 @@ $mapaMensagens = [
                     if (!tbody) return;
                     const q = document.getElementById('busca-checklists-q')?.value || '';
                     const filtro = document.getElementById('busca-checklists-cat')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=checklists&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}`);
+                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=checklists&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=0`);
                     const json = await resp.json();
                     if (!json.dados || json.dados.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Nenhum modelo de checklist encontrado.</td></tr>';
@@ -700,7 +814,7 @@ $mapaMensagens = [
                                 <div class="fw-semibold">${c.titulo}</div>
                                 <div class="small text-muted">${c.descricao || ''}</div>
                             </td>
-                            <td><span class="badge bg-primary-subtle text-primary text-uppercase">${c.categoria}</span></td>
+                            <td>${formatarBadgesCategoriasPerguntas(c.categorias_perguntas)}</td>
                             <td><span class="badge bg-secondary">${c.total_perguntas} perguntas</span></td>
                             <td><span class="badge bg-success-subtle text-success">${c.total_execucoes} vistorias</span></td>
                             <td class="small">${c.criador_nome}</td>
@@ -720,7 +834,7 @@ $mapaMensagens = [
                     if (!tbody) return;
                     const q = document.getElementById('busca-vistorias-q')?.value || '';
                     const filtro = document.getElementById('busca-vistorias-status')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=vistorias&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}`);
+                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=vistorias&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=0`);
                     const json = await resp.json();
                     if (!json.dados || json.dados.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhuma vistoria encontrada.</td></tr>';

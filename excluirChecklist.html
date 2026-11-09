@@ -63,12 +63,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         async function inicializarExclusaoChecklist() {
-            const resp = await fetch('backend/api.php?acao=buscar&tipo=checklists');
+            const resp = await fetch('backend/api.php?acao=buscar&tipo=checklists&limite=0');
             const json = await resp.json();
             const sel = document.getElementById('select-checklist');
             if (!json.dados || json.dados.length === 0) return;
             sel.innerHTML = json.dados.map(c =>
-                `<option value="${c.id_checklist}">#${c.id_checklist} - ${c.titulo} (${c.categoria.toUpperCase()})</option>`
+                `<option value="${c.id_checklist}">#${c.id_checklist} - ${c.titulo} (Categorias: ${(c.categorias_perguntas || 'múltiplas').toUpperCase()})</option>`
             ).join('');
             const urlId = new URLSearchParams(window.location.search).get('id') || json.dados[0].id_checklist;
             sel.value = urlId;
@@ -80,11 +80,12 @@
             const json = await resp.json();
             if (!json.dados) return;
             const c = json.dados;
+            const cats = [...new Set((c.perguntas || []).map(p => (p.categoria || 'mecanico').toUpperCase()))].join(', ');
             document.getElementById('id_checklist').value = c.id_checklist;
             document.getElementById('resumo-checklist').innerHTML = `
                 <li><strong>ID:</strong> #${c.id_checklist}</li>
                 <li><strong>Título:</strong> ${c.titulo}</li>
-                <li><strong>Categoria:</strong> ${c.categoria.toUpperCase()}</li>
+                <li><strong>Categorias das Perguntas:</strong> ${cats || 'MÚLTIPLAS'}</li>
                 <li><strong>Total de Perguntas:</strong> ${(c.perguntas || []).length} perguntas cadastradas</li>
             `;
         }

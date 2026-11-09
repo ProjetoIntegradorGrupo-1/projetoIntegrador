@@ -149,7 +149,7 @@ function axion_garantir_estrutura(PDO $pdo): void {
             id_checklist INT AUTO_INCREMENT PRIMARY KEY,
             id_criador INT DEFAULT NULL,
             titulo VARCHAR(180) NOT NULL,
-            categoria VARCHAR(50) NOT NULL,
+            categoria VARCHAR(50) NOT NULL DEFAULT 'multicategoria',
             descricao VARCHAR(255) DEFAULT NULL,
             ativo TINYINT(1) NOT NULL DEFAULT 1,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -166,12 +166,14 @@ function axion_garantir_estrutura(PDO $pdo): void {
             $pdo->exec("ALTER TABLE Checklists ADD COLUMN $col $def");
         }
     }
+    $pdo->exec("ALTER TABLE Checklists MODIFY COLUMN categoria VARCHAR(50) DEFAULT 'multicategoria'");
 
-    // 4. Tabela Checklist_Perguntas
+    // 4. Tabela Checklist_Perguntas (Com Categoria por Pergunta!)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS Checklist_Perguntas (
             id_pergunta INT AUTO_INCREMENT PRIMARY KEY,
             id_checklist INT NOT NULL,
+            categoria VARCHAR(50) NOT NULL DEFAULT 'mecanico',
             id_pergunta_pai INT DEFAULT NULL,
             condicao_pai VARCHAR(20) DEFAULT NULL,
             ordem INT NOT NULL DEFAULT 1,
@@ -182,6 +184,17 @@ function axion_garantir_estrutura(PDO $pdo): void {
             orientacao VARCHAR(255) DEFAULT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+
+    $colunasPerguntas = $pdo->query("SHOW COLUMNS FROM Checklist_Perguntas")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('categoria', $colunasPerguntas, true)) {
+        $pdo->exec("ALTER TABLE Checklist_Perguntas ADD COLUMN categoria VARCHAR(50) NOT NULL DEFAULT 'mecanico' AFTER id_checklist");
+        // Distribui categorias variadas nas perguntas já existentes no banco
+        $pdo->exec("UPDATE Checklist_Perguntas SET categoria = 'eletrico' WHERE ordem = 1 AND id_pergunta_pai IS NULL");
+        $pdo->exec("UPDATE Checklist_Perguntas SET categoria = 'mecanico' WHERE id_pergunta_pai IS NOT NULL");
+        $pdo->exec("UPDATE Checklist_Perguntas SET categoria = 'estetico' WHERE ordem = 2");
+        $pdo->exec("UPDATE Checklist_Perguntas SET categoria = 'mecanico' WHERE ordem = 3");
+        $pdo->exec("UPDATE Checklist_Perguntas SET categoria = 'seguranca' WHERE ordem >= 4");
+    }
 
     // 5. Tabela Checklist_Execucoes (Checklists preenchidos / Vistorias)
     $pdo->exec("
@@ -473,9 +486,9 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
 
     $stmtPergunta = $pdo->prepare("
         INSERT INTO Checklist_Perguntas (
-            id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
+            id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
         ) VALUES (
-            :id_checklist, :id_pai, :condicao, :ordem, :texto, :tipo, :obrigatorio, :esperada, :orientacao
+            :id_checklist, :categoria, :id_pai, :condicao, :ordem, :texto, :tipo, :obrigatorio, :esperada, :orientacao
         )
     ");
 
@@ -484,18 +497,19 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
         $stmtChecklist->execute([
             ':id_criador' => $idCriador,
             ':titulo'     => $mod[0],
-            ':categoria'  => $mod[1],
+            ':categoria'  => 'multicategoria',
             ':descricao'  => $mod[2]
         ]);
         $idCheck = (int)$pdo->lastInsertId();
 
-        // Pergunta 1 (Sim/Não com subpergunta condicional)
+        // Pergunta 1 (Elétrica/Mecânica - Sim/Não com subpergunta condicional se responder 'nao')
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'eletrico',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 1,
-            ':texto'        => "Os itens principais de {$mod[1]} estão funcionando em perfeito estado?",
+            ':texto'        => "Os sistemas elétricos e mecânicos principais estão funcionando em perfeito estado?",
             ':tipo'         => 'sim_nao',
             ':obrigatorio'  => 1,
             ':esperada'     => 'sim',
@@ -503,35 +517,38 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
         ]);
         $idPergPai = (int)$pdo->lastInsertId();
 
-        // Subpergunta 1.1 condicional
+        // Subpergunta 1.1 condicional (só exibe se Pergunta 1 for 'nao')
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'mecanico',
             ':id_pai'       => $idPergPai,
             ':condicao'     => 'nao',
             ':ordem'        => 1,
-            ':texto'        => 'Descreva qual componente apresentou falha ou avaria:',
+            ':texto'        => 'Descreva qual componente apresentou falha ou defeito:',
             ':tipo'         => 'texto',
             ':obrigatorio'  => 1,
             ':esperada'     => null,
-            ':orientacao'   => 'Anexar foto da avaria na tela de detalhes de não conformidade.'
+            ':orientacao'   => 'Detalhar o defeito para abertura de Ordem de Serviço.'
         ]);
 
-        // Pergunta 2 (Sim/Não)
+        // Pergunta 2 (Estética/Segurança - Sim/Não onde 'nao' é Conforme e 'sim' exige descrever avaria e foto!)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'estetico',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 2,
-            ':texto'        => 'Há alguma avaria visual, vazamento ou alerta aceso no painel?',
+            ':texto'        => 'Há alguma avaria visual na lataria, vazamento ou alerta aceso no painel?',
             ':tipo'         => 'sim_nao',
             ':obrigatorio'  => 1,
             ':esperada'     => 'nao',
-            ':orientacao'   => 'Registrar código de alerta do painel e comunicar o supervisor.'
+            ':orientacao'   => 'Descreva a avaria encontrada e anexe a foto de evidência.'
         ]);
 
-        // Pergunta 3 (Número - Quilometragem)
+        // Pergunta 3 (Mecânica - Número - Quilometragem)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'mecanico',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 3,
@@ -542,13 +559,14 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
             ':orientacao'   => null
         ]);
 
-        // Pergunta 4 (Texto - Observações gerais)
+        // Pergunta 4 (Segurança - Texto - Observações gerais)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'seguranca',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 4,
-            ':texto'        => 'Observações complementares da vistoria:',
+            ':texto'        => 'Observações complementares de segurança e pré-viagem:',
             ':tipo'         => 'texto',
             ':obrigatorio'  => 0,
             ':esperada'     => null,

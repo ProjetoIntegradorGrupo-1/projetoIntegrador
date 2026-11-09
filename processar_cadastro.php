@@ -22,12 +22,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $estado        = strtoupper(trim($_POST['estado'] ?? ''));
     $telefone      = trim($_POST['telefone'] ?? '');
 
-    // Validação redundante de CPF no Backend
+    // Validação redundante no Backend (CPF, E-mail com @, Data de Nascimento <= 100 anos, CNH 11 dígitos e Validade <= 20 anos)
     if (!axion_validar_cpf($cpf)) {
-        echo "<script>
-                alert('CPF inválido! Verifique os dígitos verificadores informados.');
-                window.history.back();
-              </script>";
+        echo "<script>alert('CPF inválido! Verifique os dígitos verificadores informados.'); window.history.back();</script>";
+        exit;
+    }
+    if (strpos($email, '@') === false || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('E-mail inválido! É obrigatório conter @ e um domínio válido.'); window.history.back();</script>";
+        exit;
+    }
+    $anoAtual = (int)date('Y');
+    if ($dt_nasc && ((int)substr($dt_nasc, 0, 4) < ($anoAtual - 100) || $dt_nasc > date('Y-m-d'))) {
+        echo "<script>alert('Data de nascimento inválida! Só é permitido cadastrar pessoas nascidas nos últimos 100 anos.'); window.history.back();</script>";
+        exit;
+    }
+    if (strlen($cnh) !== 11) {
+        echo "<script>alert('Número da CNH inválido! A CNH deve conter exatamente 11 dígitos.'); window.history.back();</script>";
+        exit;
+    }
+    if ($validade_cnh && (int)substr($validade_cnh, 0, 4) > ($anoAtual + 20)) {
+        echo "<script>alert('Validade da CNH inválida! O ano de validade deve ser no máximo 20 anos à frente.'); window.history.back();</script>";
         exit;
     }
 
