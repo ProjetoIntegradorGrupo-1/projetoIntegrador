@@ -2,6 +2,7 @@
 // processar_cadastro.php
 require_once __DIR__ . '/conexao.php';
 require_once __DIR__ . '/backend/auth.php';
+require_once __DIR__ . '/backend/fotos.php';
 $eu = axion_exigir_perfil(['admin', 'supervisor']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -103,6 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':id_supervisor' => $id_supervisor
         ]);
 
+        // Foto enviada junto com o cadastro (opcional)
+        $novoId = (int)$pdo->lastInsertId();
+        try {
+            $foto = axion_receber_foto('foto', 'usuario', $novoId, 3);
+            if ($foto) $pdo->prepare("UPDATE Usuarios SET foto = :f WHERE id_usuario = :id")->execute([':f' => $foto, ':id' => $novoId]);
+        } catch (RuntimeException $e) {
+            // O cadastro foi feito; só a foto não foi aceita
+        }
         header("Location: oqfazer.php?aba=usuarios&sucesso={$perfil_solicitado}_cadastrado");
         exit;
 

@@ -56,6 +56,8 @@
                 </div>
 
                 <!-- 1. DADOS PESSOAIS & CPF COM MÁSCARA E VALIDAÇÃO -->
+                <div class="mb-4" id="campo-foto"></div>
+
                 <div class="axion-section-title"><i class="bi bi-person-vcard"></i> Dados pessoais</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
@@ -220,6 +222,7 @@
         document.querySelectorAll('input[name="tipo_usuario"]').forEach(r => r.addEventListener('change', () => aplicarTipo(r.value)));
 
         document.addEventListener('DOMContentLoaded', async () => {
+            AxionFoto.montar(document.getElementById('campo-foto'), { redondo: true, titulo: 'Foto do usuário' });
             aplicarTipo('motorista');
             const ctx = await AxionSessao.pronta;
             // Só o Admin cadastra Supervisores e Admins

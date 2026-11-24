@@ -202,6 +202,10 @@ function axion_garantir_estrutura(PDO $pdo): void {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    axion_garantir_colunas($pdo, 'Veiculos', [
+        'foto' => "VARCHAR(255) DEFAULT NULL", // foto do veículo (arquivo em uploads/veiculos)
+    ]);
+
     // Aprovação de modelos de checklist: o supervisor cria, o admin aprova
     axion_garantir_colunas($pdo, 'Checklists', [
         'status_aprovacao' => "VARCHAR(20) NOT NULL DEFAULT 'aprovado'",

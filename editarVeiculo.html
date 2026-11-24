@@ -48,6 +48,7 @@
 
             <!-- 2. FORMULÁRIO DE EDIÇÃO -->
             <form action="backend/api.php?acao=salvar_edicao_veiculo" method="post">
+                <div class="mb-4" id="campo-foto"></div>
                 <input type="hidden" name="id_veiculo" id="id_veiculo" value="">
 
                 <div class="row">
@@ -144,6 +145,7 @@
             document.getElementById('renavam').value = v.renavam || '';
             document.getElementById('chassi').value = v.chassi || '';
             document.getElementById('status').value = v.status || 'ativo';
+            AxionFoto.montar(document.getElementById('campo-foto'), { largura: 800, altura: 600, titulo: 'Foto do veículo', urlAtual: v.foto_url });
         }
         document.addEventListener('DOMContentLoaded', () => carregarListaVeiculos());
     </script>

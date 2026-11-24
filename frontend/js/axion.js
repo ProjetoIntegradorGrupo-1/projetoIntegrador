@@ -385,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         validade_cnh_obrigatoria: 'Informe a validade da CNH do motorista.',
         nao_pode_desativar_a_si_mesmo: 'Você não pode desativar a sua própria conta.',
         vistoria_invalida: 'Esta vistoria não pode mais ser alterada.',
+        foto_invalida: 'Os dados foram salvos, mas a foto não foi aceita. Use uma imagem JPG, PNG ou WEBP.',
         checklist_de_outro: 'Este modelo foi criado por outro supervisor. Só quem criou (ou o administrador) pode alterar.',
         checklist_nao_aprovado: 'Este modelo ainda não foi aprovado pelo administrador.'
     };
@@ -499,3 +500,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (ctx) AxionLayout.montar(ctx);
     mostrar();
 });
+
+/**
+ * Campo de foto com prévia, usado nos cadastros de usuário e de veículo.
+ * A imagem é recortada no centro e reduzida no navegador antes de enviar.
+ * Uso: AxionFoto.montar(divDestino, { largura: 400, altura: 400, redondo: true, urlAtual: '...' })
+ */
+const AxionFoto = {
+    processar(arquivo, largura, altura) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const proporcao = largura / altura;
+                let sw = img.width, sh = img.height;
+                if (sw / sh > proporcao) sw = sh * proporcao; else sh = sw / proporcao;
+                const c = document.createElement('canvas');
+                c.width = largura;
+                c.height = altura;
+                c.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, largura, altura);
+                URL.revokeObjectURL(img.src);
+                c.toBlob(b => b ? resolve(new File([b], 'foto.jpg', { type: 'image/jpeg' })) : reject(), 'image/jpeg', 0.88);
+            };
+            img.onerror = reject;
+            img.src = URL.createObjectURL(arquivo);
+        });
+    },
+
+    montar(destino, opcoes = {}) {
+        const { largura = 400, altura = 400, redondo = false, urlAtual = null, nomeCampo = 'foto', titulo = 'Foto' } = opcoes;
+        const form = destino.closest('form');
+        if (form) form.enctype = 'multipart/form-data';
+        const formato = redondo ? 'border-radius:50%;width:110px;height:110px' : 'border-radius:10px;width:200px;height:150px';
+        destino.innerHTML = `
+            <label class="form-label fw-semibold d-block">${titulo} <span class="text-muted small fw-normal">(opcional)</span></label>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="foto-previa border bg-light d-flex align-items-center justify-content-center text-muted overflow-hidden" style="${formato};flex-shrink:0">
+                    <i class="bi ${redondo ? 'bi-person' : 'bi-truck'} fs-1"></i>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <label class="btn btn-outline-primary btn-sm mb-0"><i class="bi bi-camera me-1"></i>Escolher foto
+                        <input type="file" name="${nomeCampo}" accept="image/*" class="d-none">
+                    </label>
+                    <button type="button" class="btn btn-outline-danger btn-sm d-none btn-tirar"><i class="bi bi-x-lg me-1"></i>Tirar foto</button>
+                    <input type="hidden" name="remover_foto" value="">
+                    <div class="small text-muted msg-foto">JPG, PNG ou WEBP</div>
+                </div>
+            </div>`;
+        const previa = destino.querySelector('.foto-previa');
+        const input = destino.querySelector('input[type=file]');
+        const remover = destino.querySelector('input[name=remover_foto]');
+        const btnTirar = destino.querySelector('.btn-tirar');
+        const msg = destino.querySelector('.msg-foto');
+        const mostrar = (url) => {
+            previa.innerHTML = url ? `<img src="${axionEsc(url)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i class="bi ${redondo ? 'bi-person' : 'bi-truck'} fs-1"></i>`;
+            btnTirar.classList.toggle('d-none', !url);
+        };
+        mostrar(urlAtual);
+        input.addEventListener('change', async () => {
+            const arq = input.files[0];
+            if (!arq) return;
+            if (!arq.type.startsWith('image/')) { msg.textContent = 'Escolha um arquivo de imagem.'; input.value = ''; return; }
+            try {
+                const pronto = await this.processar(arq, largura, altura);
+                const dt = new DataTransfer();
+                dt.items.add(pronto);
+                input.files = dt.files;
+                remover.value = '';
+                mostrar(URL.createObjectURL(pronto));
+                msg.textContent = 'Foto pronta. Ela é salva junto com o formulário.';
+            } catch (e) {
+                msg.textContent = 'Não foi possível ler esta imagem.';
+                input.value = '';
+            }
+        });
+        btnTirar.addEventListener('click', () => {
+            input.value = '';
+            remover.value = '1';
+            mostrar(null);
+            msg.textContent = 'A foto será removida ao salvar.';
+        });
+        return { mostrar };
+    }
+};

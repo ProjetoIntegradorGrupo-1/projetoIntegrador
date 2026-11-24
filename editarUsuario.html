@@ -56,6 +56,8 @@
             <form action="backend/api.php?acao=salvar_edicao_usuario" method="post" id="formEditarUsuario">
                 <input type="hidden" name="id_usuario" id="id_usuario" value="">
 
+                <div class="mb-4" id="campo-foto"></div>
+
                 <div class="axion-section-title"><i class="bi bi-person-vcard"></i> Dados pessoais e perfil</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
@@ -266,6 +268,7 @@
             document.getElementById('email').value = u.email || '';
             document.getElementById('id_supervisor').value = u.id_supervisor || '';
             document.getElementById('status').value = u.status || 'ativo';
+            AxionFoto.montar(document.getElementById('campo-foto'), { redondo: true, titulo: 'Foto do usuário', urlAtual: u.foto_url });
             atualizarLinhaSupervisor();
             // Reaplica máscaras/validação nos valores carregados
             ['cpf', 'telefone', 'cnh'].forEach(campo => { const el = document.getElementById(campo); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('blur')); });

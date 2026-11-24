@@ -196,6 +196,7 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
+                        ${v.veiculo_foto_url ? `<img src="${e(v.veiculo_foto_url)}" alt="" class="w-100 mb-2" style="height:120px;object-fit:cover;border-radius:8px">` : ''}
                         <div class="small text-muted">Veículo</div>
                         <div class="fw-bold font-monospace">${e(v.placa_veiculo)}</div>
                         <div class="small">${e(v.marca_modelo || '')} ${e(v.ano || '')} ${e(v.cor || '')}</div>
@@ -303,7 +304,8 @@
                 </div>
 
                 <div class="rel-secao">Identificação</div>
-                <table class="rel-grid">
+                ${v.veiculo_foto_url ? `<img src="${e(v.veiculo_foto_url)}" alt="" style="float:right;width:46mm;height:34mm;object-fit:cover;border-radius:6px;margin:0 0 6px 8px;border:1px solid #dde3ea">` : ''}
+                <table class="rel-grid" style="${v.veiculo_foto_url ? 'width:calc(100% - 50mm)' : ''}">
                     <tr>
                         <td><span class="rot">Placa</span><span class="val" style="font-family:monospace;font-size:12pt">${e(v.placa_veiculo)}</span></td>
                         <td colspan="2"><span class="rot">Veículo</span><span class="val">${e(v.marca_modelo || '-')}</span> ${e(v.ano || '')} ${v.cor ? '· ' + e(v.cor) : ''}</td>

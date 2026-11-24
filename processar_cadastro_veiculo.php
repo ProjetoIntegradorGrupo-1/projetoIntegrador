@@ -2,6 +2,7 @@
 // processar_cadastro_veiculo.php
 require_once __DIR__ . '/conexao.php';
 require_once __DIR__ . '/backend/auth.php';
+require_once __DIR__ . '/backend/fotos.php';
 axion_exigir_perfil(['admin', 'supervisor']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -43,6 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':status'       => $status
         ]);
 
+        // Foto enviada junto com o cadastro (opcional)
+        $novoId = (int)$pdo->lastInsertId();
+        try {
+            $foto = axion_receber_foto('foto', 'veiculo', $novoId, 5);
+            if ($foto) $pdo->prepare("UPDATE Veiculos SET foto = :f WHERE id_veiculo = :id")->execute([':f' => $foto, ':id' => $novoId]);
+        } catch (RuntimeException $e) {
+            // O cadastro foi feito; só a foto não foi aceita
+        }
         header("Location: oqfazer.php?aba=veiculos&sucesso=veiculo_cadastrado");
         exit;
 

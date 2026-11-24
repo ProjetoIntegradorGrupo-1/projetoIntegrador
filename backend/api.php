@@ -6,6 +6,7 @@
  */
 require_once __DIR__ . '/../conexao.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/fotos.php';
 
 $acao = $_REQUEST['acao'] ?? '';
 $ehPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
@@ -51,6 +52,10 @@ function axion_url_foto(int $id, ?string $arquivo): ?string {
     return $arquivo ? "backend/api.php?acao=foto_usuario&id=$id&v=" . rawurlencode(pathinfo($arquivo, PATHINFO_FILENAME)) : null;
 }
 
+function axion_url_foto_veiculo(int $id, ?string $arquivo): ?string {
+    return $arquivo ? "backend/api.php?acao=foto_veiculo&id=$id&v=" . rawurlencode(pathinfo($arquivo, PATHINFO_FILENAME)) : null;
+}
+
 // 0. CONTEXTO DA SESSÃO (quem está logado + token dos formulários)
 if ($acao === 'contexto') {
     $u = axion_exigir_perfil();
@@ -84,7 +89,7 @@ if ($acao === 'buscar') {
     $limite = min(250, max(10, (int)($_GET['limite'] ?? 100)));
 
     if ($tipo === 'veiculos') {
-        $sql = "SELECT id_veiculo, placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status
+        $sql = "SELECT id_veiculo, placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status, foto
                 FROM Veiculos WHERE 1=1";
         $params = [];
         if ($termo !== '') {
@@ -100,7 +105,12 @@ if ($acao === 'buscar') {
         $sql .= " ORDER BY id_veiculo DESC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = array_map(function ($r) {
+            $r['foto_url'] = axion_url_foto_veiculo((int)$r['id_veiculo'], $r['foto']);
+            unset($r['foto']);
+            return $r;
+        }, $stmt->fetchAll());
+        axion_json(['sucesso' => true, 'dados' => $dados]);
     }
 
     if ($tipo === 'usuarios') {
@@ -355,10 +365,14 @@ if ($acao === 'obter_usuario') {
     axion_exigir_perfil(['admin', 'supervisor']);
     $id = (int)($_GET['id'] ?? 0);
     $stmt = $pdo->prepare("SELECT id_usuario, nome, sobrenome, email, cpf_matricula, perfil, data_nascimento, genero,
-                                  cnh, validade_cnh, categoria_cnh, cep, logradouro, numero, bairro, cidade, estado, telefone, status, id_supervisor
+                                  cnh, validade_cnh, categoria_cnh, cep, logradouro, numero, bairro, cidade, estado, telefone, status, id_supervisor, foto
                            FROM Usuarios WHERE id_usuario = :id LIMIT 1");
     $stmt->execute([':id' => $id]);
     $user = $stmt->fetch();
+    if ($user) {
+        $user['foto_url'] = axion_url_foto((int)$user['id_usuario'], $user['foto']);
+        unset($user['foto']);
+    }
     axion_json(['sucesso' => (bool)$user, 'dados' => $user]);
 }
 
@@ -368,6 +382,10 @@ if ($acao === 'obter_veiculo') {
     $stmt = $pdo->prepare("SELECT * FROM Veiculos WHERE id_veiculo = :id LIMIT 1");
     $stmt->execute([':id' => $id]);
     $veic = $stmt->fetch();
+    if ($veic) {
+        $veic['foto_url'] = axion_url_foto_veiculo((int)$veic['id_veiculo'], $veic['foto']);
+        unset($veic['foto']);
+    }
     axion_json(['sucesso' => (bool)$veic, 'dados' => $veic]);
 }
 
@@ -476,6 +494,21 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
         header("Location: ../editarUsuario.html?id=$id&erro=$codigo");
         exit;
     }
+    // Foto de perfil enviada pelo gestor na edição (ou removida)
+    try {
+        $stFotoAnt = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+        $stFotoAnt->execute([':id' => $id]);
+        $fotoAntiga = $stFotoAnt->fetchColumn() ?: null;
+        $novaFoto = axion_receber_foto('foto', 'usuario', $id);
+        if ($novaFoto || !empty($_POST['remover_foto'])) {
+            $pdo->prepare("UPDATE Usuarios SET foto = :f WHERE id_usuario = :id")->execute([':f' => $novaFoto, ':id' => $id]);
+            axion_apagar_foto('usuario', $fotoAntiga);
+        }
+    } catch (RuntimeException $e) {
+        header("Location: ../editarUsuario.html?id=$id&erro=foto_invalida");
+        exit;
+    }
+
     // Trocou o supervisor do motorista: as solicitações dele que ainda esperam o supervisor vão para o novo
     if ($perfil === 'motorista' && $supValido && (int)$supValido !== (int)$alvo['id_supervisor']) {
         $novo = axion_buscar_usuario($pdo, $supValido);
@@ -545,6 +578,19 @@ if ($acao === 'salvar_edicao_veiculo' && $ehPost) {
         ':placa' => $placa, ':marca' => $marca, ':modelo' => $modelo, ':marca_modelo' => $marcaModelo, ':ano' => $ano,
         ':cor' => $cor, ':km' => $km, ':renavam' => $renavam, ':chassi' => $chassi, ':status' => $status, ':id' => $id
     ]);
+    try {
+        $stFotoAnt = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
+        $stFotoAnt->execute([':id' => $id]);
+        $fotoAntiga = $stFotoAnt->fetchColumn() ?: null;
+        $novaFoto = axion_receber_foto('foto', 'veiculo', $id, 5);
+        if ($novaFoto || !empty($_POST['remover_foto'])) {
+            $pdo->prepare("UPDATE Veiculos SET foto = :f WHERE id_veiculo = :id")->execute([':f' => $novaFoto, ':id' => $id]);
+            axion_apagar_foto('veiculo', $fotoAntiga);
+        }
+    } catch (RuntimeException $e) {
+        header("Location: ../editarVeiculo.html?id=$id&erro=foto_invalida");
+        exit;
+    }
     header("Location: ../oqfazer.php?aba=veiculos&sucesso=veiculo_editado");
     exit;
 }
@@ -562,6 +608,9 @@ if ($acao === 'excluir_veiculo' && $ehPost) {
         header("Location: ../excluirVeiculo.html?id=$id&erro=veiculo_com_historico");
         exit;
     }
+    $stFotoAnt = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
+    $stFotoAnt->execute([':id' => $id]);
+    axion_apagar_foto('veiculo', $stFotoAnt->fetchColumn() ?: null);
     $pdo->prepare("DELETE FROM Veiculos WHERE id_veiculo = :id")->execute([':id' => $id]);
     header("Location: ../oqfazer.php?aba=veiculos&sucesso=veiculo_excluido");
     exit;
@@ -916,6 +965,11 @@ if ($acao === 'obter_vistoria') {
     unset($v['foto_evidencia']);
     $v['situacao'] = axion_situacao($v);
     $v['meu_papel'] = axion_papel($v, $eu);
+    if ($v['id_veiculo']) {
+        $stVF = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
+        $stVF->execute([':id' => $v['id_veiculo']]);
+        $v['veiculo_foto_url'] = axion_url_foto_veiculo((int)$v['id_veiculo'], $stVF->fetchColumn() ?: null);
+    }
     $stF = $pdo->prepare("SELECT id_usuario, foto FROM Usuarios WHERE id_usuario IN (:m, :v)");
     $stF->execute([':m' => (int)$v['id_motorista'], ':v' => (int)$v['id_vistoriador']]);
     foreach ($stF->fetchAll() as $f) {
@@ -961,24 +1015,19 @@ if ($acao === 'meus_dados') {
     axion_json(['sucesso' => true, 'dados' => $d]);
 }
 
-// 11. FOTO DE PERFIL (cada usuário troca a própria foto)
+// 11. FOTOS: cada usuário troca a própria foto; gestores trocam a foto dos veículos
 if ($acao === 'salvar_foto_perfil' && $ehPost) {
     $eu = axion_exigir_perfil();
     axion_validar_csrf();
-    $arq = $_FILES['foto'] ?? null;
-    if (!$arq || $arq['error'] !== UPLOAD_ERR_OK) axion_json(['sucesso' => false, 'erro' => 'Escolha uma imagem.'], 422);
-    if ($arq['size'] > 3 * 1024 * 1024) axion_json(['sucesso' => false, 'erro' => 'A imagem pode ter no máximo 3 MB.'], 422);
-    $info = @getimagesize($arq['tmp_name']);
-    $ext = $info ? (['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$info['mime']] ?? null) : null;
-    if (!$ext) axion_json(['sucesso' => false, 'erro' => 'Envie uma foto em JPG, PNG ou WEBP.'], 422);
-    $dir = __DIR__ . '/../uploads/usuarios';
-    if (!is_dir($dir)) mkdir($dir, 0775, true);
-    $nome = $eu['id'] . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
-    if (!move_uploaded_file($arq['tmp_name'], "$dir/$nome")) axion_json(['sucesso' => false, 'erro' => 'Não foi possível salvar a foto.'], 500);
+    try {
+        $nome = axion_receber_foto('foto', 'usuario', $eu['id']);
+    } catch (RuntimeException $e) {
+        axion_json(['sucesso' => false, 'erro' => $e->getMessage()], 422);
+    }
+    if (!$nome) axion_json(['sucesso' => false, 'erro' => 'Escolha uma imagem.'], 422);
     $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
     $st->execute([':id' => $eu['id']]);
-    $antiga = $st->fetchColumn();
-    if ($antiga && is_file("$dir/" . basename($antiga))) @unlink("$dir/" . basename($antiga));
+    axion_apagar_foto('usuario', $st->fetchColumn() ?: null);
     $pdo->prepare("UPDATE Usuarios SET foto = :f WHERE id_usuario = :id")->execute([':f' => $nome, ':id' => $eu['id']]);
     axion_json(['sucesso' => true, 'foto_url' => axion_url_foto($eu['id'], $nome)]);
 }
@@ -988,26 +1037,42 @@ if ($acao === 'remover_foto_perfil' && $ehPost) {
     axion_validar_csrf();
     $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
     $st->execute([':id' => $eu['id']]);
-    $antiga = $st->fetchColumn();
-    $dir = __DIR__ . '/../uploads/usuarios';
-    if ($antiga && is_file("$dir/" . basename($antiga))) @unlink("$dir/" . basename($antiga));
+    axion_apagar_foto('usuario', $st->fetchColumn() ?: null);
     $pdo->prepare("UPDATE Usuarios SET foto = NULL WHERE id_usuario = :id")->execute([':id' => $eu['id']]);
     axion_json(['sucesso' => true]);
+}
+
+if ($acao === 'salvar_foto_veiculo' && $ehPost) {
+    axion_exigir_perfil(['admin', 'supervisor']);
+    axion_validar_csrf();
+    $id = (int)($_POST['id_veiculo'] ?? 0);
+    $st = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
+    $st->execute([':id' => $id]);
+    $antiga = $st->fetchColumn();
+    if ($antiga === false) axion_json(['sucesso' => false, 'erro' => 'Veículo não encontrado.'], 404);
+    try {
+        $nome = axion_receber_foto('foto', 'veiculo', $id, 5);
+    } catch (RuntimeException $e) {
+        axion_json(['sucesso' => false, 'erro' => $e->getMessage()], 422);
+    }
+    if (!$nome) axion_json(['sucesso' => false, 'erro' => 'Escolha uma imagem.'], 422);
+    axion_apagar_foto('veiculo', $antiga ?: null);
+    $pdo->prepare("UPDATE Veiculos SET foto = :f WHERE id_veiculo = :id")->execute([':f' => $nome, ':id' => $id]);
+    axion_json(['sucesso' => true, 'foto_url' => axion_url_foto_veiculo($id, $nome)]);
 }
 
 if ($acao === 'foto_usuario') {
     axion_exigir_perfil();
     $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
     $st->execute([':id' => (int)($_GET['id'] ?? 0)]);
-    $foto = $st->fetchColumn();
-    $arq = $foto ? __DIR__ . '/../uploads/usuarios/' . basename($foto) : null;
-    if (!$arq || !is_file($arq)) { http_response_code(404); exit; }
-    $tipos = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
-    header('Content-Type: ' . ($tipos[strtolower(pathinfo($arq, PATHINFO_EXTENSION))] ?? 'application/octet-stream'));
-    header('Content-Length: ' . filesize($arq));
-    header('Cache-Control: private, max-age=86400');
-    readfile($arq);
-    exit;
+    axion_servir_foto('usuario', $st->fetchColumn() ?: null);
+}
+
+if ($acao === 'foto_veiculo') {
+    axion_exigir_perfil();
+    $st = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
+    $st->execute([':id' => (int)($_GET['id'] ?? 0)]);
+    axion_servir_foto('veiculo', $st->fetchColumn() ?: null);
 }
 
 // 12. TROCAR A PRÓPRIA SENHA (todos começam com mudar123)

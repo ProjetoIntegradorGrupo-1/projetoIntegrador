@@ -581,7 +581,12 @@ $mapaErros = [
             veiculos: (v) => `
                 <tr>
                     <td><span class="badge bg-dark font-monospace fs-6">${esc(v.placa)}</span></td>
-                    <td class="fw-semibold">${esc(v.marca_modelo)}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            ${v.foto_url ? `<img src="${esc(v.foto_url)}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:6px">` : '<span class="d-inline-flex align-items-center justify-content-center bg-light border text-muted" style="width:64px;height:48px;border-radius:6px"><i class="bi bi-truck"></i></span>'}
+                            <span class="fw-semibold">${esc(v.marca_modelo)}</span>
+                        </div>
+                    </td>
                     <td>${esc(v.ano)}</td>
                     <td>${esc(v.cor || '-')}</td>
                     <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>

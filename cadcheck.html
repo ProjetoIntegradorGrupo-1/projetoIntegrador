@@ -45,6 +45,7 @@
                         <select id="id_veiculo" name="id_veiculo" class="form-select" required>
                             <option value="">Carregando frota...</option>
                         </select>
+                        <img id="foto-veiculo" alt="" class="d-none mt-2 w-100" style="height:120px;object-fit:cover;border-radius:8px">
                     </div>
                     <div class="col-md-2 mb-3">
                         <label for="kmrodado" class="form-label fw-semibold">Km Atual</label>
@@ -137,11 +138,13 @@
             const veiculos = jVeic.dados || [];
             selV.innerHTML = veiculos.length
                 ? '<option value="">Selecione o veículo...</option>' + veiculos.map(v =>
-                    `<option value="${v.id_veiculo}" data-km="${v.km_rodado || 0}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}${v.status === 'manutencao' ? ' (em manutenção)' : v.status === 'em_rota' ? ' (em rota)' : ''}</option>`).join('')
+                    `<option value="${v.id_veiculo}" data-km="${v.km_rodado || 0}" data-foto="${axionEsc(v.foto_url || '')}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}${v.status === 'manutencao' ? ' (em manutenção)' : v.status === 'em_rota' ? ' (em rota)' : ''}</option>`).join('')
                 : '<option value="">Nenhum veículo cadastrado</option>';
             selV.addEventListener('change', () => {
                 const opt = selV.selectedOptions[0];
                 const km = document.getElementById('kmrodado');
+                const foto = document.getElementById('foto-veiculo');
+                if (opt && opt.dataset.foto) { foto.src = opt.dataset.foto; foto.classList.remove('d-none'); } else { foto.classList.add('d-none'); }
                 // O hodômetro não volta: o mínimo é o último km registrado do carro
                 if (opt && opt.dataset.km) { km.min = opt.dataset.km; km.placeholder = `Mínimo: ${Number(opt.dataset.km).toLocaleString('pt-BR')} km`; }
             });

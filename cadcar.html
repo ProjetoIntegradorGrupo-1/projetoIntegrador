@@ -36,6 +36,8 @@
             </div>
 
             <form action="processar_cadastro_veiculo.php" method="post">
+                <div class="mb-4" id="campo-foto"></div>
+
                 <div class="axion-section-title"><i class="bi bi-info-circle"></i> Veículo</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
@@ -106,6 +108,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="frontend/js/axion.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => AxionFoto.montar(document.getElementById('campo-foto'), { largura: 800, altura: 600, titulo: 'Foto do veículo' }));
+    </script>
 </body>
 
 </html>
