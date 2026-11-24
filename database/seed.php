@@ -216,7 +216,20 @@ function axion_garantir_estrutura(PDO $pdo): void {
         'assinatura_motorista'      => "LONGTEXT DEFAULT NULL",
         'assinatura_vistoriador'    => "LONGTEXT DEFAULT NULL",
         'assinado_em'               => "DATETIME DEFAULT NULL",
+        // Fluxo de solicitação: cada pessoa assina no próprio login, em momentos diferentes
+        'assinado_motorista_em'     => "DATETIME DEFAULT NULL",
+        'assinado_vistoriador_em'   => "DATETIME DEFAULT NULL",
+        'recusado_em'               => "DATETIME DEFAULT NULL",
+        'recusado_por'              => "INT DEFAULT NULL",
+        'motivo_recusa'             => "TEXT DEFAULT NULL",
+        'enviado_manutencao'        => "TINYINT(1) NOT NULL DEFAULT 0",
     ]);
+    // Resposta esperada só faz sentido em pergunta Sim/Não
+    $pdo->exec("UPDATE Checklist_Perguntas SET resposta_esperada = NULL WHERE tipo <> 'sim_nao' AND resposta_esperada IS NOT NULL");
+    $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
+    // Vistorias assinadas na versão anterior (as duas assinaturas de uma vez)
+    $pdo->exec("UPDATE Checklist_Execucoes SET assinado_motorista_em = assinado_em WHERE assinado_em IS NOT NULL AND assinado_motorista_em IS NULL AND assinatura_motorista IS NOT NULL");
+    $pdo->exec("UPDATE Checklist_Execucoes SET assinado_vistoriador_em = assinado_em WHERE assinado_em IS NOT NULL AND assinado_vistoriador_em IS NULL AND assinatura_vistoriador IS NOT NULL");
 
     // 6. Respostas de cada pergunta de uma vistoria (antes as respostas eram descartadas)
     $pdo->exec("

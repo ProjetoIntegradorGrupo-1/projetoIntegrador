@@ -19,10 +19,31 @@ function axion_digitos(string $s): string {
 }
 
 function axion_buscar_usuario(PDO $pdo, int $id): ?array {
-    $st = $pdo->prepare("SELECT id_usuario, nome, perfil, id_supervisor, senha, email, cpf_matricula FROM Usuarios WHERE id_usuario = :id LIMIT 1");
+    $st = $pdo->prepare("SELECT id_usuario, nome, perfil, id_supervisor, senha, email, cpf_matricula, status, cnh, validade_cnh FROM Usuarios WHERE id_usuario = :id LIMIT 1");
     $st->execute([':id' => $id]);
     $r = $st->fetch();
     return $r ?: null;
+}
+
+/**
+ * Situação da vistoria no fluxo de solicitação de assinatura.
+ * recusada | concluida | aguardando_vistoriador | aguardando_motorista | aguardando_assinaturas
+ */
+function axion_situacao(array $v): string {
+    if (!empty($v['recusado_em'])) return 'recusada';
+    $m = !empty($v['assinado_motorista_em']);
+    $s = !empty($v['assinado_vistoriador_em']);
+    if ($m && $s) return 'concluida';
+    if ($m) return 'aguardando_vistoriador';
+    if ($s) return 'aguardando_motorista';
+    return 'aguardando_assinaturas';
+}
+
+/** Papel do usuário logado na vistoria: motorista, vistoriador ou null. */
+function axion_papel(array $v, array $eu): ?string {
+    if ((int)$v['id_motorista'] === $eu['id']) return 'motorista';
+    if ((int)$v['id_vistoriador'] === $eu['id']) return 'vistoriador';
+    return null;
 }
 
 // 0. CONTEXTO DA SESSÃO (quem está logado + token dos formulários)
@@ -34,6 +55,10 @@ if ($acao === 'contexto') {
         $st->execute([':id' => $u['id']]);
         $extra['supervisor'] = $st->fetch() ?: null;
     }
+    $st = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE recusado_em IS NULL AND
+        ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
+    $st->execute([':a' => $u['id'], ':b' => $u['id']]);
+    $extra['pendencias'] = (int)$st->fetchColumn();
     axion_json(['sucesso' => true, 'usuario' => $u, 'csrf' => axion_csrf_token()] + $extra);
 }
 
@@ -110,7 +135,10 @@ if ($acao === 'buscar') {
             $sql .= " AND c.categoria = :cat";
             $params[':cat'] = $filtroExtra;
         }
-        $sql .= " ORDER BY c.id_checklist DESC LIMIT $limite";
+        if (!empty($_GET['somente_ativos'])) {
+            $sql .= " AND c.ativo = 1 AND EXISTS (SELECT 1 FROM Checklist_Perguntas p2 WHERE p2.id_checklist = c.id_checklist)";
+        }
+        $sql .= " ORDER BY c.ativo DESC, c.id_checklist DESC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
@@ -118,7 +146,8 @@ if ($acao === 'buscar') {
 
     if ($tipo === 'vistorias') {
         $sql = "SELECT e.id_execucao, e.id_checklist, e.placa_veiculo, e.nome_motorista, e.nome_vistoriador, e.data_vistoria,
-                       e.hora_vistoria, e.km_rodado, e.status_conformidade, e.assinado_em,
+                       e.hora_vistoria, e.km_rodado, e.status_conformidade, e.assinado_em, e.id_motorista, e.id_vistoriador,
+                       e.assinado_motorista_em, e.assinado_vistoriador_em, e.recusado_em,
                        COALESCE(c.titulo, 'Checklist removido') AS checklist_titulo,
                        COALESCE(c.categoria, '-') AS checklist_categoria
                 FROM Checklist_Execucoes e
@@ -135,7 +164,13 @@ if ($acao === 'buscar') {
             $params[':q'] = "%$termo%";
         }
         if ($filtroExtra === 'pendente') {
-            $sql .= " AND e.assinado_em IS NULL";
+            $sql .= " AND e.assinado_em IS NULL AND e.recusado_em IS NULL";
+        } elseif ($filtroExtra === 'recusada') {
+            $sql .= " AND e.recusado_em IS NOT NULL";
+        } elseif ($filtroExtra === 'minhas_pendencias') {
+            $sql .= " AND e.recusado_em IS NULL AND ((e.id_motorista = :p1 AND e.assinado_motorista_em IS NULL) OR (e.id_vistoriador = :p2 AND e.assinado_vistoriador_em IS NULL))";
+            $params[':p1'] = $u['id'];
+            $params[':p2'] = $u['id'];
         } elseif ($filtroExtra !== '') {
             $sql .= " AND e.status_conformidade = :st";
             $params[':st'] = $filtroExtra;
@@ -143,7 +178,15 @@ if ($acao === 'buscar') {
         $sql .= " ORDER BY e.data_vistoria DESC, e.id_execucao DESC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = array_map(function ($v) use ($u) {
+            $v['situacao'] = axion_situacao($v);
+            $papel = axion_papel($v, $u);
+            $v['minha_vez'] = $v['situacao'] !== 'recusada' && (
+                ($papel === 'motorista' && empty($v['assinado_motorista_em'])) ||
+                ($papel === 'vistoriador' && empty($v['assinado_vistoriador_em'])));
+            return $v;
+        }, $stmt->fetchAll());
+        axion_json(['sucesso' => true, 'dados' => $dados]);
     }
 
     axion_json(['sucesso' => false, 'erro' => 'Tipo de busca inválido'], 400);
@@ -234,13 +277,21 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
     $estado        = strtoupper(trim($_POST['estado'] ?? ''));
     $telefone      = trim($_POST['telefone'] ?? '');
     $idSupervisor  = (int)($_POST['id_supervisor'] ?? 0);
+    $statusConta   = ($_POST['status'] ?? $alvo['status'] ?? 'ativo') === 'inativo' ? 'inativo' : 'ativo';
 
     $erro = null;
+    if ($perfil === 'motorista') {
+        // Motorista precisa de CNH completa para dirigir a frota
+        if (strlen($cnh) !== 11) $erro = 'cnh_obrigatoria';
+        elseif ($catCnh === '') $erro = 'categoria_cnh_obrigatoria';
+        elseif (!$valCnh) $erro = 'validade_cnh_obrigatoria';
+    }
     if (!in_array($perfil, AXION_PERFIS, true)) $erro = 'perfil_invalido';
     // Supervisor não gerencia contas de admin/supervisor nem promove alguém a esses níveis
     if ($eu['perfil'] === 'supervisor' && (in_array($alvo['perfil'], ['admin', 'supervisor'], true) || in_array($perfil, ['admin', 'supervisor'], true)) && $alvo['id_usuario'] != $eu['id']) $erro = 'sem_permissao';
     // Ninguém muda o próprio nível de acesso
     if ($alvo['id_usuario'] == $eu['id'] && $perfil !== $alvo['perfil']) $erro = 'nao_pode_mudar_proprio_perfil';
+    if ($alvo['id_usuario'] == $eu['id'] && $statusConta === 'inativo') $erro = 'nao_pode_desativar_a_si_mesmo';
     if (!axion_validar_cpf($cpf)) $erro = 'cpf_invalido';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $erro = 'email_invalido';
     if ($nomeCompleto === '') $erro = 'nome_obrigatorio';
@@ -262,19 +313,26 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
                 nome = :nome, sobrenome = :sobrenome, email = :email, cpf_matricula = :cpf, perfil = :perfil,
                 data_nascimento = :dt_nasc, genero = :genero, cnh = :cnh, validade_cnh = :val_cnh, categoria_cnh = :cat_cnh,
                 cep = :cep, logradouro = :logradouro, numero = :numero, bairro = :bairro, cidade = :cidade, estado = :estado,
-                telefone = :telefone, id_supervisor = :sup
+                telefone = :telefone, id_supervisor = :sup, status = :status_conta
             WHERE id_usuario = :id
         ");
         $stmt->execute([
             ':nome' => $nomeCompleto, ':sobrenome' => $sobrenome, ':email' => $email, ':cpf' => $cpf, ':perfil' => $perfil,
             ':dt_nasc' => $dtNasc, ':genero' => $genero, ':cnh' => $cnh, ':val_cnh' => $valCnh, ':cat_cnh' => $catCnh ?: null,
             ':cep' => $cep, ':logradouro' => $logradouro, ':numero' => $numero, ':bairro' => $bairro, ':cidade' => $cidade,
-            ':estado' => $estado, ':telefone' => $telefone, ':sup' => $supValido, ':id' => $id
+            ':estado' => $estado, ':telefone' => $telefone, ':sup' => $supValido, ':status_conta' => $statusConta, ':id' => $id
         ]);
     } catch (PDOException $e) {
         $codigo = ($e->errorInfo[1] ?? 0) == 1062 ? 'cpf_ou_email_duplicado' : 'erro_banco';
         header("Location: ../editarUsuario.html?id=$id&erro=$codigo");
         exit;
+    }
+    // Trocou o supervisor do motorista: as solicitações dele que ainda esperam o supervisor vão para o novo
+    if ($perfil === 'motorista' && $supValido && (int)$supValido !== (int)$alvo['id_supervisor']) {
+        $novo = axion_buscar_usuario($pdo, $supValido);
+        $pdo->prepare("UPDATE Checklist_Execucoes SET id_vistoriador = :v, nome_vistoriador = :n
+                       WHERE id_motorista = :m AND id_registrado_por = :m2 AND assinado_vistoriador_em IS NULL AND recusado_em IS NULL")
+            ->execute([':v' => $supValido, ':n' => $novo['nome'], ':m' => $id, ':m2' => $id]);
     }
     header("Location: ../oqfazer.php?aba=usuarios&sucesso=usuario_editado");
     exit;
@@ -290,6 +348,15 @@ if ($acao === 'excluir_usuario' && $ehPost) {
     if ($alvo['id_usuario'] == $eu['id']) { header("Location: ../excluirUsuario.html?id=$id&erro=nao_pode_excluir_a_si_mesmo"); exit; }
     if ($eu['perfil'] === 'supervisor' && in_array($alvo['perfil'], ['admin', 'supervisor'], true)) {
         header("Location: ../excluirUsuario.html?id=$id&erro=sem_permissao"); exit;
+    }
+    // Quem já participou de vistoria não é apagado (o histórico e as assinaturas precisam continuar
+    // apontando para a pessoa). Nesse caso a conta é desativada: não consegue mais entrar no sistema.
+    $hist = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE id_motorista = :a OR id_vistoriador = :b");
+    $hist->execute([':a' => $id, ':b' => $id]);
+    if ((int)$hist->fetchColumn() > 0) {
+        $pdo->prepare("UPDATE Usuarios SET status = 'inativo' WHERE id_usuario = :id")->execute([':id' => $id]);
+        header("Location: ../oqfazer.php?aba=usuarios&sucesso=usuario_desativado");
+        exit;
     }
     $pdo->prepare("UPDATE Usuarios SET id_supervisor = NULL WHERE id_supervisor = :id")->execute([':id' => $id]);
     $pdo->prepare("DELETE FROM Usuarios WHERE id_usuario = :id")->execute([':id' => $id]);
@@ -339,6 +406,13 @@ if ($acao === 'excluir_veiculo' && $ehPost) {
     axion_validar_csrf();
     $id = (int)($_POST['id_veiculo'] ?? 0);
     if ($id <= 0) { header("Location: ../excluirVeiculo.html?erro=veiculo_nao_selecionado"); exit; }
+    $hist = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE id_veiculo = :id");
+    $hist->execute([':id' => $id]);
+    if ((int)$hist->fetchColumn() > 0) {
+        // Carro com vistorias não é apagado, para não perder o histórico
+        header("Location: ../excluirVeiculo.html?id=$id&erro=veiculo_com_historico");
+        exit;
+    }
     $pdo->prepare("DELETE FROM Veiculos WHERE id_veiculo = :id")->execute([':id' => $id]);
     header("Location: ../oqfazer.php?aba=veiculos&sucesso=veiculo_excluido");
     exit;
@@ -356,7 +430,8 @@ if ($acao === 'salvar_edicao_checklist' && $ehPost) {
 
     if ($id <= 0 || $titulo === '') { header("Location: ../editarChecklist.html?erro=checklist_nao_selecionado"); exit; }
     $pdo->beginTransaction();
-    $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc WHERE id_checklist = :id")
+    // Salvar um modelo arquivado volta a deixá-lo disponível
+    $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc, ativo = 1 WHERE id_checklist = :id")
         ->execute([':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':id' => $id]);
 
     if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
@@ -370,7 +445,8 @@ if ($acao === 'salvar_edicao_checklist' && $ehPost) {
             if ($texto === '') continue;
             $dados = [
                 ':id_chk' => $id, ':ordem' => $ordem++, ':texto' => $texto, ':tipo' => $p['tipo'] ?? 'sim_nao',
-                ':obrig' => isset($p['obrigatorio']) ? 1 : 0, ':esp' => $p['resposta_esperada'] ?? 'sim', ':ori' => trim($p['orientacao'] ?? '')
+                ':obrig' => isset($p['obrigatorio']) ? 1 : 0,
+                ':esp' => ($p['tipo'] ?? 'sim_nao') === 'sim_nao' ? ($p['resposta_esperada'] ?? 'sim') : null, ':ori' => trim($p['orientacao'] ?? '')
             ];
             $idp = (int)($p['id_pergunta'] ?? 0);
             if ($idp > 0) {
@@ -401,6 +477,14 @@ if ($acao === 'excluir_checklist' && $ehPost) {
     axion_validar_csrf();
     $id = (int)($_POST['id_checklist'] ?? 0);
     if ($id <= 0) { header("Location: ../excluirChecklist.html?erro=checklist_nao_selecionado"); exit; }
+    $hist = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE id_checklist = :id");
+    $hist->execute([':id' => $id]);
+    if ((int)$hist->fetchColumn() > 0) {
+        // Modelo já usado em vistorias: é arquivado (some do "Preencher Vistoria"), mas o histórico continua
+        $pdo->prepare("UPDATE Checklists SET ativo = 0 WHERE id_checklist = :id")->execute([':id' => $id]);
+        header("Location: ../oqfazer.php?aba=checklists&sucesso=checklist_arquivado");
+        exit;
+    }
     $pdo->prepare("DELETE FROM Checklist_Perguntas WHERE id_checklist = :id")->execute([':id' => $id]);
     $pdo->prepare("DELETE FROM Checklists WHERE id_checklist = :id")->execute([':id' => $id]);
     header("Location: ../oqfazer.php?aba=checklists&sucesso=checklist_excluido");
@@ -417,9 +501,11 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     };
 
     $idChecklist = (int)($_POST['id_checklist'] ?? 0);
-    $chk = $pdo->prepare("SELECT id_checklist FROM Checklists WHERE id_checklist = :id");
+    $chk = $pdo->prepare("SELECT c.ativo, (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS qtd FROM Checklists c WHERE c.id_checklist = :id");
     $chk->execute([':id' => $idChecklist]);
-    if (!$chk->fetchColumn()) $voltar('checklist_invalido');
+    $modelo = $chk->fetch();
+    if (!$modelo || (int)$modelo['ativo'] !== 1) $voltar('checklist_invalido');
+    if ((int)$modelo['qtd'] === 0) $voltar('checklist_sem_perguntas');
 
     $idVeiculo = (int)($_POST['id_veiculo'] ?? 0);
     $stV = $pdo->prepare("SELECT id_veiculo, placa, km_rodado FROM Veiculos WHERE id_veiculo = :id");
@@ -429,6 +515,8 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
 
     $km = (int)($_POST['kmrodado'] ?? -1);
     if ($km < 0) $voltar('km_invalido');
+    // Hodômetro não volta: o km informado não pode ser menor que o último registrado
+    if ($km < (int)$veiculo['km_rodado']) $voltar('km_menor_que_atual');
 
     // Motorista: se quem está logado é motorista, é ele mesmo (não dá para escolher outro)
     if ($eu['perfil'] === 'motorista') {
@@ -446,7 +534,10 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     } else {
         $vistoriador = axion_buscar_usuario($pdo, (int)($_POST['id_vistoriador'] ?? 0));
     }
-    if (!$vistoriador || !in_array($vistoriador['perfil'], ['supervisor', 'admin'], true)) $voltar('vistoriador_invalido');
+    if (!$vistoriador || !in_array($vistoriador['perfil'], ['supervisor', 'admin'], true) || $vistoriador['status'] !== 'ativo') $voltar('vistoriador_invalido');
+    if ($motorista['status'] !== 'ativo') $voltar('motorista_invalido');
+    // Motorista com CNH vencida não pode assumir veículo
+    if (!empty($motorista['validade_cnh']) && $motorista['validade_cnh'] < date('Y-m-d')) $voltar('cnh_vencida');
     if ($vistoriador['id_usuario'] == $motorista['id_usuario']) $voltar('motorista_e_vistoriador_iguais');
 
     // Respostas: guarda cada uma e apura a conformidade pelo gabarito do modelo
@@ -476,7 +567,7 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
             $conforme = (strtolower($resp) === strtolower($p['resposta_esperada'])) ? 1 : 0;
             if ($conforme === 0) $naoConforme = true;
         }
-        $linhas[] = [$idp, $p['id_pergunta_pai'], $p['texto'], mb_substr($resp, 0, 255), $p['resposta_esperada'], $conforme];
+        $linhas[] = [$idp, $p['id_pergunta_pai'], $p['texto'], mb_substr($resp, 0, 255), $p['tipo'] === 'sim_nao' ? $p['resposta_esperada'] : null, $conforme];
     }
     // O usuário ainda pode marcar avaria encontrada fora das perguntas
     if (($_POST['status_conformidade'] ?? '') === 'nao_conforme') $naoConforme = true;
@@ -525,12 +616,15 @@ function axion_carregar_vistoria(PDO $pdo, array $eu, int $id): ?array {
 }
 
 // 9b. DETALHES DE NÃO CONFORMIDADE (descrição + foto)
+// Só pode ser preenchido/alterado antes da primeira assinatura: quem assina depois precisa ver exatamente o que o outro assinou.
 if ($acao === 'salvar_nao_conformidade' && $ehPost) {
     $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
     axion_validar_csrf();
     $id = (int)($_POST['id_execucao'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
-    if (!$v || $v['assinado_em']) { header("Location: ../oqfazer.php?aba=checklists&erro=vistoria_invalida"); exit; }
+    $bloqueada = !$v || $v['recusado_em'] || $v['assinado_motorista_em'] || $v['assinado_vistoriador_em']
+        || (int)$v['id_registrado_por'] !== $eu['id'];
+    if ($bloqueada) { header("Location: ../oqfazer.php?aba=checklists&erro=vistoria_invalida"); exit; }
     $descricao = trim($_POST['descricao_detalhada'] ?? '');
     if ($descricao === '') { header("Location: ../detalhesNaoConformidade.html?id=$id&erro=descricao_obrigatoria"); exit; }
 
@@ -546,6 +640,7 @@ if ($acao === 'salvar_nao_conformidade' && $ehPost) {
         if (!is_dir($dir)) mkdir($dir, 0775, true);
         $nomeArq = $id . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
         move_uploaded_file($arq['tmp_name'], "$dir/$nomeArq");
+        if ($v['foto_evidencia'] && is_file("$dir/" . basename($v['foto_evidencia']))) @unlink("$dir/" . basename($v['foto_evidencia']));
         $foto = $nomeArq;
         break;
     }
@@ -555,49 +650,69 @@ if ($acao === 'salvar_nao_conformidade' && $ehPost) {
     exit;
 }
 
-// 9c. ASSINATURAS (cada campo precisa ser de uma pessoa diferente, confirmada por senha)
+// 9c. ASSINATURA (cada pessoa assina o próprio campo, no próprio login)
+// Quem registra a vistoria assina primeiro; isso vira uma solicitação para a outra pessoa
+// (normalmente o supervisor), que revisa e assina depois, ou recusa com um motivo.
 if ($acao === 'assinar_vistoria' && $ehPost) {
     $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
     axion_validar_csrf();
     $id = (int)($_POST['id_execucao'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
     if (!$v) axion_json(['sucesso' => false, 'erro' => 'Vistoria não encontrada.'], 404);
-    if ($v['assinado_em']) axion_json(['sucesso' => false, 'erro' => 'Esta vistoria já foi assinada.'], 409);
+    $situacao = axion_situacao($v);
+    if ($situacao === 'recusada') axion_json(['sucesso' => false, 'erro' => 'Esta vistoria foi recusada e não pode mais ser assinada.'], 409);
+    if ($situacao === 'concluida') axion_json(['sucesso' => false, 'erro' => 'Esta vistoria já foi concluída.'], 409);
 
-    $idMot = (int)$v['id_motorista'];
-    $idVist = (int)$v['id_vistoriador'];
-    if (!$idMot || !$idVist || $idMot === $idVist) axion_json(['sucesso' => false, 'erro' => 'Vistoria sem motorista e vistoriador distintos.'], 422);
+    $papel = axion_papel($v, $eu);
+    if (!$papel) axion_json(['sucesso' => false, 'erro' => 'Só o motorista ou o vistoriador desta vistoria podem assinar.'], 403);
+    if ($v["assinado_{$papel}_em"]) axion_json(['sucesso' => false, 'erro' => 'Você já assinou esta vistoria. Agora falta a outra pessoa.'], 409);
+    if ($v['status_conformidade'] === 'nao_conforme' && trim((string)$v['detalhes_nao_conformidade']) === '') {
+        axion_json(['sucesso' => false, 'erro' => 'Descreva a não conformidade antes de assinar.', 'redirecionar' => "detalhesNaoConformidade.html?id=$id"], 422);
+    }
 
-    $assMot = (string)($_POST['assinatura_motorista'] ?? '');
-    $assVist = (string)($_POST['assinatura_vistoriador'] ?? '');
-    foreach ([$assMot, $assVist] as $a) {
-        if (strpos($a, 'data:image/png;base64,') !== 0 || strlen($a) < 1500 || strlen($a) > 2000000) {
-            axion_json(['sucesso' => false, 'erro' => 'As duas assinaturas precisam ser desenhadas.'], 422);
+    $assinatura = (string)($_POST['assinatura'] ?? '');
+    if (strpos($assinatura, 'data:image/png;base64,') !== 0 || strlen($assinatura) < 1500 || strlen($assinatura) > 2000000) {
+        axion_json(['sucesso' => false, 'erro' => 'Desenhe a sua assinatura no quadro.'], 422);
+    }
+    $outra = $papel === 'motorista' ? $v['assinatura_vistoriador'] : $v['assinatura_motorista'];
+    if ($outra && hash_equals($outra, $assinatura)) axion_json(['sucesso' => false, 'erro' => 'Assinatura idêntica à da outra pessoa.'], 422);
+
+    $pdo->beginTransaction();
+    $pdo->prepare("UPDATE Checklist_Execucoes SET assinatura_$papel = :a, assinado_{$papel}_em = NOW() WHERE id_execucao = :id AND assinado_{$papel}_em IS NULL")
+        ->execute([':a' => $assinatura, ':id' => $id]);
+    $v = axion_carregar_vistoria($pdo, $eu, $id);
+    $concluiu = axion_situacao($v) === 'concluida';
+    if ($concluiu) {
+        $pdo->prepare("UPDATE Checklist_Execucoes SET assinado_em = NOW() WHERE id_execucao = :id")->execute([':id' => $id]);
+        // Supervisor pode mandar o carro para manutenção ao aprovar uma vistoria com avaria
+        if ($papel === 'vistoriador' && $v['status_conformidade'] === 'nao_conforme' && !empty($_POST['enviar_manutencao']) && $v['id_veiculo']) {
+            $pdo->prepare("UPDATE Veiculos SET status = 'manutencao' WHERE id_veiculo = :v")->execute([':v' => $v['id_veiculo']]);
+            $pdo->prepare("UPDATE Checklist_Execucoes SET enviado_manutencao = 1 WHERE id_execucao = :id")->execute([':id' => $id]);
         }
     }
-    if (hash_equals($assMot, $assVist)) axion_json(['sucesso' => false, 'erro' => 'As duas assinaturas são idênticas. Cada pessoa deve assinar o próprio campo.'], 422);
+    $pdo->commit();
+    axion_json(['sucesso' => true, 'concluida' => $concluiu, 'redirecionar' => "verVistoria.html?id=$id&sucesso=" . ($concluiu ? 'concluida' : 'enviada')]);
+}
 
-    // Quem está logado assina o próprio campo; a outra pessoa confirma com login e senha dela
-    $confirmar = function (int $idEsperado, string $papel) use ($pdo, $eu) {
-        if ($eu['id'] === $idEsperado) return;
-        $login = trim((string)($_POST["login_$papel"] ?? ''));
-        $senha = (string)($_POST["senha_$papel"] ?? '');
-        $p = axion_buscar_usuario($pdo, $idEsperado);
-        $loginOk = $p && $login !== '' && (strcasecmp($login, $p['email']) === 0 || preg_replace('/\D/', '', $login) === preg_replace('/\D/', '', $p['cpf_matricula']));
-        if (!$loginOk || !password_verify($senha, $p['senha'])) {
-            $quem = $papel === 'motorista' ? 'do motorista' : 'do vistoriador';
-            axion_json(['sucesso' => false, 'erro' => "Login ou senha $quem incorretos. A assinatura precisa ser confirmada pela própria pessoa."], 422);
-        }
-    };
-    if ($eu['id'] !== $idMot && $eu['id'] !== $idVist && $eu['perfil'] !== 'admin') {
-        axion_json(['sucesso' => false, 'erro' => 'Só o motorista ou o vistoriador desta vistoria podem colher as assinaturas.'], 403);
+// 9d. RECUSAR VISTORIA (a pessoa que ainda não assinou devolve com um motivo)
+if ($acao === 'recusar_vistoria' && $ehPost) {
+    $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
+    axion_validar_csrf();
+    $id = (int)($_POST['id_execucao'] ?? 0);
+    $v = axion_carregar_vistoria($pdo, $eu, $id);
+    if (!$v) axion_json(['sucesso' => false, 'erro' => 'Vistoria não encontrada.'], 404);
+    $papel = axion_papel($v, $eu);
+    $situacao = axion_situacao($v);
+    $outroPapel = $papel === 'motorista' ? 'vistoriador' : 'motorista';
+    // Recusa é a resposta a uma solicitação: só quem recebeu o pedido (a outra pessoa já assinou) pode recusar
+    if (!$papel || in_array($situacao, ['recusada', 'concluida'], true) || $v["assinado_{$papel}_em"] || !$v["assinado_{$outroPapel}_em"]) {
+        axion_json(['sucesso' => false, 'erro' => 'Você não pode recusar esta vistoria.'], 403);
     }
-    $confirmar($idMot, 'motorista');
-    $confirmar($idVist, 'vistoriador');
-
-    $pdo->prepare("UPDATE Checklist_Execucoes SET assinatura_motorista = :am, assinatura_vistoriador = :av, assinado_em = NOW() WHERE id_execucao = :id AND assinado_em IS NULL")
-        ->execute([':am' => $assMot, ':av' => $assVist, ':id' => $id]);
-    axion_json(['sucesso' => true, 'redirecionar' => "verVistoria.html?id=$id&sucesso=1"]);
+    $motivo = trim((string)($_POST['motivo'] ?? ''));
+    if (mb_strlen($motivo) < 5) axion_json(['sucesso' => false, 'erro' => 'Explique o motivo da recusa.'], 422);
+    $pdo->prepare("UPDATE Checklist_Execucoes SET recusado_em = NOW(), recusado_por = :u, motivo_recusa = :m WHERE id_execucao = :id AND recusado_em IS NULL")
+        ->execute([':u' => $eu['id'], ':m' => mb_substr($motivo, 0, 2000), ':id' => $id]);
+    axion_json(['sucesso' => true, 'redirecionar' => "verVistoria.html?id=$id&sucesso=recusada"]);
 }
 
 // 10. VISUALIZAR VISTORIA PREENCHIDA (respostas, avaria, foto e assinaturas)
@@ -611,7 +726,19 @@ if ($acao === 'obter_vistoria') {
     $v['respostas'] = $st->fetchAll();
     $v['foto_url'] = $v['foto_evidencia'] ? "backend/api.php?acao=foto_vistoria&id=$id" : null;
     unset($v['foto_evidencia']);
-    $v['pode_assinar'] = !$v['assinado_em'] && in_array($eu['id'], [(int)$v['id_motorista'], (int)$v['id_vistoriador']], true);
+    $v['situacao'] = axion_situacao($v);
+    $v['meu_papel'] = axion_papel($v, $eu);
+    $v['pode_assinar'] = $v['meu_papel'] && !in_array($v['situacao'], ['recusada', 'concluida'], true) && !$v["assinado_{$v['meu_papel']}_em"];
+    $v['pode_editar_avaria'] = !$v['assinado_motorista_em'] && !$v['assinado_vistoriador_em'] && !$v['recusado_em'] && (int)$v['id_registrado_por'] === $eu['id'];
+    if ($v['recusado_por']) {
+        $r = axion_buscar_usuario($pdo, (int)$v['recusado_por']);
+        $v['recusado_por_nome'] = $r['nome'] ?? '';
+    }
+    // Cliente consulta a vistoria, mas não vê as assinaturas
+    if ($eu['perfil'] === 'cliente') {
+        $v['assinatura_motorista'] = $v['assinatura_motorista'] ? true : null;
+        $v['assinatura_vistoriador'] = $v['assinatura_vistoriador'] ? true : null;
+    }
     axion_json(['sucesso' => true, 'dados' => $v, 'usuario' => $eu]);
 }
 

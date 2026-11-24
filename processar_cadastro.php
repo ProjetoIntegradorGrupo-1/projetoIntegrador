@@ -14,7 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $genero        = trim($_POST['genero'] ?? '');
     $cnh           = preg_replace('/\D/', '', $_POST['cnh'] ?? '');
     $validade_cnh  = !empty($_POST['validade-cnh']) ? $_POST['validade-cnh'] : null;
-    $categoria_cnh = strtoupper(trim($_POST['categoria-cnh'] ?? 'B'));
+    $categoria_cnh = strtoupper(trim($_POST['categoria-cnh'] ?? ''));
+    if ($cnh === '') { $categoria_cnh = ''; $validade_cnh = null; } // sem CNH (ex.: cliente)
     $cep           = trim($_POST['cep'] ?? '');
     $logradouro    = trim($_POST['logradouro'] ?? '');
     $numero        = trim($_POST['numero'] ?? '');
@@ -59,6 +60,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($perfil_solicitado === 'motorista' && !$id_supervisor && $eu['perfil'] === 'supervisor') {
         $id_supervisor = $eu['id']; // supervisor que cadastrou vira o responsável
     }
+    if ($perfil_solicitado === 'motorista' && (strlen($cnh) !== 11 || $categoria_cnh === '' || !$validade_cnh)) {
+        echo "<script>alert('Motorista precisa de CNH (11 dígitos), categoria e validade.'); window.history.back();</script>";
+        exit;
+    }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         echo "<script>alert('E-mail inválido.'); window.history.back();</script>";
         exit;
@@ -87,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':genero'        => $genero,
             ':cnh'           => $cnh,
             ':val_cnh'       => $validade_cnh,
-            ':cat_cnh'       => $categoria_cnh,
+            ':cat_cnh'       => $categoria_cnh ?: null,
             ':cep'           => $cep,
             ':logradouro'    => $logradouro,
             ':numero'        => $numero,

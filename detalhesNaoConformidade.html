@@ -92,7 +92,11 @@
                 return;
             }
             const v = json.dados;
-            if (v.assinado_em) { window.location.href = `verVistoria.html?id=${v.id_execucao}`; return; }
+            // Depois da primeira assinatura a descrição não muda mais (quem assina depois vê o mesmo conteúdo)
+            if (!v.pode_editar_avaria) {
+                window.location.href = (v.pode_assinar ? 'assinaturaChecklist.html' : 'verVistoria.html') + `?id=${v.id_execucao}`;
+                return;
+            }
             document.getElementById('resumo-vistoria').textContent =
                 `Vistoria #${v.id_execucao} - ${v.placa_veiculo} - ${v.checklist_titulo}`;
             if (v.detalhes_nao_conformidade) document.getElementById('descricao_detalhada').value = v.detalhes_nao_conformidade;

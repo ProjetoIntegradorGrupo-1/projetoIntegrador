@@ -101,6 +101,15 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="status" class="form-label fw-semibold">Situação da conta</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="ativo">Ativa (pode entrar)</option>
+                            <option value="inativo">Desativada (não entra)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="row" id="linha-supervisor" style="display:none">
                     <div class="col-md-6 mb-3">
                         <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável pelo motorista</label>
@@ -222,8 +231,10 @@
         }
 
         function atualizarLinhaSupervisor() {
-            document.getElementById('linha-supervisor').style.display =
-                document.getElementById('perfil').value === 'motorista' ? '' : 'none';
+            const ehMotorista = document.getElementById('perfil').value === 'motorista';
+            document.getElementById('linha-supervisor').style.display = ehMotorista ? '' : 'none';
+            // Motorista precisa de CNH completa
+            ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista);
         }
 
         async function carregarUsuarioPorId(id) {
@@ -254,6 +265,7 @@
             document.getElementById('estado').value = u.estado || '';
             document.getElementById('email').value = u.email || '';
             document.getElementById('id_supervisor').value = u.id_supervisor || '';
+            document.getElementById('status').value = u.status || 'ativo';
             atualizarLinhaSupervisor();
             // Reaplica máscaras/validação nos valores carregados
             ['cpf', 'telefone', 'cnh'].forEach(campo => { const el = document.getElementById(campo); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('blur')); });

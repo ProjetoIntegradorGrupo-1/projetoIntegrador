@@ -28,7 +28,12 @@ $filtroVist = $perfil_usuario === 'motorista' ? ' WHERE id_motorista = ' . (int)
 $filtroVistAnd = $filtroVist ? $filtroVist . ' AND ' : ' WHERE ';
 $stats['vistorias']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes$filtroVist")->fetchColumn();
 $stats['nao_conformes'] = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}status_conformidade = 'nao_conforme'")->fetchColumn();
-$stats['pendentes']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}assinado_em IS NULL")->fetchColumn();
+$stats['pendentes']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}assinado_em IS NULL AND recusado_em IS NULL")->fetchColumn();
+// Solicitações que dependem da assinatura do usuário logado
+$stPend = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE recusado_em IS NULL AND
+    ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
+$stPend->execute([':a' => $eu['id'], ':b' => $eu['id']]);
+$minhasPendencias = (int)$stPend->fetchColumn();
 
 $abaAtiva = $_GET['aba'] ?? 'inicio';
 $sucessoMsg = $_GET['sucesso'] ?? '';
@@ -46,6 +51,8 @@ $mapaMensagens = [
     'checklist_criado'      => 'Novo modelo de checklist criado com sucesso!',
     'checklist_editado'     => 'Modelo de checklist atualizado com sucesso!',
     'checklist_excluido'    => 'Modelo de checklist excluído com sucesso!',
+    'checklist_arquivado'   => 'Este modelo já foi usado em vistorias, então foi arquivado (não aparece mais para preencher, mas o histórico continua). Para reativar, edite e salve o modelo.',
+    'usuario_desativado'    => 'Este usuário já participou de vistorias, então a conta foi desativada em vez de apagada (não consegue mais entrar). Para reativar, edite o usuário.',
 ];
 $erroMsg = $_GET['erro'] ?? '';
 $mapaErros = [
@@ -80,6 +87,11 @@ $mapaErros = [
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                <?php if ($minhasPendencias > 0): ?>
+                <a href="#solicitacoes" class="btn btn-sm btn-warning fw-semibold">
+                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?> para assinar
+                </a>
+                <?php endif; ?>
                 <span class="badge bg-light text-dark d-flex align-items-center gap-1 px-3 py-2">
                     <i class="bi bi-shield-lock-fill text-primary"></i>
                     Nível: <?php echo strtoupper(htmlspecialchars($perfil_usuario)); ?>
@@ -115,6 +127,19 @@ $mapaErros = [
                 <div><strong>Sucesso:</strong> <?php echo htmlspecialchars($mapaMensagens[$sucessoMsg]); ?></div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
             </div>
+        <?php endif; ?>
+
+        <!-- SOLICITAÇÕES DE ASSINATURA DO USUÁRIO LOGADO -->
+        <?php if ($minhasPendencias > 0): ?>
+        <div class="card border-warning shadow-sm mb-4" id="solicitacoes">
+            <div class="card-header bg-warning-subtle fw-semibold">
+                <i class="bi bi-bell-fill text-warning-emphasis me-1"></i>
+                Solicitações de assinatura para você (<?php echo $minhasPendencias; ?>)
+            </div>
+            <div class="list-group list-group-flush" id="lista-solicitacoes">
+                <div class="list-group-item text-muted small">Carregando...</div>
+            </div>
+        </div>
         <?php endif; ?>
 
         <!-- INDICADORES DO SISTEMA (KPIs) -->
@@ -170,7 +195,7 @@ $mapaErros = [
                     <div>
                         <div class="h4 fw-bold mb-0"><?php echo $stats['vistorias']; ?></div>
                         <div class="text-muted small"><?php echo $perfil_usuario === 'motorista' ? 'Minhas Vistorias' : 'Vistorias Realizadas'; ?></div>
-                        <div class="small"><span class="text-danger"><?php echo $stats['nao_conformes']; ?> não conformes</span> · <span class="text-warning-emphasis"><?php echo $stats['pendentes']; ?> sem assinatura</span></div>
+                        <div class="small"><span class="text-danger"><?php echo $stats['nao_conformes']; ?> não conformes</span> · <span class="text-warning-emphasis"><?php echo $stats['pendentes']; ?> aguardando assinatura</span></div>
                     </div>
                 </div>
             </div>
@@ -523,7 +548,9 @@ $mapaErros = [
                                 <option value="">Todos os Resultados</option>
                                 <option value="conforme">Conforme (Liberado)</option>
                                 <option value="nao_conforme">Não Conforme (Com Avaria)</option>
-                                <option value="pendente">Assinatura pendente</option>
+                                <option value="pendente">Aguardando assinatura</option>
+                                <option value="minhas_pendencias">Aguardando a MINHA assinatura</option>
+                                <option value="recusada">Recusadas</option>
                             </select>
                         </div>
                     </div>
@@ -620,6 +647,36 @@ $mapaErros = [
             return '<span class="badge bg-info text-dark">Cliente</span>';
         }
 
+        function badgeSituacao(sit) {
+            const m = {
+                concluida: '<span class="badge bg-success-subtle text-success mt-1">Concluída</span>',
+                aguardando_vistoriador: '<span class="badge bg-warning text-dark mt-1">Aguardando supervisor</span>',
+                aguardando_motorista: '<span class="badge bg-warning text-dark mt-1">Aguardando motorista</span>',
+                aguardando_assinaturas: '<span class="badge bg-secondary mt-1">Não assinada</span>',
+                recusada: '<span class="badge bg-dark mt-1">Recusada</span>'
+            };
+            return m[sit] || '';
+        }
+
+        async function carregarSolicitacoes() {
+            const box = document.getElementById('lista-solicitacoes');
+            if (!box) return;
+            const json = await (await fetch('backend/api.php?acao=buscar&tipo=vistorias&filtro=minhas_pendencias&limite=50')).json();
+            const dados = json.dados || [];
+            box.innerHTML = dados.length ? dados.map(v => {
+                const souVist = Number(v.id_vistoriador) === MEU_ID;
+                const outro = souVist ? v.nome_motorista : v.nome_vistoriador;
+                const outroAssinou = souVist ? v.assinado_motorista_em : v.assinado_vistoriador_em;
+                return `<a href="verVistoria.html?id=${v.id_execucao}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-semibold">#${v.id_execucao} · ${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)} ${badgeConformidade(v.status_conformidade)}</div>
+                        <div class="small text-muted">${esc(v.data_vistoria)} · ${outroAssinou ? `${esc(outro)} já assinou e pediu a sua assinatura` : 'Falta a sua assinatura para enviar a solicitação'}</div>
+                    </div>
+                    <span class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-pen me-1"></i>${souVist && outroAssinou ? 'Revisar e aprovar' : 'Assinar'}</span>
+                </a>`;
+            }).join('') : '<div class="list-group-item text-muted small">Nenhuma solicitação pendente.</div>';
+        }
+
         function badgeConformidade(st) {
             if (st === 'conforme') return '<span class="badge bg-success">Conforme</span>';
             if (st === 'nao_conforme') return '<span class="badge bg-danger">Não Conforme</span>';
@@ -674,7 +731,7 @@ $mapaErros = [
                     tbody.innerHTML = json.dados.map(u => `
                         <tr>
                             <td class="text-muted small">#${u.id_usuario}</td>
-                            <td class="fw-semibold">${esc(u.nome)}${u.perfil === 'motorista' ? `<div class="small text-muted fw-normal">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}</td>
+                            <td class="fw-semibold">${esc(u.nome)}${u.status === 'inativo' ? ' <span class="badge bg-secondary">Desativado</span>' : ''}${u.perfil === 'motorista' ? `<div class="small text-muted fw-normal">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}</td>
                             <td class="font-monospace small">${esc(u.cpf_matricula)}</td>
                             <td>${badgePerfilUsuario(u.perfil)}</td>
                             <td class="small">${u.cnh ? `${esc(u.cnh)} <span class="badge bg-secondary">${esc(u.categoria_cnh || '-')}</span>` : '-'}</td>
@@ -704,7 +761,7 @@ $mapaErros = [
                         <tr>
                             <td class="text-muted small">#${c.id_checklist}</td>
                             <td>
-                                <div class="fw-semibold">${esc(c.titulo)}</div>
+                                <div class="fw-semibold">${esc(c.titulo)} ${Number(c.ativo) === 1 ? '' : '<span class="badge bg-secondary">Arquivado</span>'}</div>
                                 <div class="small text-muted">${esc(c.descricao || '')}</div>
                             </td>
                             <td><span class="badge bg-primary-subtle text-primary text-uppercase">${esc(c.categoria)}</span></td>
@@ -712,7 +769,7 @@ $mapaErros = [
                             <td><span class="badge bg-success-subtle text-success">${c.total_execucoes} vistorias</span></td>
                             <td class="small">${esc(c.criador_nome)}</td>
                             <td class="text-end text-nowrap">
-                                ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Preencher este Checklist"><i class="bi bi-clipboard2-check"></i> Usar</a>` : ''}
+                                ${(IS_GESTOR || IS_MOTORISTA) && Number(c.ativo) === 1 ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Preencher este Checklist"><i class="bi bi-clipboard2-check"></i> Usar</a>` : ''}
                                 ${IS_GESTOR ? `
                                     <a href="editarChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
                                     <a href="excluirChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
@@ -742,8 +799,11 @@ $mapaErros = [
                             <td class="small">${esc(v.nome_motorista)}</td>
                             <td class="small text-muted">${esc(v.nome_vistoriador)}</td>
                             <td class="small">${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td>${badgeConformidade(v.status_conformidade)}${v.assinado_em ? '' : '<div><span class="badge bg-warning text-dark mt-1">Sem assinatura</span></div>'}</td>
-                            <td class="text-end"><a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-outline-success" title="Ver checklist preenchido"><i class="bi bi-eye"></i> Ver</a></td>
+                            <td>${badgeConformidade(v.status_conformidade)}<div>${badgeSituacao(v.situacao)}</div></td>
+                            <td class="text-end text-nowrap">
+                                ${v.minha_vez ? `<a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-warning fw-semibold" title="Revisar e assinar"><i class="bi bi-pen"></i> Assinar</a>` : ''}
+                                <a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-outline-success" title="Ver checklist preenchido"><i class="bi bi-eye"></i> Ver</a>
+                            </td>
                         </tr>
                     `).join('');
                 }
@@ -757,6 +817,7 @@ $mapaErros = [
             if (IS_GESTOR) carregarBusca('usuarios');
             carregarBusca('checklists');
             carregarBusca('vistorias');
+            carregarSolicitacoes();
         });
     </script>
 </body>

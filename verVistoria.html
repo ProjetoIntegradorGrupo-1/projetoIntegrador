@@ -53,6 +53,21 @@
             return `${dia}/${m}/${a}`;
         }
 
+        async function recusar() {
+            const motivo = prompt('Motivo da recusa (o motorista vai ver este texto):');
+            if (motivo === null) return;
+            if (motivo.trim().length < 5) { alert('Escreva o motivo da recusa.'); return; }
+            const ctx = await AxionSessao.pronta;
+            const fd = new FormData();
+            fd.append('id_execucao', new URLSearchParams(window.location.search).get('id'));
+            fd.append('csrf', ctx.csrf);
+            fd.append('motivo', motivo.trim());
+            const resp = await fetch('backend/api.php?acao=recusar_vistoria', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+            const json = await resp.json();
+            if (!json.sucesso) { alert(json.erro || 'Não foi possível recusar.'); return; }
+            window.location.href = json.redirecionar;
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
@@ -78,14 +93,30 @@
                 </tr>`;
             }).join('');
 
-            const pendente = !v.assinado_em;
-            const precisaDetalhes = v.status_conformidade === 'nao_conforme' && !v.detalhes_nao_conformidade;
-            const acaoPendente = pendente && v.pode_assinar
-                ? `<a class="btn btn-warning fw-semibold" href="${precisaDetalhes ? 'detalhesNaoConformidade.html' : 'assinaturaChecklist.html'}?id=${v.id_execucao}">
-                       <i class="bi bi-pen me-1"></i>${precisaDetalhes ? 'Descrever avaria e assinar' : 'Colher assinaturas'}</a>` : '';
+            const precisaDetalhes = v.status_conformidade === 'nao_conforme' && !v.detalhes_nao_conformidade && v.pode_editar_avaria;
+            const outroAssinou = v.meu_papel === 'motorista' ? v.assinado_vistoriador_em : v.assinado_motorista_em;
+            let acaoPendente = '';
+            if (v.pode_assinar) {
+                acaoPendente = `<a class="btn btn-warning fw-semibold" href="${precisaDetalhes ? 'detalhesNaoConformidade.html' : 'assinaturaChecklist.html'}?id=${v.id_execucao}">
+                    <i class="bi bi-pen me-1"></i>${precisaDetalhes ? 'Descrever avaria e assinar' : (v.meu_papel === 'vistoriador' && outroAssinou ? 'Aprovar e assinar' : 'Assinar')}</a>`;
+                if (outroAssinou) acaoPendente += ` <button class="btn btn-outline-danger" onclick="recusar()"><i class="bi bi-x-circle me-1"></i>Recusar</button>`;
+            }
+            const situacoes = {
+                concluida: `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Concluída em ${v.assinado_em ? dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
+                aguardando_vistoriador: `<span class="badge bg-warning text-dark">Aguardando assinatura do supervisor</span>`,
+                aguardando_motorista: `<span class="badge bg-warning text-dark">Aguardando assinatura do motorista</span>`,
+                aguardando_assinaturas: `<span class="badge bg-secondary">Ainda não assinada</span>`,
+                recusada: `<span class="badge bg-dark">Recusada</span>`
+            };
+            const fmtAss = (img, em) => img === true ? `<div class="small text-success">Assinada ${em ? 'em ' + dataBR(em) : ''}</div>`
+                : img ? `<img class="assinatura-img w-100" src="${e(img)}" alt="Assinatura"><div class="small text-muted">${em ? dataBR(em) + ' ' + e(em.slice(11, 16)) : ''}</div>`
+                : '<div class="text-muted small">Aguardando assinatura</div>';
+            const mensagens = { enviada: 'Assinatura registrada! A solicitação foi enviada para a outra pessoa assinar no login dela.', concluida: 'Vistoria concluída com as duas assinaturas.', recusada: 'Vistoria recusada. O motivo ficou registrado.' };
 
             box.innerHTML = `
-                ${params.get('sucesso') ? '<div class="alert alert-success">Vistoria concluída e assinada com sucesso!</div>' : ''}
+                ${mensagens[params.get('sucesso')] ? `<div class="alert alert-success">${mensagens[params.get('sucesso')]}</div>` : ''}
+                ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
+                ${Number(v.enviado_manutencao) === 1 ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>O veículo foi enviado para manutenção na aprovação desta vistoria.</div>' : ''}
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                     <div>
                         <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-success me-2"></i>Vistoria #${v.id_execucao}</h1>
@@ -93,7 +124,7 @@
                     </div>
                     <div class="text-end">
                         ${badgeResultado(v.status_conformidade)}
-                        <div class="small mt-1">${pendente ? '<span class="badge bg-warning text-dark">Assinatura pendente</span>' : `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Assinada em ${dataBR(v.assinado_em)} ${e(v.assinado_em.slice(11, 16))}</span>`}</div>
+                        <div class="small mt-1">${situacoes[v.situacao] || ''}</div>
                     </div>
                 </div>
 
@@ -130,11 +161,11 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <div class="small text-muted mb-1">Motorista: ${e(v.nome_motorista)}</div>
-                        ${v.assinatura_motorista ? `<img class="assinatura-img w-100" src="${e(v.assinatura_motorista)}" alt="Assinatura do motorista">` : '<div class="text-muted small">Não assinada</div>'}
+                        ${fmtAss(v.assinatura_motorista, v.assinado_motorista_em)}
                     </div>
                     <div class="col-md-6">
                         <div class="small text-muted mb-1">Vistoriador: ${e(v.nome_vistoriador)}</div>
-                        ${v.assinatura_vistoriador ? `<img class="assinatura-img w-100" src="${e(v.assinatura_vistoriador)}" alt="Assinatura do vistoriador">` : '<div class="text-muted small">Não assinada</div>'}
+                        ${fmtAss(v.assinatura_vistoriador, v.assinado_vistoriador_em)}
                     </div>
                 </div>
 

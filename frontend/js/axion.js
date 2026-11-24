@@ -366,7 +366,16 @@ document.addEventListener('DOMContentLoaded', () => {
         descricao_obrigatoria: 'Descreva a não conformidade encontrada.',
         arquivo_nao_e_imagem: 'O anexo precisa ser uma imagem (JPG, PNG, WEBP ou GIF).',
         arquivo_muito_grande: 'A imagem pode ter no máximo 8 MB.',
-        formulario_expirado: 'O formulário expirou. Recarregue a página e tente de novo.'
+        formulario_expirado: 'O formulário expirou. Recarregue a página e tente de novo.',
+        km_menor_que_atual: 'O km informado é menor que o último registrado para este veículo. O hodômetro não volta.',
+        cnh_vencida: 'A CNH do motorista está vencida. Atualize o cadastro antes de fazer a vistoria.',
+        checklist_sem_perguntas: 'Este modelo de checklist não tem perguntas. Edite o modelo antes de usar.',
+        veiculo_com_historico: 'Este veículo já tem vistorias registradas e não pode ser apagado. Mude o status dele em "Editar Veículo".',
+        cnh_obrigatoria: 'Motorista precisa ter o número da CNH (11 dígitos).',
+        categoria_cnh_obrigatoria: 'Informe a categoria da CNH do motorista.',
+        validade_cnh_obrigatoria: 'Informe a validade da CNH do motorista.',
+        nao_pode_desativar_a_si_mesmo: 'Você não pode desativar a sua própria conta.',
+        vistoria_invalida: 'Esta vistoria não pode mais ser alterada.'
     };
     const main = document.querySelector('main') || document.body;
     const div = document.createElement('div');

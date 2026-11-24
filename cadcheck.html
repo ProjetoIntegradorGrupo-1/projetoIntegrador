@@ -114,7 +114,7 @@
             const ehGestor = eu.perfil === 'admin' || eu.perfil === 'supervisor';
 
             // Modelos de checklist
-            const jChk = await getJson('backend/api.php?acao=buscar&tipo=checklists&limite=250');
+            const jChk = await getJson('backend/api.php?acao=buscar&tipo=checklists&limite=250&somente_ativos=1');
             const sel = document.getElementById('id_checklist');
             if (jChk.dados && jChk.dados.length > 0) {
                 sel.innerHTML = '<option value="">Selecione o modelo...</option>' + jChk.dados.map(c =>
@@ -132,12 +132,13 @@
             const veiculos = jVeic.dados || [];
             selV.innerHTML = veiculos.length
                 ? '<option value="">Selecione o veículo...</option>' + veiculos.map(v =>
-                    `<option value="${v.id_veiculo}" data-km="${v.km_rodado || 0}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}</option>`).join('')
+                    `<option value="${v.id_veiculo}" data-km="${v.km_rodado || 0}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}${v.status === 'manutencao' ? ' (em manutenção)' : v.status === 'em_rota' ? ' (em rota)' : ''}</option>`).join('')
                 : '<option value="">Nenhum veículo cadastrado</option>';
             selV.addEventListener('change', () => {
                 const opt = selV.selectedOptions[0];
                 const km = document.getElementById('kmrodado');
-                if (opt && opt.dataset.km) { km.min = 0; km.placeholder = `Último registro: ${Number(opt.dataset.km).toLocaleString('pt-BR')} km`; }
+                // O hodômetro não volta: o mínimo é o último km registrado do carro
+                if (opt && opt.dataset.km) { km.min = opt.dataset.km; km.placeholder = `Mínimo: ${Number(opt.dataset.km).toLocaleString('pt-BR')} km`; }
             });
             if (params.get('placa')) {
                 const v = veiculos.find(x => x.placa === params.get('placa'));

@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ':texto'  => $textoP,
                     ':tipo'   => $p['tipo'] ?? 'sim_nao',
                     ':obrig'  => isset($p['obrigatorio']) ? 1 : 0,
-                    ':esp'    => $p['resposta_esperada'] ?? 'sim',
+                    ':esp'    => ($p['tipo'] ?? 'sim_nao') === 'sim_nao' ? ($p['resposta_esperada'] ?? 'sim') : null,
                     ':ori'    => trim($p['orientacao'] ?? '')
                 ]);
                 $idPai = (int)$pdo->lastInsertId();

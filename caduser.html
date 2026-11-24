@@ -206,6 +206,9 @@
         function definirPerfilEnvio(perfil, actionUrl) {
             document.getElementById('inputPerfilSelecionado').value = perfil;
             document.getElementById('formCadUser').action = actionUrl;
+            // CNH e supervisor responsável só são obrigatórios para Motorista
+            const ehMotorista = perfil === 'motorista';
+            ['cnh', 'categoria-cnh', 'validade-cnh', 'id_supervisor'].forEach(id => document.getElementById(id).required = ehMotorista);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
