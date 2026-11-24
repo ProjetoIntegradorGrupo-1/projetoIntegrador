@@ -27,6 +27,19 @@ function axion_buscar_usuario(PDO $pdo, int $id): ?array {
 }
 
 /**
+ * Quem o usuário logado pode gerenciar (editar, excluir, redefinir senha).
+ * Admin: todos. Supervisor: a si mesmo, clientes e os motoristas da própria equipe (ou sem supervisor).
+ */
+function axion_pode_gerenciar(array $eu, array $alvo): bool {
+    if ($eu['perfil'] === 'admin') return true;
+    if ($eu['perfil'] !== 'supervisor') return false;
+    if ((int)$alvo['id_usuario'] === (int)$eu['id']) return true;
+    if ($alvo['perfil'] === 'cliente') return true;
+    if ($alvo['perfil'] === 'motorista') return empty($alvo['id_supervisor']) || (int)$alvo['id_supervisor'] === (int)$eu['id'];
+    return false;
+}
+
+/**
  * Situação da vistoria no fluxo de solicitação de assinatura.
  * recusada | concluida | aguardando_vistoriador | aguardando_motorista | aguardando_assinaturas
  */
@@ -454,8 +467,15 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
         elseif (!$valCnh) $erro = 'validade_cnh_obrigatoria';
     }
     if (!in_array($perfil, AXION_PERFIS, true)) $erro = 'perfil_invalido';
-    // Supervisor não gerencia contas de admin/supervisor nem promove alguém a esses níveis
-    if ($eu['perfil'] === 'supervisor' && (in_array($alvo['perfil'], ['admin', 'supervisor'], true) || in_array($perfil, ['admin', 'supervisor'], true)) && $alvo['id_usuario'] != $eu['id']) $erro = 'sem_permissao';
+    // Supervisor só gerencia a própria equipe e clientes, e não promove ninguém a admin/supervisor
+    if (!axion_pode_gerenciar($eu, $alvo)) $erro = 'sem_permissao';
+    if ($eu['perfil'] === 'supervisor' && $alvo['id_usuario'] != $eu['id'] && in_array($perfil, ['admin', 'supervisor'], true)) $erro = 'sem_permissao';
+    // Supervisor que deixa de ser supervisor não pode largar motoristas sem responsável
+    if ($alvo['perfil'] === 'supervisor' && $perfil !== 'supervisor') {
+        $eq = $pdo->prepare("SELECT COUNT(*) FROM Usuarios WHERE id_supervisor = :id AND status = 'ativo'");
+        $eq->execute([':id' => $id]);
+        if ((int)$eq->fetchColumn() > 0) $erro = 'supervisor_com_equipe';
+    }
     // Ninguém muda o próprio nível de acesso
     if ($alvo['id_usuario'] == $eu['id'] && $perfil !== $alvo['perfil']) $erro = 'nao_pode_mudar_proprio_perfil';
     if ($alvo['id_usuario'] == $eu['id'] && $statusConta === 'inativo') $erro = 'nao_pode_desativar_a_si_mesmo';
@@ -468,6 +488,11 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
         $s = axion_buscar_usuario($pdo, $idSupervisor);
         if (!$s || $s['perfil'] !== 'supervisor') $erro = 'supervisor_invalido';
         else $supValido = $idSupervisor;
+    }
+    // Motorista sempre tem um supervisor responsável (o supervisor logado assume, se ninguém foi escolhido)
+    if ($perfil === 'motorista' && !$supValido) {
+        if ($eu['perfil'] === 'supervisor') $supValido = (int)$eu['id'];
+        else $erro = $erro ?: 'supervisor_obrigatorio';
     }
     if ($erro) {
         header("Location: ../editarUsuario.html?id=$id&erro=$erro");
@@ -528,8 +553,13 @@ if ($acao === 'excluir_usuario' && $ehPost) {
     $alvo = $id > 0 ? axion_buscar_usuario($pdo, $id) : null;
     if (!$alvo) { header("Location: ../excluirUsuario.html?erro=usuario_nao_selecionado"); exit; }
     if ($alvo['id_usuario'] == $eu['id']) { header("Location: ../excluirUsuario.html?id=$id&erro=nao_pode_excluir_a_si_mesmo"); exit; }
-    if ($eu['perfil'] === 'supervisor' && in_array($alvo['perfil'], ['admin', 'supervisor'], true)) {
+    if (!axion_pode_gerenciar($eu, $alvo)) {
         header("Location: ../excluirUsuario.html?id=$id&erro=sem_permissao"); exit;
+    }
+    if ($alvo['perfil'] === 'supervisor') {
+        $eq = $pdo->prepare("SELECT COUNT(*) FROM Usuarios WHERE id_supervisor = :id AND status = 'ativo'");
+        $eq->execute([':id' => $id]);
+        if ((int)$eq->fetchColumn() > 0) { header("Location: ../excluirUsuario.html?id=$id&erro=supervisor_com_equipe"); exit; }
     }
     // Quem já participou de vistoria não é apagado (o histórico e as assinaturas precisam continuar
     // apontando para a pessoa). Nesse caso a conta é desativada: não consegue mais entrar no sistema.
@@ -1087,6 +1117,19 @@ if ($acao === 'trocar_senha' && $ehPost) {
     if ($nova === $atual) axion_json(['sucesso' => false, 'erro' => 'A nova senha precisa ser diferente da atual.'], 422);
     $pdo->prepare("UPDATE Usuarios SET senha = :s WHERE id_usuario = :id")->execute([':s' => password_hash($nova, PASSWORD_DEFAULT), ':id' => $eu['id']]);
     axion_json(['sucesso' => true]);
+}
+
+// 13. REDEFINIR A SENHA DE OUTRA PESSOA (quem esqueceu a senha pede ao gestor)
+if ($acao === 'redefinir_senha' && $ehPost) {
+    $eu = axion_exigir_perfil(['admin', 'supervisor']);
+    axion_validar_csrf();
+    $alvo = axion_buscar_usuario($pdo, (int)($_POST['id_usuario'] ?? 0));
+    if (!$alvo) axion_json(['sucesso' => false, 'erro' => 'Usuário não encontrado.'], 404);
+    if ((int)$alvo['id_usuario'] === (int)$eu['id']) axion_json(['sucesso' => false, 'erro' => 'Para a sua própria senha use "Meu perfil".'], 422);
+    if (!axion_pode_gerenciar($eu, $alvo)) axion_json(['sucesso' => false, 'erro' => 'Você não pode redefinir a senha deste usuário.'], 403);
+    $pdo->prepare("UPDATE Usuarios SET senha = :s WHERE id_usuario = :id")
+        ->execute([':s' => password_hash('mudar123', PASSWORD_DEFAULT), ':id' => $alvo['id_usuario']]);
+    axion_json(['sucesso' => true, 'mensagem' => 'Senha redefinida para mudar123. Peça para a pessoa trocar em "Meu perfil".']);
 }
 
 axion_json(['sucesso' => false, 'erro' => 'Ação inválida.'], 400);

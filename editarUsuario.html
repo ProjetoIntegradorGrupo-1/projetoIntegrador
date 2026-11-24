@@ -188,6 +188,7 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
+                    <button type="button" id="btn-redefinir" class="btn btn-outline-warning me-auto" disabled title="Volta a senha para mudar123"><i class="bi bi-key me-1"></i>Redefinir senha</button>
                     <a href="oqfazer.php?aba=usuarios" class="btn btn-outline-secondary">Cancelar e Voltar</a>
                     <button type="submit" id="btn-salvar" class="btn btn-primary px-4 fw-semibold" disabled><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
                 </div>
@@ -228,14 +229,15 @@
             const resp = await fetch('backend/api.php?acao=listar_pessoas');
             const json = await resp.json();
             const sel = document.getElementById('id_supervisor');
-            sel.innerHTML = '<option value="">Sem supervisor definido</option>' + (json.supervisores || []).map(s =>
-                `<option value="${s.id_usuario}">${axionEsc(s.nome)}${s.perfil === 'admin' ? ' (Admin)' : ''}</option>`).join('');
+            sel.innerHTML = '<option value="">Selecione o supervisor...</option>' + (json.supervisores || []).map(s =>
+                `<option value="${s.id_usuario}">${axionEsc(s.nome)}</option>`).join('');
         }
 
         function atualizarLinhaSupervisor() {
             const perfil = document.getElementById('perfil').value;
             const ehMotorista = perfil === 'motorista';
             document.getElementById('linha-supervisor').style.display = ehMotorista ? '' : 'none';
+            document.getElementById('id_supervisor').required = ehMotorista;
             // Motorista e cliente precisam de CNH completa
             ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista || perfil === 'cliente');
         }
@@ -274,6 +276,7 @@
             // Reaplica máscaras/validação nos valores carregados
             ['cpf', 'telefone', 'cnh'].forEach(campo => { const el = document.getElementById(campo); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('blur')); });
             document.getElementById('btn-salvar').disabled = false;
+            document.getElementById('btn-redefinir').disabled = false;
             document.getElementById('select-usuario').value = u.id_usuario;
             document.getElementById('titulo-editando').textContent = `Editando: ${u.nome} (${u.perfil.toUpperCase()})`;
         }
@@ -285,6 +288,18 @@
                 document.querySelectorAll('#perfil option[value="admin"], #perfil option[value="supervisor"]').forEach(o => o.disabled = true);
             }
             document.getElementById('perfil').addEventListener('change', atualizarLinhaSupervisor);
+            // Quem esqueceu a senha pede ao gestor: a senha volta para mudar123
+            document.getElementById('btn-redefinir').addEventListener('click', async () => {
+                const id = document.getElementById('id_usuario').value;
+                const nome = document.getElementById('nome').value;
+                if (!id || !confirm(`Redefinir a senha de ${nome} para "mudar123"?`)) return;
+                const dados = new FormData();
+                dados.append('id_usuario', id);
+                dados.append('csrf', ctx.csrf);
+                const r = await fetch('backend/api.php?acao=redefinir_senha', { method: 'POST', body: dados });
+                const j = await r.json().catch(() => ({}));
+                alert(j.sucesso ? j.mensagem : (j.erro || 'Não foi possível redefinir a senha.'));
+            });
             await carregarSupervisores();
             await carregarListaUsuarios();
             const urlId = new URLSearchParams(window.location.search).get('id');
