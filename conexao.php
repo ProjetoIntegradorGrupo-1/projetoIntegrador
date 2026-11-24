@@ -1,29 +1,37 @@
 <?php
 // conexao.php
-$host = 'localhost';
-$dbname = 'axion_db';
+// Padrão do XAMPP. Para mudar sem alterar este arquivo (ex.: MySQL do XAMPP em outra porta),
+// crie um "config.local.php" ao lado deste arquivo (ele não vai para o GitHub). Exemplo:
+//   <?php $porta = 3307;
+$host    = 'localhost';
+$porta   = 3306;
+$dbname  = 'axion_db';
 $usuario = 'root'; // Padrão do XAMPP
-$senha = '';       // Padrão do XAMPP (vazio)
+$senha   = '';     // Padrão do XAMPP (vazio)
+
+if (is_file(__DIR__ . '/config.local.php')) {
+    require __DIR__ . '/config.local.php';
+}
 
 require_once __DIR__ . '/database/seed.php';
 
 try {
-    // Conecta inicialmente ao servidor MySQL e garante que o banco axion_db exista
-    $pdo = new PDO("mysql:host=$host;charset=utf8mb4", $usuario, $senha, [
+    // Conecta ao servidor MySQL e garante que o banco axion_db exista
+    $pdo = new PDO("mysql:host=$host;port=$porta;charset=utf8mb4", $usuario, $senha, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $pdo->exec("USE `$dbname`");
 
-    // Garante todas as tabelas e colunas atualizadas e popula automaticamente se estiver vazio
+    // Garante tabelas/colunas atualizadas. NÃO popula mais dados fictícios automaticamente
+    // (antes, se houvesse menos de 50 usuários ou carros, o banco inteiro era apagado e recriado,
+    // o que trocava os IDs e fazia a sessão "virar" outro usuário).
     axion_garantir_estrutura($pdo);
-    $qtdUsuarios = (int)$pdo->query("SELECT COUNT(*) FROM Usuarios")->fetchColumn();
-    $qtdVeiculos = (int)$pdo->query("SELECT COUNT(*) FROM Veiculos")->fetchColumn();
-    if ($qtdUsuarios < 50 || $qtdVeiculos < 50) {
-        axion_popular_banco($pdo, false);
+    if ((int)$pdo->query("SELECT COUNT(*) FROM Usuarios")->fetchColumn() === 0) {
+        axion_criar_contas_base($pdo);
     }
 } catch (PDOException $e) {
-    die("Erro de conexão com o banco de dados: " . $e->getMessage());
+    http_response_code(500);
+    die("Erro de conexão com o banco de dados: " . htmlspecialchars($e->getMessage()));
 }
-?>

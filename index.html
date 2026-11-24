@@ -37,7 +37,7 @@
                             Controle veículos, motoristas, clientes, supervisores e checklists dinâmicos com validação em tempo real.
                         </p>
                         <ul class="list-unstyled small d-grid gap-2">
-                            <li><i class="bi bi-check-circle-fill text-info me-2"></i>200 Veículos, 100 Motoristas, 250 Clientes e 13 Supervisores</li>
+                            <li><i class="bi bi-check-circle-fill text-info me-2"></i>Frota, Motoristas, Clientes e Supervisores em um só lugar</li>
                             <li><i class="bi bi-check-circle-fill text-info me-2"></i>Navegação rápida por Abas e Níveis de Acesso</li>
                             <li><i class="bi bi-check-circle-fill text-info me-2"></i>Validação de CPF, Dropdown CNH e Busca de CEP Gratuita</li>
                             <li><i class="bi bi-check-circle-fill text-info me-2"></i>Central de Busca de Carros, Usuários e Checklists</li>
@@ -122,8 +122,14 @@
             document.getElementById('user').value = email;
             document.getElementById('senha').value = 'mudar123';
         }
-        if (new URLSearchParams(window.location.search).get('erro')) {
+        const paramsLogin = new URLSearchParams(window.location.search);
+        if (paramsLogin.get('erro')) {
             document.getElementById('alertaErroLogin').classList.remove('d-none');
+        }
+        if (paramsLogin.get('info') === 'banco_zerado') {
+            const aviso = document.getElementById('alertaErroLogin');
+            aviso.className = 'alert alert-success small py-2';
+            aviso.textContent = 'Banco zerado. Restaram só as 4 contas de acesso (senha mudar123). Entre novamente.';
         }
     </script>
 </body>

@@ -48,7 +48,7 @@
 
             <!-- 2. FORMULÁRIO DE EDIÇÃO -->
             <form action="backend/api.php?acao=salvar_edicao_veiculo" method="post">
-                <input type="hidden" name="id_veiculo" id="id_veiculo" value="1">
+                <input type="hidden" name="id_veiculo" id="id_veiculo" value="">
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
@@ -118,15 +118,13 @@
                 sel.innerHTML = '<option value="">Nenhum veículo encontrado</option>';
                 return;
             }
-            sel.innerHTML = json.dados.map(v =>
-                `<option value="${v.id_veiculo}">${v.placa} | ${v.marca_modelo} (${v.cor || '-'}) - ${v.status.toUpperCase()}</option>`
+            sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(v =>
+                `<option value="${v.id_veiculo}">${axionEsc(v.placa)} | ${axionEsc(v.marca_modelo)} (${axionEsc(v.cor || '-')}) - ${axionEsc(v.status.toUpperCase())}</option>`
             ).join('');
             const urlId = new URLSearchParams(window.location.search).get('id');
             if (urlId && !termo) {
                 sel.value = urlId;
                 carregarVeiculoPorId(urlId);
-            } else if (json.dados[0]) {
-                carregarVeiculoPorId(json.dados[0].id_veiculo);
             }
         }
 

@@ -156,6 +156,16 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável <span class="text-muted small">(só para Motorista)</span></label>
+                        <select id="id_supervisor" name="id_supervisor" class="form-select">
+                            <option value="">Carregando supervisores...</option>
+                        </select>
+                        <div class="form-text">É este supervisor que assina as vistorias feitas pelo motorista.</div>
+                    </div>
+                </div>
+
                 <!-- 4. NÍVEL DE ACESSO / PERFIL E ENVIO DIRETO -->
                 <div class="axion-section-title mt-3"><i class="bi bi-shield-check"></i> 4. Nível de Acesso e Confirmação</div>
                 <p class="small text-muted mb-2">Clique diretamente no botão do perfil desejado para concluir o cadastro:</p>
@@ -172,12 +182,12 @@
                         </button>
                     </div>
                     <div class="col-6 col-md-3">
-                        <button type="submit" class="btn btn-warning text-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('supervisor', 'processar_cadastro_supervisor.php')">
+                        <button type="submit" id="btn-cad-supervisor" class="btn btn-warning text-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('supervisor', 'processar_cadastro_supervisor.php')">
                             <i class="bi bi-person-badge-fill me-1"></i>Cadastrar Supervisor
                         </button>
                     </div>
                     <div class="col-6 col-md-3">
-                        <button type="submit" class="btn btn-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('admin', 'processar_cadastro.php')">
+                        <button type="submit" id="btn-cad-admin" class="btn btn-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('admin', 'processar_cadastro.php')">
                             <i class="bi bi-stars me-1"></i>Cadastrar Admin
                         </button>
                     </div>
@@ -197,6 +207,21 @@
             document.getElementById('inputPerfilSelecionado').value = perfil;
             document.getElementById('formCadUser').action = actionUrl;
         }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ctx = await AxionSessao.pronta;
+            const ehAdmin = ctx && ctx.usuario.perfil === 'admin';
+            // Só o Admin cadastra Supervisores e Admins
+            if (!ehAdmin) {
+                ['btn-cad-supervisor', 'btn-cad-admin'].forEach(id => document.getElementById(id).closest('.col-6').remove());
+            }
+            const resp = await fetch('backend/api.php?acao=listar_pessoas');
+            const json = await resp.json();
+            const sel = document.getElementById('id_supervisor');
+            sel.innerHTML = '<option value="">Selecione o supervisor...</option>' + (json.supervisores || []).map(s =>
+                `<option value="${s.id_usuario}">${axionEsc(s.nome)}${s.perfil === 'admin' ? ' (Admin)' : ''}</option>`).join('');
+            if (ctx && ctx.usuario.perfil === 'supervisor') sel.value = ctx.usuario.id;
+        });
     </script>
 </body>
 

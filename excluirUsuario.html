@@ -61,18 +61,21 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
     <script>
         async function inicializarExclusaoUsuario() {
             const resp = await fetch('backend/api.php?acao=buscar&tipo=usuarios&limite=250');
             const json = await resp.json();
             const sel = document.getElementById('select-usuario');
             if (!json.dados || json.dados.length === 0) return;
-            sel.innerHTML = json.dados.map(u =>
-                `<option value="${u.id_usuario}">#${u.id_usuario} - ${u.nome} (${u.cpf_matricula}) - ${u.perfil.toUpperCase()}</option>`
+            sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(u =>
+                `<option value="${u.id_usuario}">#${u.id_usuario} - ${axionEsc(u.nome)} (${axionEsc(u.cpf_matricula)}) - ${axionEsc(u.perfil.toUpperCase())}</option>`
             ).join('');
-            const urlId = new URLSearchParams(window.location.search).get('id') || json.dados[0].id_usuario;
-            sel.value = urlId;
-            carregarResumoUsuario(urlId);
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId) {
+                sel.value = urlId;
+                carregarResumoUsuario(urlId);
+            }
         }
 
         async function carregarResumoUsuario(id) {
@@ -83,11 +86,11 @@
             document.getElementById('id_usuario').value = u.id_usuario;
             document.getElementById('resumo-usuario').innerHTML = `
                 <li><strong>ID:</strong> #${u.id_usuario}</li>
-                <li><strong>Nome:</strong> ${u.nome}</li>
-                <li><strong>CPF:</strong> ${u.cpf_matricula}</li>
-                <li><strong>Perfil:</strong> ${u.perfil.toUpperCase()}</li>
-                <li><strong>CNH / Categoria:</strong> ${u.cnh || '-'} (${u.categoria_cnh || '-'})</li>
-                <li><strong>E-mail:</strong> ${u.email}</li>
+                <li><strong>Nome:</strong> ${axionEsc(u.nome)}</li>
+                <li><strong>CPF:</strong> ${axionEsc(u.cpf_matricula)}</li>
+                <li><strong>Perfil:</strong> ${axionEsc(u.perfil.toUpperCase())}</li>
+                <li><strong>CNH / Categoria:</strong> ${axionEsc(u.cnh || '-')} (${axionEsc(u.categoria_cnh || '-')})</li>
+                <li><strong>E-mail:</strong> ${axionEsc(u.email)}</li>
             `;
         }
         document.addEventListener('DOMContentLoaded', inicializarExclusaoUsuario);

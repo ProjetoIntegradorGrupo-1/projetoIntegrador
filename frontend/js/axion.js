@@ -301,3 +301,76 @@ const AxionUtils = {
 document.addEventListener('DOMContentLoaded', () => {
     AxionUtils.inicializarMascarasEValidacoes();
 });
+
+/** Escapa texto vindo do banco antes de montar HTML (evita que um nome com <script> rode na página). */
+function axionEsc(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/**
+ * Sessão do usuário logado: carrega quem está logado, coloca o token de segurança (csrf) em todos
+ * os formulários POST da página e manda para o login se a sessão tiver expirado.
+ * Uso: const ctx = await AxionSessao.pronta;
+ */
+const AxionSessao = {
+    pronta: (async () => {
+        try {
+            const resp = await fetch('backend/api.php?acao=contexto', { headers: { Accept: 'application/json' } });
+            if (resp.status === 401) {
+                window.location.href = 'index.html';
+                return null;
+            }
+            const ctx = await resp.json();
+            const injetar = () => document.querySelectorAll('form[method="post"], form[method="POST"]').forEach((f) => {
+                let campo = f.querySelector('input[name="csrf"]');
+                if (!campo) {
+                    campo = document.createElement('input');
+                    campo.type = 'hidden';
+                    campo.name = 'csrf';
+                    f.appendChild(campo);
+                }
+                campo.value = ctx.csrf;
+            });
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injetar);
+            else injetar();
+            return ctx;
+        } catch (e) {
+            console.error('Falha ao carregar a sessão', e);
+            return null;
+        }
+    })()
+};
+
+/** Mostra a mensagem de erro que o servidor devolveu na URL (?erro=...). */
+document.addEventListener('DOMContentLoaded', () => {
+    const erro = new URLSearchParams(window.location.search).get('erro');
+    if (!erro || document.body.dataset.semAlertaErro !== undefined) return;
+    const textos = {
+        usuario_nao_selecionado: 'Selecione um usuário na lista antes de salvar.',
+        veiculo_nao_selecionado: 'Selecione um veículo na lista antes de continuar.',
+        checklist_nao_selecionado: 'Selecione um checklist na lista antes de continuar.',
+        sem_permissao: 'Seu nível de acesso não permite esta operação.',
+        nao_pode_mudar_proprio_perfil: 'Você não pode alterar o seu próprio nível de acesso.',
+        nao_pode_excluir_a_si_mesmo: 'Você não pode excluir a sua própria conta.',
+        cpf_invalido: 'CPF inválido.',
+        email_invalido: 'E-mail inválido.',
+        cpf_ou_email_duplicado: 'Já existe outro usuário com este CPF ou e-mail.',
+        placa_renavam_ou_chassi_duplicado: 'Já existe outro veículo com esta placa, Renavam ou chassi.',
+        supervisor_invalido: 'Supervisor responsável inválido.',
+        checklist_invalido: 'Escolha um modelo de checklist.',
+        veiculo_invalido: 'Escolha um veículo da frota.',
+        km_invalido: 'Informe a quilometragem atual.',
+        motorista_invalido: 'Escolha o motorista.',
+        vistoriador_invalido: 'Não há supervisor responsável definido. Peça a um gestor para vincular seu cadastro a um supervisor.',
+        resposta_obrigatoria: 'Responda todas as perguntas obrigatórias.',
+        descricao_obrigatoria: 'Descreva a não conformidade encontrada.',
+        arquivo_nao_e_imagem: 'O anexo precisa ser uma imagem (JPG, PNG, WEBP ou GIF).',
+        arquivo_muito_grande: 'A imagem pode ter no máximo 8 MB.',
+        formulario_expirado: 'O formulário expirou. Recarregue a página e tente de novo.'
+    };
+    const main = document.querySelector('main') || document.body;
+    const div = document.createElement('div');
+    div.className = 'alert alert-danger shadow-sm';
+    div.textContent = textos[erro] || ('Não foi possível concluir: ' + erro.replace(/_/g, ' '));
+    main.prepend(div);
+});

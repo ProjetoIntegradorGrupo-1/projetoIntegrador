@@ -28,19 +28,20 @@
 
     <main class="axion-web-container">
         <div class="axion-form-card">
-            <h1 class="h4 fw-bold mb-3"><i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário</h1>
+            <h1 class="h4 fw-bold mb-1"><i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário</h1>
+            <p class="text-muted small mb-3" id="titulo-editando">Nenhum usuário carregado. Filtre, escolha na lista e clique em "Carregar".</p>
 
             <!-- 1. BLOCO DE BUSCA E SELEÇÃO DO USUÁRIO DO BANCO -->
             <div class="mb-4 p-3 bg-light border rounded">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-5">
-                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome ou CPF</label>
-                        <input type="text" id="filtro-rapido-usuario" class="form-control" placeholder="Digite para filtrar a lista..." oninput="carregarListaUsuarios(this.value)">
+                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome, CPF ou E-mail</label>
+                        <input type="text" id="filtro-rapido-usuario" class="form-control" placeholder="Ex: Maria, 123.456 ou 12345678909" oninput="filtrarComAtraso(this.value)">
                     </div>
                     <div class="col-md-7">
                         <label for="select-usuario" class="form-label small fw-bold mb-1">Selecione o Usuário Cadastrado</label>
                         <div class="input-group">
-                            <select id="select-usuario" class="form-select" onchange="carregarUsuarioPorId(this.value)">
+                            <select id="select-usuario" class="form-select">
                                 <option value="">Carregando usuários do banco...</option>
                             </select>
                             <button class="btn btn-primary" type="button" onclick="carregarUsuarioPorId(document.getElementById('select-usuario').value)">
@@ -53,7 +54,7 @@
 
             <!-- 2. FORMULÁRIO DE EDIÇÃO -->
             <form action="backend/api.php?acao=salvar_edicao_usuario" method="post" id="formEditarUsuario">
-                <input type="hidden" name="id_usuario" id="id_usuario" value="1">
+                <input type="hidden" name="id_usuario" id="id_usuario" value="">
 
                 <div class="axion-section-title"><i class="bi bi-person-vcard"></i> 1. Dados Pessoais e Nível de Acesso</div>
                 <div class="row">
@@ -87,6 +88,7 @@
                     <div class="col-md-3 mb-3">
                         <label for="perfil" class="form-label fw-semibold">Perfil / Nível de Acesso</label>
                         <select name="perfil" id="perfil" class="form-select" required>
+                            <option value="" selected disabled>Carregue um usuário</option>
                             <option value="admin">Admin (Privilégio Total)</option>
                             <option value="supervisor">Supervisor</option>
                             <option value="motorista">Motorista</option>
@@ -96,6 +98,16 @@
                     <div class="col-md-3 mb-3">
                         <label for="telefone" class="form-label fw-semibold">Telefone</label>
                         <input type="tel" id="telefone" name="telefone" data-mask="telefone" class="form-control" maxlength="15" required>
+                    </div>
+                </div>
+
+                <div class="row" id="linha-supervisor" style="display:none">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável pelo motorista</label>
+                        <select id="id_supervisor" name="id_supervisor" class="form-select">
+                            <option value="">Sem supervisor definido</option>
+                        </select>
+                        <div class="form-text">É este supervisor que assina as vistorias feitas por este motorista.</div>
                     </div>
                 </div>
 
@@ -166,7 +178,7 @@
 
                 <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
                     <a href="oqfazer.php?aba=usuarios" class="btn btn-outline-secondary">Cancelar e Voltar</a>
-                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
+                    <button type="submit" id="btn-salvar" class="btn btn-primary px-4 fw-semibold" disabled><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -175,30 +187,51 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="frontend/js/axion.js"></script>
     <script>
+        let usuariosCarregados = [];
+        let timerFiltro = null;
+
+        function filtrarComAtraso(termo) {
+            clearTimeout(timerFiltro);
+            timerFiltro = setTimeout(() => carregarListaUsuarios(termo), 250);
+        }
+
+        // Só preenche a lista. O formulário NÃO troca de usuário sozinho: é preciso escolher e clicar em "Carregar".
         async function carregarListaUsuarios(termo = '') {
-            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=150`);
+            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=250`);
             const json = await resp.json();
             const sel = document.getElementById('select-usuario');
-            if (!json.dados || json.dados.length === 0) {
+            usuariosCarregados = json.dados || [];
+            if (usuariosCarregados.length === 0) {
                 sel.innerHTML = '<option value="">Nenhum usuário encontrado</option>';
                 return;
             }
-            sel.innerHTML = json.dados.map(u =>
-                `<option value="${u.id_usuario}">#${u.id_usuario} - ${u.nome} (CPF: ${u.cpf_matricula}) [${u.perfil.toUpperCase()}]</option>`
+            const atual = document.getElementById('id_usuario').value;
+            sel.innerHTML = '<option value="">Selecione um usuário...</option>' + usuariosCarregados.map(u =>
+                `<option value="${u.id_usuario}">${axionEsc(u.nome)} - CPF ${axionEsc(u.cpf_matricula)} [${axionEsc(u.perfil.toUpperCase())}]</option>`
             ).join('');
+            if (atual && usuariosCarregados.some(u => String(u.id_usuario) === atual)) sel.value = atual;
+            else if (usuariosCarregados.length === 1) sel.value = usuariosCarregados[0].id_usuario;
+        }
 
-            const urlId = new URLSearchParams(window.location.search).get('id');
-            if (urlId && !termo) {
-                sel.value = urlId;
-                carregarUsuarioPorId(urlId);
-            } else if (json.dados[0]) {
-                carregarUsuarioPorId(json.dados[0].id_usuario);
-            }
+        async function carregarSupervisores() {
+            const resp = await fetch('backend/api.php?acao=listar_pessoas');
+            const json = await resp.json();
+            const sel = document.getElementById('id_supervisor');
+            sel.innerHTML = '<option value="">Sem supervisor definido</option>' + (json.supervisores || []).map(s =>
+                `<option value="${s.id_usuario}">${axionEsc(s.nome)}${s.perfil === 'admin' ? ' (Admin)' : ''}</option>`).join('');
+        }
+
+        function atualizarLinhaSupervisor() {
+            document.getElementById('linha-supervisor').style.display =
+                document.getElementById('perfil').value === 'motorista' ? '' : 'none';
         }
 
         async function carregarUsuarioPorId(id) {
-            if (!id) return;
-            const resp = await fetch(`backend/api.php?acao=obter_usuario&id=${id}`);
+            if (!id) {
+                alert('Selecione um usuário na lista.');
+                return;
+            }
+            const resp = await fetch(`backend/api.php?acao=obter_usuario&id=${encodeURIComponent(id)}`);
             const json = await resp.json();
             if (!json.sucesso || !json.dados) return;
             const u = json.dados;
@@ -220,10 +253,27 @@
             document.getElementById('cidade').value = u.cidade || '';
             document.getElementById('estado').value = u.estado || '';
             document.getElementById('email').value = u.email || '';
-            AxionUtils.inicializarMascarasEValidacoes();
+            document.getElementById('id_supervisor').value = u.id_supervisor || '';
+            atualizarLinhaSupervisor();
+            // Reaplica máscaras/validação nos valores carregados
+            ['cpf', 'telefone', 'cnh'].forEach(campo => { const el = document.getElementById(campo); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('blur')); });
+            document.getElementById('btn-salvar').disabled = false;
+            document.getElementById('select-usuario').value = u.id_usuario;
+            document.getElementById('titulo-editando').textContent = `Editando: ${u.nome} (${u.perfil.toUpperCase()})`;
         }
 
-        document.addEventListener('DOMContentLoaded', () => carregarListaUsuarios());
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ctx = await AxionSessao.pronta;
+            // Supervisor não pode promover ninguém a Admin/Supervisor
+            if (ctx && ctx.usuario.perfil !== 'admin') {
+                document.querySelectorAll('#perfil option[value="admin"], #perfil option[value="supervisor"]').forEach(o => o.disabled = true);
+            }
+            document.getElementById('perfil').addEventListener('change', atualizarLinhaSupervisor);
+            await carregarSupervisores();
+            await carregarListaUsuarios();
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId) carregarUsuarioPorId(urlId);
+        });
     </script>
 </body>
 

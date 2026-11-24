@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     } catch (PDOException $e) {
         echo "<script>
-                alert('Erro ao processar recuperação: " . addslashes($e->getMessage()) . "');
+                alert('Erro ao processar recuperação.');
                 window.location.href = 'esqueciSenha.html';
               </script>";
         exit;

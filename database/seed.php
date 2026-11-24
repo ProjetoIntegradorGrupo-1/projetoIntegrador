@@ -201,6 +201,87 @@ function axion_garantir_estrutura(PDO $pdo): void {
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+
+    // Vínculo fixo Motorista -> Supervisor responsável
+    axion_garantir_colunas($pdo, 'Usuarios', [
+        'id_supervisor' => "INT DEFAULT NULL",
+    ]);
+
+    // Dados que faltavam para a vistoria ser rastreável e visualizável depois
+    axion_garantir_colunas($pdo, 'Checklist_Execucoes', [
+        'id_vistoriador'            => "INT DEFAULT NULL",
+        'id_registrado_por'         => "INT DEFAULT NULL",
+        'detalhes_nao_conformidade' => "TEXT DEFAULT NULL",
+        'foto_evidencia'            => "VARCHAR(255) DEFAULT NULL",
+        'assinatura_motorista'      => "LONGTEXT DEFAULT NULL",
+        'assinatura_vistoriador'    => "LONGTEXT DEFAULT NULL",
+        'assinado_em'               => "DATETIME DEFAULT NULL",
+    ]);
+
+    // 6. Respostas de cada pergunta de uma vistoria (antes as respostas eram descartadas)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS Checklist_Respostas (
+            id_resposta INT AUTO_INCREMENT PRIMARY KEY,
+            id_execucao INT NOT NULL,
+            id_pergunta INT DEFAULT NULL,
+            id_pergunta_pai INT DEFAULT NULL,
+            pergunta_texto VARCHAR(255) NOT NULL,
+            resposta VARCHAR(255) DEFAULT NULL,
+            resposta_esperada VARCHAR(20) DEFAULT NULL,
+            conforme TINYINT(1) DEFAULT NULL,
+            INDEX idx_resp_execucao (id_execucao)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+}
+
+/** Adiciona colunas que ainda não existem (bancos criados por versões antigas do sistema). */
+function axion_garantir_colunas(PDO $pdo, string $tabela, array $colunas): void {
+    $existentes = $pdo->query("SHOW COLUMNS FROM `$tabela`")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($colunas as $col => $def) {
+        if (!in_array($col, $existentes, true)) {
+            $pdo->exec("ALTER TABLE `$tabela` ADD COLUMN `$col` $def");
+        }
+    }
+}
+
+/**
+ * Cria apenas as 4 contas de acesso (senha mudar123), sem carros, checklists ou vistorias.
+ * O motorista de teste já nasce vinculado ao supervisor de teste.
+ */
+function axion_criar_contas_base(PDO $pdo): void {
+    $hash = password_hash('mudar123', PASSWORD_DEFAULT);
+    $contas = [
+        ['Administrador', 'Axion', 'admin@axion.com',      '529.982.247-25', 'admin'],
+        ['Supervisor',    'Axion', 'supervisor@axion.com', '111.444.777-35', 'supervisor'],
+        ['Motorista',     'Axion', 'motorista@axion.com',  '390.533.447-05', 'motorista'],
+        ['Cliente',       'Axion', 'cliente@axion.com',    '153.509.460-56', 'cliente'],
+    ];
+    $stmt = $pdo->prepare("
+        INSERT IGNORE INTO Usuarios (nome, sobrenome, email, senha, cpf_matricula, perfil, status)
+        VALUES (:nome, :sobrenome, :email, :senha, :cpf, :perfil, 'ativo')
+    ");
+    foreach ($contas as [$nome, $sobrenome, $email, $cpf, $perfil]) {
+        $stmt->execute([
+            ':nome' => "$nome $sobrenome", ':sobrenome' => $sobrenome, ':email' => $email,
+            ':senha' => $hash, ':cpf' => $cpf, ':perfil' => $perfil,
+        ]);
+    }
+    $idSup = $pdo->query("SELECT id_usuario FROM Usuarios WHERE email = 'supervisor@axion.com'")->fetchColumn();
+    if ($idSup) {
+        $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email = 'motorista@axion.com' AND id_supervisor IS NULL")
+            ->execute([':sup' => $idSup]);
+    }
+}
+
+/** Apaga TODOS os dados (carros, usuários, checklists, vistorias) e recria só as 4 contas de acesso. */
+function axion_zerar_banco(PDO $pdo): void {
+    axion_garantir_estrutura($pdo);
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+    foreach (['Checklist_Respostas', 'Checklist_Execucoes', 'Checklist_Perguntas', 'Checklists', 'Veiculos', 'Usuarios'] as $t) {
+        $pdo->exec("TRUNCATE TABLE `$t`");
+    }
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+    axion_criar_contas_base($pdo);
 }
 
 function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
@@ -618,13 +699,22 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
     ];
 }
 
-// Se chamado diretamente via navegador (ex: database/seed.php?acao=reset)
+// Chamado diretamente pelo navegador: só o ADMIN pode zerar a base (POST vindo do painel).
+// A carga automática de dados fictícios foi desativada: a base começa vazia.
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'seed.php' && php_sapi_name() !== 'cli') {
-    session_start();
     require_once __DIR__ . '/../conexao.php';
-    $forcar = isset($_GET['forcar']) && $_GET['forcar'] === '1';
-    $res = axion_popular_banco($pdo, $forcar);
-    header("Location: ../oqfazer.php?sucesso=banco_populado");
+    require_once __DIR__ . '/../backend/auth.php';
+    axion_exigir_perfil(['admin']);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'zerar') {
+        axion_validar_csrf();
+        axion_zerar_banco($pdo);
+        // As contas foram recriadas: a sessão atual aponta para um id que não existe mais.
+        $_SESSION = [];
+        session_destroy();
+        header("Location: ../index.html?info=banco_zerado");
+        exit;
+    }
+    header("Location: ../oqfazer.php?aba=admin");
     exit;
 }
 ?>

@@ -1,18 +1,13 @@
 <?php
 // oqfazer.php — Painel Web Principal do Sistema Axion (Dashboard, Abas por Nível de Acesso e Central de Buscas)
-session_start();
-require_once 'conexao.php';
+require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . '/backend/auth.php';
 
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
-
-$nome_usuario   = $_SESSION['nome_usuario'] ?? 'Usuário Axion';
-$perfil_usuario = strtolower($_SESSION['perfil_usuario'] ?? 'supervisor');
-if (!in_array($perfil_usuario, ['admin', 'supervisor', 'motorista', 'cliente'], true)) {
-    $perfil_usuario = 'supervisor';
-}
+// O nível de acesso vem do banco a cada página (não existe mais "simular/trocar perfil")
+$eu             = axion_exigir_perfil();
+$nome_usuario   = $eu['nome'];
+$perfil_usuario = $eu['perfil'];
+$csrf           = axion_csrf_token();
 
 $isAdmin      = ($perfil_usuario === 'admin');
 $isGestor     = in_array($perfil_usuario, ['admin', 'supervisor'], true);
@@ -27,8 +22,13 @@ $stats = [
     'supervisores' => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'supervisor'")->fetchColumn(),
     'admins'       => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'admin'")->fetchColumn(),
     'checklists'   => (int)$pdo->query("SELECT COUNT(*) FROM Checklists")->fetchColumn(),
-    'vistorias'    => (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes")->fetchColumn(),
 ];
+// Vistorias: motorista vê só as dele; os demais veem todas
+$filtroVist = $perfil_usuario === 'motorista' ? ' WHERE id_motorista = ' . (int)$eu['id'] : '';
+$filtroVistAnd = $filtroVist ? $filtroVist . ' AND ' : ' WHERE ';
+$stats['vistorias']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes$filtroVist")->fetchColumn();
+$stats['nao_conformes'] = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}status_conformidade = 'nao_conforme'")->fetchColumn();
+$stats['pendentes']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}assinado_em IS NULL")->fetchColumn();
 
 $abaAtiva = $_GET['aba'] ?? 'inicio';
 $sucessoMsg = $_GET['sucesso'] ?? '';
@@ -46,8 +46,12 @@ $mapaMensagens = [
     'checklist_criado'      => 'Novo modelo de checklist criado com sucesso!',
     'checklist_editado'     => 'Modelo de checklist atualizado com sucesso!',
     'checklist_excluido'    => 'Modelo de checklist excluído com sucesso!',
-    'banco_populado'        => 'Banco de dados populado com 200 carros, 100 motoristas, 250 clientes, 13 supervisores e 20 modelos de checklists!',
-    'perfil_alterado'       => 'Nível de acesso alterado para visualização!'
+];
+$erroMsg = $_GET['erro'] ?? '';
+$mapaErros = [
+    'sem_permissao'        => 'Seu nível de acesso não permite esta operação.',
+    'formulario_expirado'  => 'O formulário expirou. Recarregue a página e tente novamente.',
+    'vistoria_invalida'    => 'Vistoria não encontrada ou já assinada.',
 ];
 ?>
 <!DOCTYPE html>
@@ -76,20 +80,10 @@ $mapaMensagens = [
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
-                <!-- Seletor rápido de perfil para avaliação das abas por nível de acesso -->
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-light dropdown-toggle fw-semibold d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-shield-lock-fill text-primary"></i>
-                        <span>Nível: <?php echo strtoupper(htmlspecialchars($perfil_usuario)); ?></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow">
-                        <li><h6 class="dropdown-header">Simular Nível de Acesso</h6></li>
-                        <li><a class="dropdown-item <?php echo $perfil_usuario === 'admin' ? 'active' : ''; ?>" href="backend/api.php?acao=trocar_perfil_demo&perfil=admin"><i class="bi bi-stars me-2"></i>Admin (Acesso Total + Seed)</a></li>
-                        <li><a class="dropdown-item <?php echo $perfil_usuario === 'supervisor' ? 'active' : ''; ?>" href="backend/api.php?acao=trocar_perfil_demo&perfil=supervisor"><i class="bi bi-person-badge me-2"></i>Supervisor (Gestão Operacional)</a></li>
-                        <li><a class="dropdown-item <?php echo $perfil_usuario === 'motorista' ? 'active' : ''; ?>" href="backend/api.php?acao=trocar_perfil_demo&perfil=motorista"><i class="bi bi-person-vcard me-2"></i>Motorista (Vistorias e Frota)</a></li>
-                        <li><a class="dropdown-item <?php echo $perfil_usuario === 'cliente' ? 'active' : ''; ?>" href="backend/api.php?acao=trocar_perfil_demo&perfil=cliente"><i class="bi bi-person-check me-2"></i>Cliente (Consulta)</a></li>
-                    </ul>
-                </div>
+                <span class="badge bg-light text-dark d-flex align-items-center gap-1 px-3 py-2">
+                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                    Nível: <?php echo strtoupper(htmlspecialchars($perfil_usuario)); ?>
+                </span>
 
                 <div class="d-none d-md-flex align-items-center gap-2 text-white-50 small border-start ps-3 border-light border-opacity-25">
                     <i class="bi bi-person-circle fs-5 text-white"></i>
@@ -108,6 +102,12 @@ $mapaMensagens = [
 
     <!-- CONTEÚDO PRINCIPAL WEB -->
     <main class="axion-web-container">
+
+        <?php if ($erroMsg && isset($mapaErros[$erroMsg])): ?>
+            <div class="alert alert-danger shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-octagon-fill me-2"></i><?php echo htmlspecialchars($mapaErros[$erroMsg]); ?>
+            </div>
+        <?php endif; ?>
 
         <?php if ($sucessoMsg && isset($mapaMensagens[$sucessoMsg])): ?>
             <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex align-items-center mb-4" role="alert">
@@ -169,11 +169,14 @@ $mapaMensagens = [
                     <div class="axion-stat-icon bg-danger-subtle text-danger"><i class="bi bi-clipboard2-check-fill"></i></div>
                     <div>
                         <div class="h4 fw-bold mb-0"><?php echo $stats['vistorias']; ?></div>
-                        <div class="text-muted small">Vistorias Realizadas</div>
+                        <div class="text-muted small"><?php echo $perfil_usuario === 'motorista' ? 'Minhas Vistorias' : 'Vistorias Realizadas'; ?></div>
+                        <div class="small"><span class="text-danger"><?php echo $stats['nao_conformes']; ?> não conformes</span> · <span class="text-warning-emphasis"><?php echo $stats['pendentes']; ?> sem assinatura</span></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <p class="small text-muted mt-n2 mb-4"><i class="bi bi-info-circle me-1"></i>Indicadores calculados na hora, contando os registros do banco: carros cadastrados, usuários por perfil, modelos de checklist e vistorias (com quantas deram não conforme e quantas ainda aguardam assinatura).</p>
 
         <!-- NAVEGAÇÃO EM ABAS (Adaptada ao Nível de Acesso: Admin, Supervisor, Motorista, Cliente) -->
         <ul class="nav nav-tabs axion-nav-tabs mb-4" id="axionMainTabs" role="tablist">
@@ -202,7 +205,7 @@ $mapaMensagens = [
             <?php if ($isAdmin): ?>
             <li class="nav-item" role="presentation">
                 <button class="nav-link <?php echo $abaAtiva === 'admin' ? 'active' : ''; ?>" id="tab-admin" data-bs-toggle="tab" data-bs-target="#pane-admin" type="button" role="tab">
-                    <i class="bi bi-Database-fill-gear bi-sliders"></i> Administração & Seed (Admin)
+                    <i class="bi bi-Database-fill-gear bi-sliders"></i> Administração (Admin)
                 </button>
             </li>
             <?php endif; ?>
@@ -520,7 +523,7 @@ $mapaMensagens = [
                                 <option value="">Todos os Resultados</option>
                                 <option value="conforme">Conforme (Liberado)</option>
                                 <option value="nao_conforme">Não Conforme (Com Avaria)</option>
-                                <option value="pendente">Pendente</option>
+                                <option value="pendente">Assinatura pendente</option>
                             </select>
                         </div>
                     </div>
@@ -539,58 +542,57 @@ $mapaMensagens = [
                                     <th>Vistoriador</th>
                                     <th>Km</th>
                                     <th>Resultado</th>
+                                    <th class="text-end">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-vistorias">
-                                <tr><td colspan="8" class="text-center py-4 text-muted">Carregando vistorias realizadas...</td></tr>
+                                <tr><td colspan="9" class="text-center py-4 text-muted">Carregando vistorias realizadas...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ABA 5: ADMINISTRAÇÃO & SEED DO BANCO (Exclusiva Admin) -->
+            <!-- ABA 5: ADMINISTRAÇÃO DO BANCO (Exclusiva Admin) -->
             <?php if ($isAdmin): ?>
             <div class="tab-pane fade <?php echo $abaAtiva === 'admin' ? 'show active' : ''; ?>" id="pane-admin" role="tabpanel">
                 <div class="card border-0 shadow-sm p-4">
-                    <h3 class="h5 fw-bold text-primary mb-2"><i class="bi bi-database-fill-check me-2"></i>Gerenciamento de Banco de Dados & População (Exclusivo Admin)</h3>
-                    <p class="text-muted small mb-4">
-                        Como <strong>Administrador</strong>, você possui privilégios superiores aos de Supervisor, podendo regerar a carga inicial de demonstração (Seed) a qualquer momento ou exportar o esquema SQL.
-                    </p>
-
-                    <div class="row g-3 mb-4">
+                    <h3 class="h5 fw-bold text-primary mb-2"><i class="bi bi-database-fill-check me-2"></i>Gerenciamento do Banco de Dados (Exclusivo Admin)</h3>
+                    <div class="row g-3 mb-2">
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded border h-100">
                                 <h4 class="h6 fw-bold mb-2">Resumo Atual da Base <code>axion_db</code>:</h4>
                                 <ul class="small mb-0">
-                                    <li><strong>Veículos (Carros/Frota):</strong> <?php echo $stats['veiculos']; ?> registros (Meta: 200)</li>
-                                    <li><strong>Motoristas:</strong> <?php echo $stats['motoristas']; ?> registros (Meta: 100)</li>
-                                    <li><strong>Clientes:</strong> <?php echo $stats['clientes']; ?> registros (Meta: 250)</li>
-                                    <li><strong>Supervisores:</strong> <?php echo $stats['supervisores']; ?> registros (Meta: 13)</li>
-                                    <li><strong>Administradores:</strong> <?php echo $stats['admins']; ?> registro(s)</li>
-                                    <li><strong>Modelos de Checklists:</strong> <?php echo $stats['checklists']; ?> modelos com perguntas condicionais</li>
-                                    <li><strong>Vistorias Preenchidas:</strong> <?php echo $stats['vistorias']; ?> execuções registradas</li>
+                                    <li><strong>Veículos:</strong> <?php echo $stats['veiculos']; ?></li>
+                                    <li><strong>Motoristas:</strong> <?php echo $stats['motoristas']; ?></li>
+                                    <li><strong>Clientes:</strong> <?php echo $stats['clientes']; ?></li>
+                                    <li><strong>Supervisores:</strong> <?php echo $stats['supervisores']; ?></li>
+                                    <li><strong>Administradores:</strong> <?php echo $stats['admins']; ?></li>
+                                    <li><strong>Modelos de Checklists:</strong> <?php echo $stats['checklists']; ?></li>
+                                    <li><strong>Vistorias:</strong> <?php echo $stats['vistorias']; ?></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded border h-100 d-flex flex-column justify-content-between">
                                 <div>
-                                    <h4 class="h6 fw-bold mb-2">Restaurar / Repopular Base Completa (Seed)</h4>
+                                    <h4 class="h6 fw-bold mb-2 text-danger">Zerar banco de dados</h4>
                                     <p class="small text-muted">
-                                        Caso deseje limpar testes manuais e restaurar exatamente os 200 carros, 100 motoristas, 250 clientes, 13 supervisores, 1 admin e 20 modelos de checklists com 150 vistorias:
+                                        Apaga todos os carros, usuários, checklists e vistorias. Ficam só as 4 contas de acesso
+                                        (admin, supervisor, motorista e cliente @axion.com, senha <code>mudar123</code>). Não dá para desfazer.
                                     </p>
                                 </div>
-                                <a href="database/seed.php?forcar=1" class="btn btn-danger w-100" onclick="return confirm('Deseja recriar e repopular todos os dados de demonstração do banco axion_db?');">
-                                    <i class="bi bi-arrow-repeat me-1"></i>Executar Seed Completo Agora
-                                </a>
+                                <form action="database/seed.php" method="post" onsubmit="return confirm('Apagar TODOS os dados do sistema? Esta ação não pode ser desfeita.');">
+                                    <input type="hidden" name="acao" value="zerar">
+                                    <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($csrf); ?>">
+                                    <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash3 me-1"></i>Zerar banco agora</button>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <?php endif; ?>
-
         </div>
     </main>
 
@@ -598,6 +600,10 @@ $mapaMensagens = [
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const IS_GESTOR = <?php echo $isGestor ? 'true' : 'false'; ?>;
+        const IS_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>;
+        const MEU_ID = <?php echo (int)$eu['id']; ?>;
+        // Escapa textos do banco antes de colocar no HTML
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const IS_MOTORISTA = <?php echo $isMotorista ? 'true' : 'false'; ?>;
 
         function badgeStatusVeiculo(st) {
@@ -636,15 +642,15 @@ $mapaMensagens = [
                     tbody.innerHTML = json.dados.map(v => `
                         <tr>
                             <td class="text-muted small">#${v.id_veiculo}</td>
-                            <td><span class="badge bg-dark font-monospace fs-6">${v.placa}</span></td>
-                            <td class="fw-semibold">${v.marca_modelo}</td>
-                            <td>${v.ano}</td>
-                            <td>${v.cor || '-'}</td>
+                            <td><span class="badge bg-dark font-monospace fs-6">${esc(v.placa)}</span></td>
+                            <td class="fw-semibold">${esc(v.marca_modelo)}</td>
+                            <td>${esc(v.ano)}</td>
+                            <td>${esc(v.cor || '-')}</td>
                             <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td class="small text-muted"><div>Ren: ${v.renavam || '-'}</div><div>Chassi: ${v.chassi || '-'}</div></td>
+                            <td class="small text-muted"><div>Ren: ${esc(v.renavam || '-')}</div><div>Chassi: ${esc(v.chassi || '-')}</div></td>
                             <td>${badgeStatusVeiculo(v.status)}</td>
                             <td class="text-end text-nowrap">
-                                ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}&km=${v.km_rodado || 0}" class="btn btn-sm btn-warning" title="Preencher Checklist"><i class="bi bi-clipboard2-check"></i></a>` : ''}
+                                ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}" class="btn btn-sm btn-warning" title="Preencher Checklist"><i class="bi bi-clipboard2-check"></i></a>` : ''}
                                 ${IS_GESTOR ? `
                                     <a href="editarVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-primary" title="Editar Veículo"><i class="bi bi-pencil"></i></a>
                                     <a href="excluirVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-danger" title="Excluir Veículo"><i class="bi bi-trash"></i></a>
@@ -668,15 +674,16 @@ $mapaMensagens = [
                     tbody.innerHTML = json.dados.map(u => `
                         <tr>
                             <td class="text-muted small">#${u.id_usuario}</td>
-                            <td class="fw-semibold">${u.nome}</td>
-                            <td class="font-monospace small">${u.cpf_matricula}</td>
+                            <td class="fw-semibold">${esc(u.nome)}${u.perfil === 'motorista' ? `<div class="small text-muted fw-normal">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}</td>
+                            <td class="font-monospace small">${esc(u.cpf_matricula)}</td>
                             <td>${badgePerfilUsuario(u.perfil)}</td>
-                            <td class="small">${u.cnh ? `${u.cnh} <span class="badge bg-secondary">${u.categoria_cnh || 'B'}</span>` : '-'}</td>
-                            <td class="small">${u.cidade ? `${u.cidade}/${u.estado} <div class="text-muted">${u.cep || ''}</div>` : '-'}</td>
-                            <td class="small"><div>${u.email}</div><div class="text-muted">${u.telefone || ''}</div></td>
+                            <td class="small">${u.cnh ? `${esc(u.cnh)} <span class="badge bg-secondary">${esc(u.categoria_cnh || '-')}</span>` : '-'}</td>
+                            <td class="small">${u.cidade ? `${esc(u.cidade)}/${esc(u.estado)} <div class="text-muted">${esc(u.cep || '')}</div>` : '-'}</td>
+                            <td class="small"><div>${esc(u.email)}</div><div class="text-muted">${esc(u.telefone || '')}</div></td>
                             <td class="text-end text-nowrap">
+                                ${(IS_ADMIN || !['admin', 'supervisor'].includes(u.perfil)) ? `
                                 <a href="editarUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                <a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                                ${Number(u.id_usuario) !== MEU_ID ? `<a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}` : ''}
                             </td>
                         </tr>
                     `).join('');
@@ -697,13 +704,13 @@ $mapaMensagens = [
                         <tr>
                             <td class="text-muted small">#${c.id_checklist}</td>
                             <td>
-                                <div class="fw-semibold">${c.titulo}</div>
-                                <div class="small text-muted">${c.descricao || ''}</div>
+                                <div class="fw-semibold">${esc(c.titulo)}</div>
+                                <div class="small text-muted">${esc(c.descricao || '')}</div>
                             </td>
-                            <td><span class="badge bg-primary-subtle text-primary text-uppercase">${c.categoria}</span></td>
+                            <td><span class="badge bg-primary-subtle text-primary text-uppercase">${esc(c.categoria)}</span></td>
                             <td><span class="badge bg-secondary">${c.total_perguntas} perguntas</span></td>
                             <td><span class="badge bg-success-subtle text-success">${c.total_execucoes} vistorias</span></td>
-                            <td class="small">${c.criador_nome}</td>
+                            <td class="small">${esc(c.criador_nome)}</td>
                             <td class="text-end text-nowrap">
                                 ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Preencher este Checklist"><i class="bi bi-clipboard2-check"></i> Usar</a>` : ''}
                                 ${IS_GESTOR ? `
@@ -723,19 +730,20 @@ $mapaMensagens = [
                     const resp = await fetch(`backend/api.php?acao=buscar&tipo=vistorias&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}`);
                     const json = await resp.json();
                     if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhuma vistoria encontrada.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhuma vistoria encontrada.</td></tr>';
                         return;
                     }
                     tbody.innerHTML = json.dados.map(v => `
                         <tr>
                             <td class="text-muted small">#${v.id_execucao}</td>
-                            <td class="small">${v.data_vistoria} <span class="text-muted">${(v.hora_vistoria || '').slice(0,5)}</span></td>
-                            <td><span class="badge bg-dark font-monospace">${v.placa_veiculo}</span></td>
-                            <td class="fw-semibold small">${v.checklist_titulo}</td>
-                            <td class="small">${v.nome_motorista}</td>
-                            <td class="small text-muted">${v.nome_vistoriador}</td>
+                            <td class="small">${esc(v.data_vistoria)} <span class="text-muted">${(v.hora_vistoria || '').slice(0,5)}</span></td>
+                            <td><span class="badge bg-dark font-monospace">${esc(v.placa_veiculo)}</span></td>
+                            <td class="fw-semibold small">${esc(v.checklist_titulo)}</td>
+                            <td class="small">${esc(v.nome_motorista)}</td>
+                            <td class="small text-muted">${esc(v.nome_vistoriador)}</td>
                             <td class="small">${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td>${badgeConformidade(v.status_conformidade)}</td>
+                            <td>${badgeConformidade(v.status_conformidade)}${v.assinado_em ? '' : '<div><span class="badge bg-warning text-dark mt-1">Sem assinatura</span></div>'}</td>
+                            <td class="text-end"><a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-outline-success" title="Ver checklist preenchido"><i class="bi bi-eye"></i> Ver</a></td>
                         </tr>
                     `).join('');
                 }

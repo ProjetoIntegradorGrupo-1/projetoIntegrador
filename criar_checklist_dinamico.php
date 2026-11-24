@@ -1,14 +1,11 @@
 <?php
 // criar_checklist_dinamico.php
-session_start();
-require_once 'conexao.php';
-
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
+require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . '/backend/auth.php';
+axion_exigir_perfil(['admin', 'supervisor']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    axion_validar_csrf();
     $id_criador = (int)$_SESSION['id_usuario'];
     $titulo     = trim($_POST['titulo'] ?? '');
     $categoria  = trim($_POST['categoria'] ?? 'outros');
@@ -83,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         echo "<script>
-                alert('Erro ao salvar checklist: " . addslashes($e->getMessage()) . "');
+                alert('Erro ao salvar checklist.');
                 window.location.href = 'criarChecklist.html';
               </script>";
         exit;

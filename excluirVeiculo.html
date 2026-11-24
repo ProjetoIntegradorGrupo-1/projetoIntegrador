@@ -61,18 +61,21 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
     <script>
         async function inicializarExclusaoVeiculo() {
             const resp = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=200');
             const json = await resp.json();
             const sel = document.getElementById('select-veiculo');
             if (!json.dados || json.dados.length === 0) return;
-            sel.innerHTML = json.dados.map(v =>
-                `<option value="${v.id_veiculo}">${v.placa} | ${v.marca_modelo} (${v.ano})</option>`
+            sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(v =>
+                `<option value="${v.id_veiculo}">${axionEsc(v.placa)} | ${axionEsc(v.marca_modelo)} (${axionEsc(v.ano)})</option>`
             ).join('');
-            const urlId = new URLSearchParams(window.location.search).get('id') || json.dados[0].id_veiculo;
-            sel.value = urlId;
-            carregarResumoVeiculo(urlId);
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId) {
+                sel.value = urlId;
+                carregarResumoVeiculo(urlId);
+            }
         }
 
         async function carregarResumoVeiculo(id) {
@@ -82,10 +85,10 @@
             const v = json.dados;
             document.getElementById('id_veiculo').value = v.id_veiculo;
             document.getElementById('resumo-veiculo').innerHTML = `
-                <li><strong>Placa:</strong> ${v.placa}</li>
-                <li><strong>Modelo/Marca:</strong> ${v.marca_modelo} (${v.cor || '-'})</li>
-                <li><strong>Ano / Km:</strong> ${v.ano} | ${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</li>
-                <li><strong>Renavam / Chassi:</strong> ${v.renavam || '-'} / ${v.chassi || '-'}</li>
+                <li><strong>Placa:</strong> ${axionEsc(v.placa)}</li>
+                <li><strong>Modelo/Marca:</strong> ${axionEsc(v.marca_modelo)} (${axionEsc(v.cor || '-')})</li>
+                <li><strong>Ano / Km:</strong> ${axionEsc(v.ano)} | ${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</li>
+                <li><strong>Renavam / Chassi:</strong> ${axionEsc(v.renavam || '-')} / ${axionEsc(v.chassi || '-')}</li>
             `;
         }
         document.addEventListener('DOMContentLoaded', inicializarExclusaoVeiculo);

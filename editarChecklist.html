@@ -39,7 +39,7 @@
             </div>
 
             <form action="backend/api.php?acao=salvar_edicao_checklist" method="post" id="formEditarChecklist">
-                <input type="hidden" name="id_checklist" id="id_checklist" value="1">
+                <input type="hidden" name="id_checklist" id="id_checklist" value="">
 
                 <div class="row">
                     <div class="col-md-5 mb-3">
@@ -81,6 +81,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
     <script>
         let contadorPerguntas = 0;
 
@@ -100,7 +101,9 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Texto da Pergunta</label>
-                        <input type="text" name="perguntas[${idx}][texto]" class="form-control" value="${texto.replace(/"/g, '&quot;')}" required>
+                        <input type="hidden" name="perguntas[${idx}][id_pergunta]" value="${p.id_pergunta || ''}">
+                        <input type="text" name="perguntas[${idx}][texto]" class="form-control" value="${axionEsc(texto)}" required>
+                        ${p.qtd_sub ? `<div class="form-text">Esta pergunta tem ${p.qtd_sub} subpergunta(s) condicional(is), que são mantidas.</div>` : ''}
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6 mb-2">
@@ -128,7 +131,7 @@
                         </div>
                         <div class="col-md-8 mb-2">
                             <label class="form-label small fw-bold text-warning-emphasis">Orientação se Fora do Padrão (Toast)</label>
-                            <input type="text" name="perguntas[${idx}][orientacao]" class="form-control form-control-sm" value="${orientacao.replace(/"/g, '&quot;')}">
+                            <input type="text" name="perguntas[${idx}][orientacao]" class="form-control form-control-sm" value="${axionEsc(orientacao)}">
                         </div>
                     </div>
                 </div>
@@ -159,12 +162,14 @@
             const json = await resp.json();
             const sel = document.getElementById('select-checklist');
             if (!json.dados || json.dados.length === 0) return;
-            sel.innerHTML = json.dados.map(c =>
-                `<option value="${c.id_checklist}">#${c.id_checklist} - ${c.titulo} (${c.categoria.toUpperCase()})</option>`
+            sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(c =>
+                `<option value="${c.id_checklist}">#${c.id_checklist} - ${axionEsc(c.titulo)} (${axionEsc(c.categoria.toUpperCase())})</option>`
             ).join('');
-            const urlId = new URLSearchParams(window.location.search).get('id') || json.dados[0].id_checklist;
-            sel.value = urlId;
-            carregarChecklistPorId(urlId);
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId) {
+                sel.value = urlId;
+                carregarChecklistPorId(urlId);
+            }
         }
 
         async function carregarChecklistPorId(id) {
@@ -180,7 +185,11 @@
             const cont = document.getElementById('containerPerguntas');
             cont.innerHTML = '';
             contadorPerguntas = 0;
-            const lista = (c.perguntas && c.perguntas.length > 0) ? c.perguntas : [{}];
+            // Só as perguntas principais são editadas aqui; as subperguntas condicionais são preservadas
+            const todas = c.perguntas || [];
+            const principais = todas.filter(p => p.id_pergunta_pai === null)
+                .map(p => ({ ...p, qtd_sub: todas.filter(sp => Number(sp.id_pergunta_pai) === Number(p.id_pergunta)).length }));
+            const lista = principais.length > 0 ? principais : [{}];
             lista.forEach(p => {
                 contadorPerguntas++;
                 cont.insertAdjacentHTML('beforeend', renderizarBlocoPergunta(contadorPerguntas, p));

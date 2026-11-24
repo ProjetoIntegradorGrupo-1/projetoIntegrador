@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     ];
     $buscaEmail = $atalhos[strtolower($user)] ?? $user;
 
-    $sql = "SELECT id_usuario, nome, email, senha, perfil
+    $sql = "SELECT id_usuario, nome, email, senha, perfil, status
             FROM Usuarios
             WHERE email = :email
                OR cpf_matricula = :user
@@ -35,7 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($usuario && password_verify($senha_digitada, $usuario['senha'])) {
+    if ($usuario && ($usuario['status'] ?? 'ativo') === 'ativo' && password_verify($senha_digitada, $usuario['senha'])) {
+        // Nova sessão a cada login (evita reaproveitar a sessão de outra pessoa no mesmo navegador)
+        session_regenerate_id(true);
+        $_SESSION = [];
         $_SESSION['id_usuario']     = $usuario['id_usuario'];
         $_SESSION['nome_usuario']   = $usuario['nome'];
         $_SESSION['email_usuario']  = $usuario['email'];

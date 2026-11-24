@@ -7,7 +7,9 @@
     <title>Assinatura dos Usuários - Axion</title>
     <!-- CSS do Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        canvas { touch-action: none; }
         .canvas-container {
             position: relative;
             touch-action: none; /* Impede a tela do celular de rolar enquanto assina */
@@ -24,164 +26,162 @@
 </head>
 
 <body class="bg-light">
+    <main class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div class="card p-4 shadow-sm" style="max-width: 640px; width: 100%;">
+            <h1 class="h4 text-center mb-1">Assinatura dos responsáveis pela vistoria</h1>
+            <p class="text-center text-muted small mb-4" id="resumo-vistoria">Carregando vistoria...</p>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
-            
-            <h1 class="h4 text-center mb-4">Assinatura dos usuários do veículo</h1>
-
-            <!-- ALERTAS DE FEEDBACK DO ENVIO -->
-            <div id="alertaSucesso" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert">
-                <strong>Sucesso!</strong> Checklist e assinaturas enviados com sucesso! Redirecionando...
+            <div id="alertaSucesso" class="alert alert-success d-none mb-3" role="alert">
+                <strong>Sucesso!</strong> Checklist e assinaturas registrados. Abrindo a vistoria...
             </div>
+            <div id="alertaErro" class="alert alert-danger d-none mb-3" role="alert"></div>
 
-            <div id="alertaErro" class="alert alert-danger alert-dismissible fade show d-none mb-3" role="alert">
-                <strong>Atenção:</strong> Por favor, informe as duas assinaturas antes de concluir.
-            </div>
-
-            <form id="formAssinaturas" action="processar_checklist_final.php" method="post">
-                <!-- Inputs ocultos para enviar as assinaturas em formato de imagem (Base64) para o PHP -->
-                <input type="hidden" name="assinatura_motorista" id="inputAssinaturaMotorista">
-                <input type="hidden" name="assinatura_vistoriador" id="inputAssinaturaVistoriador">
-
+            <form id="formAssinaturas" onsubmit="return false;">
                 <!-- 1. ASSINATURA DO MOTORISTA -->
-                <div class="mb-4">
+                <div class="mb-4 bloco-assinatura" id="bloco-motorista">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0">Assinatura do motorista</label>
+                        <label class="form-label fw-bold mb-0">Assinatura do motorista: <span class="fw-normal" id="nome-motorista"></span></label>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasMotorista')">Limpar</button>
                     </div>
-                    <div class="canvas-container">
-                        <canvas id="canvasMotorista"></canvas>
+                    <div class="row g-2 mb-2 confirmacao d-none">
+                        <div class="col-sm-6"><input class="form-control form-control-sm" id="login_motorista" placeholder="E-mail ou CPF do motorista" autocomplete="off"></div>
+                        <div class="col-sm-6"><input class="form-control form-control-sm" id="senha_motorista" type="password" placeholder="Senha do motorista" autocomplete="new-password"></div>
+                        <div class="col-12 form-text">O motorista confirma a identidade com o próprio login e senha antes de assinar.</div>
                     </div>
+                    <div class="small text-success mb-2 eu-mesmo d-none"><i class="bi bi-person-check-fill me-1"></i>Você está logado como este usuário.</div>
+                    <div class="canvas-container"><canvas id="canvasMotorista"></canvas></div>
                 </div>
 
                 <!-- 2. ASSINATURA DO VISTORIADOR -->
-                <div class="mb-4">
+                <div class="mb-4 bloco-assinatura" id="bloco-vistoriador">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0">Assinatura do vistoriador</label>
+                        <label class="form-label fw-bold mb-0">Assinatura do vistoriador: <span class="fw-normal" id="nome-vistoriador"></span></label>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparCanvas('canvasVistoriador')">Limpar</button>
                     </div>
-                    <div class="canvas-container">
-                        <canvas id="canvasVistoriador"></canvas>
+                    <div class="row g-2 mb-2 confirmacao d-none">
+                        <div class="col-sm-6"><input class="form-control form-control-sm" id="login_vistoriador" placeholder="E-mail ou CPF do vistoriador" autocomplete="off"></div>
+                        <div class="col-sm-6"><input class="form-control form-control-sm" id="senha_vistoriador" type="password" placeholder="Senha do vistoriador" autocomplete="new-password"></div>
+                        <div class="col-12 form-text">O vistoriador confirma a identidade com o próprio login e senha antes de assinar.</div>
                     </div>
+                    <div class="small text-success mb-2 eu-mesmo d-none"><i class="bi bi-person-check-fill me-1"></i>Você está logado como este usuário.</div>
+                    <div class="canvas-container"><canvas id="canvasVistoriador"></canvas></div>
                 </div>
 
-                <!-- BOTÃO DE AÇÃO PRINCIPAL (Sem botão de voltar) -->
                 <div class="d-grid gap-2 mt-4">
-                    <button type="button" class="btn btn-primary btn-lg" onclick="finalizarChecklist()">Concluir Checklist</button>
+                    <button type="button" class="btn btn-primary btn-lg" id="btn-concluir" onclick="finalizarChecklist()" disabled>Concluir Checklist</button>
                 </div>
             </form>
-
         </div>
-    </div>
+    </main>
 
-    <!-- JS do Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- LÓGICA DE CAPTURA DA ASSINATURA E VALIDAÇÃO -->
+    <script src="frontend/js/axion.js"></script>
     <script>
+        const idExecucao = new URLSearchParams(window.location.search).get('id');
+        let csrf = '';
+
         function configurarCanvas(idCanvas) {
             const canvas = document.getElementById(idCanvas);
             const ctx = canvas.getContext('2d');
             let desenhando = false;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 160;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000';
+            canvas.dataset.tracos = '0';
 
-            // Ajusta a resolução do canvas conforme a largura real da tela
-            function redimensionarCanvas() {
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = 160;
-                ctx.lineWidth = 2;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = '#000000';
+            function pos(e) {
+                const r = canvas.getBoundingClientRect();
+                const t = e.touches ? e.touches[0] : e;
+                return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
             }
-            redimensionarCanvas();
-
-            function obterPosicao(e) {
-                const rect = canvas.getBoundingClientRect();
-                const clienteX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clienteY = e.touches ? e.touches[0].clientY : e.clientY;
-                return {
-                    x: clienteX - rect.left,
-                    y: clienteY - rect.top
-                };
-            }
-
-            function iniciarDesenho(e) {
-                desenhando = true;
-                const pos = obterPosicao(e);
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
-            }
-
+            function iniciar(e) { e.preventDefault(); desenhando = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
             function desenhar(e) {
                 if (!desenhando) return;
-                const pos = obterPosicao(e);
-                ctx.lineTo(pos.x, pos.y);
+                e.preventDefault();
+                const p = pos(e);
+                ctx.lineTo(p.x, p.y);
                 ctx.stroke();
+                canvas.dataset.tracos = String(Number(canvas.dataset.tracos) + 1);
             }
-
-            function pararDesenho() {
-                desenhando = false;
-            }
-
-            // Eventos de Mouse
-            canvas.addEventListener('mousedown', iniciarDesenho);
+            function parar() { desenhando = false; }
+            canvas.addEventListener('mousedown', iniciar);
             canvas.addEventListener('mousemove', desenhar);
-            canvas.addEventListener('mouseup', pararDesenho);
-            canvas.addEventListener('mouseleave', pararDesenho);
-
-            // Eventos de Toque (Celular/Tablet)
-            canvas.addEventListener('touchstart', iniciarDesenho);
-            canvas.addEventListener('touchmove', desenhar);
-            canvas.addEventListener('touchend', pararDesenho);
+            canvas.addEventListener('mouseup', parar);
+            canvas.addEventListener('mouseleave', parar);
+            canvas.addEventListener('touchstart', iniciar, { passive: false });
+            canvas.addEventListener('touchmove', desenhar, { passive: false });
+            canvas.addEventListener('touchend', parar);
         }
 
         function limparCanvas(idCanvas) {
             const canvas = document.getElementById(idCanvas);
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            canvas.dataset.tracos = '0';
         }
 
-        function canvasEstaVazio(idCanvas) {
-            const canvas = document.getElementById(idCanvas);
-            const ctx = canvas.getContext('2d');
-            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            return !pixelData.some(channel => channel !== 0);
+        // Exige um mínimo de traços para não aceitar um simples ponto como assinatura
+        function assinaturaValida(idCanvas) {
+            return Number(document.getElementById(idCanvas).dataset.tracos) >= 15;
         }
 
-        function finalizarChecklist() {
-            const alertaErro = document.getElementById('alertaErro');
-            const alertaSucesso = document.getElementById('alertaSucesso');
+        function mostrarErro(msg) {
+            const el = document.getElementById('alertaErro');
+            el.textContent = msg;
+            el.classList.remove('d-none');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-            // Oculta alertas prévios
-            alertaErro.classList.add('d-none');
-            alertaSucesso.classList.add('d-none');
-
-            // Verifica se os dois quadros foram assinados
-            if (canvasEstaVazio('canvasMotorista') || canvasEstaVazio('canvasVistoriador')) {
-                alertaErro.classList.remove('d-none');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+        async function finalizarChecklist() {
+            document.getElementById('alertaErro').classList.add('d-none');
+            if (!assinaturaValida('canvasMotorista') || !assinaturaValida('canvasVistoriador')) {
+                mostrarErro('As duas pessoas precisam assinar os seus campos.');
                 return;
             }
+            const fd = new FormData();
+            fd.append('id_execucao', idExecucao);
+            fd.append('csrf', csrf);
+            fd.append('assinatura_motorista', document.getElementById('canvasMotorista').toDataURL('image/png'));
+            fd.append('assinatura_vistoriador', document.getElementById('canvasVistoriador').toDataURL('image/png'));
+            ['login_motorista', 'senha_motorista', 'login_vistoriador', 'senha_vistoriador'].forEach(c => fd.append(c, document.getElementById(c).value));
 
-            // Converte os desenhos dos quadros para texto base64
-            document.getElementById('inputAssinaturaMotorista').value = document.getElementById('canvasMotorista').toDataURL();
-            document.getElementById('inputAssinaturaVistoriador').value = document.getElementById('canvasVistoriador').toDataURL();
-
-            // Exibe mensagem de sucesso e redireciona após 2 segundos
-            alertaSucesso.classList.remove('d-none');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            setTimeout(function () {
-                // Redireciona para o painel web de checklists após concluir
-                window.location.href = "oqfazer.php?aba=checklists&sucesso=checklist_criado";
-            }, 1500);
+            const btn = document.getElementById('btn-concluir');
+            btn.disabled = true;
+            try {
+                const resp = await fetch('backend/api.php?acao=assinar_vistoria', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+                const json = await resp.json();
+                if (!json.sucesso) { mostrarErro(json.erro || 'Não foi possível registrar as assinaturas.'); btn.disabled = false; return; }
+                document.getElementById('alertaSucesso').classList.remove('d-none');
+                setTimeout(() => { window.location.href = json.redirecionar; }, 1200);
+            } catch (e) {
+                mostrarErro('Falha de comunicação com o servidor.');
+                btn.disabled = false;
+            }
         }
 
-        // Inicializa a captura de ambos os quadros de assinatura ao carregar a tela
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             configurarCanvas('canvasMotorista');
             configurarCanvas('canvasVistoriador');
+            const ctx = await AxionSessao.pronta;
+            if (!ctx) return;
+            csrf = ctx.csrf;
+            const resp = await fetch(`backend/api.php?acao=obter_vistoria&id=${encodeURIComponent(idExecucao)}`, { headers: { Accept: 'application/json' } });
+            const json = await resp.json();
+            if (!json.sucesso) { mostrarErro(json.erro || 'Vistoria não encontrada.'); return; }
+            const v = json.dados;
+            if (v.assinado_em) { window.location.href = `verVistoria.html?id=${v.id_execucao}`; return; }
+            document.getElementById('resumo-vistoria').textContent = `Vistoria #${v.id_execucao} - ${v.placa_veiculo} - ${v.checklist_titulo}`;
+            document.getElementById('nome-motorista').textContent = v.nome_motorista;
+            document.getElementById('nome-vistoriador').textContent = v.nome_vistoriador;
+            // A pessoa logada assina sem senha; a outra precisa confirmar login e senha dela
+            [['bloco-motorista', Number(v.id_motorista)], ['bloco-vistoriador', Number(v.id_vistoriador)]].forEach(([bloco, idPessoa]) => {
+                const el = document.getElementById(bloco);
+                const souEu = idPessoa === ctx.usuario.id;
+                el.querySelector(souEu ? '.eu-mesmo' : '.confirmacao').classList.remove('d-none');
+            });
+            document.getElementById('btn-concluir').disabled = false;
         });
     </script>
 </body>
