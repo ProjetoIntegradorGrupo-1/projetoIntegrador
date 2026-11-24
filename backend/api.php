@@ -59,6 +59,10 @@ if ($acao === 'contexto') {
         ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
     $st->execute([':a' => $u['id'], ':b' => $u['id']]);
     $extra['pendencias'] = (int)$st->fetchColumn();
+    // Para o admin, a pendência é aprovar os modelos de checklist enviados pelos supervisores
+    if ($u['perfil'] === 'admin') {
+        $extra['pendencias'] = (int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE status_aprovacao = 'pendente'")->fetchColumn();
+    }
     axion_json(['sucesso' => true, 'usuario' => $u, 'csrf' => axion_csrf_token()] + $extra);
 }
 
@@ -108,6 +112,10 @@ if ($acao === 'buscar') {
             }
             $sql .= " AND ($cond)";
         }
+        // Supervisor administra motoristas e clientes; contas de supervisor/admin ficam com o admin
+        if ($u['perfil'] === 'supervisor') {
+            $sql .= " AND u.perfil IN ('motorista', 'cliente')";
+        }
         if ($filtroExtra === 'minha_equipe') {
             $sql .= " AND u.id_supervisor = :me";
             $params[':me'] = $u['id'];
@@ -124,7 +132,8 @@ if ($acao === 'buscar') {
     }
 
     if ($tipo === 'checklists') {
-        $sql = "SELECT c.id_checklist, c.titulo, c.categoria, c.descricao, c.ativo, c.criado_em,
+        $sql = "SELECT c.id_checklist, c.titulo, c.categoria, c.descricao, c.ativo, c.criado_em, c.id_criador,
+                       c.status_aprovacao, c.motivo_rejeicao, c.avaliado_em,
                        COALESCE(u.nome, 'Sistema Axion') AS criador_nome,
                        (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS total_perguntas,
                        (SELECT COUNT(*) FROM Checklist_Execucoes e WHERE e.id_checklist = c.id_checklist) AS total_execucoes
@@ -136,14 +145,27 @@ if ($acao === 'buscar') {
             $sql .= " AND (c.titulo LIKE :q OR c.categoria LIKE :q OR c.descricao LIKE :q)";
             $params[':q'] = "%$termo%";
         }
-        if ($filtroExtra !== '') {
+        if (in_array($filtroExtra, ['pendente', 'rejeitado', 'aprovado'], true)) {
+            $sql .= " AND c.status_aprovacao = :st";
+            $params[':st'] = $filtroExtra;
+        } elseif ($filtroExtra === 'meus') {
+            $sql .= " AND c.id_criador = :meu";
+            $params[':meu'] = $u['id'];
+        } elseif ($filtroExtra !== '') {
             $sql .= " AND c.categoria = :cat";
             $params[':cat'] = $filtroExtra;
         }
-        if (!empty($_GET['somente_ativos'])) {
-            $sql .= " AND c.ativo = 1 AND EXISTS (SELECT 1 FROM Checklist_Perguntas p2 WHERE p2.id_checklist = c.id_checklist)";
+        // Quem não é admin só enxerga modelos aprovados (o supervisor vê também os que ele mesmo criou)
+        if ($u['perfil'] === 'supervisor') {
+            $sql .= " AND (c.status_aprovacao = 'aprovado' OR c.id_criador = :eu_criador)";
+            $params[':eu_criador'] = $u['id'];
+        } elseif ($u['perfil'] !== 'admin') {
+            $sql .= " AND c.status_aprovacao = 'aprovado'";
         }
-        $sql .= " ORDER BY c.ativo DESC, c.id_checklist DESC LIMIT $limite";
+        if (!empty($_GET['somente_ativos'])) {
+            $sql .= " AND c.ativo = 1 AND c.status_aprovacao = 'aprovado' AND EXISTS (SELECT 1 FROM Checklist_Perguntas p2 WHERE p2.id_checklist = c.id_checklist)";
+        }
+        $sql .= " ORDER BY FIELD(c.status_aprovacao, 'pendente', 'rejeitado', 'aprovado'), c.ativo DESC, c.id_checklist DESC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
@@ -251,9 +273,12 @@ if ($acao === 'dashboard') {
         ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
     $stPend->execute([':a' => $u['id'], ':b' => $u['id']]);
     $dados['minhas_pendencias'] = (int)$stPend->fetchColumn();
+    if ($p === 'admin') {
+        $dados['minhas_pendencias'] = (int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE status_aprovacao = 'pendente'")->fetchColumn();
+    }
 
-    if (in_array($p, ['admin', 'supervisor'], true)) {
-        // Vistorias por motorista nos últimos 30 dias
+    if ($p === 'supervisor') {
+        // Vistorias por motorista da equipe nos últimos 30 dias
         $dados['por_motorista'] = $q("SELECT e.nome_motorista AS nome, SUM(e.status_conformidade = 'conforme') AS conforme, SUM(e.status_conformidade = 'nao_conforme') AS nao_conforme
             FROM Checklist_Execucoes e WHERE $esc AND e.data_vistoria >= CURDATE() - INTERVAL 29 DAY
             GROUP BY e.id_motorista, e.nome_motorista ORDER BY COUNT(*) DESC LIMIT 8")->fetchAll();
@@ -263,10 +288,26 @@ if ($acao === 'dashboard') {
             GROUP BY e.placa_veiculo ORDER BY qtd DESC LIMIT 5")->fetchAll();
     }
     if ($p === 'admin') {
+        // Comparação entre equipes: vistorias de cada supervisor nos últimos 30 dias
+        $dados['por_supervisor'] = $pdo->query("SELECT e.nome_vistoriador AS nome, SUM(e.status_conformidade = 'conforme') AS conforme, SUM(e.status_conformidade = 'nao_conforme') AS nao_conforme
+            FROM Checklist_Execucoes e WHERE e.data_vistoria >= CURDATE() - INTERVAL 29 DAY
+            GROUP BY e.id_vistoriador, e.nome_vistoriador ORDER BY COUNT(*) DESC LIMIT 8")->fetchAll();
+        $dados['top_avarias'] = $pdo->query("SELECT e.placa_veiculo AS placa, COUNT(*) AS qtd FROM Checklist_Execucoes e
+            WHERE e.status_conformidade = 'nao_conforme' AND e.data_vistoria >= CURDATE() - INTERVAL 89 DAY
+            GROUP BY e.placa_veiculo ORDER BY qtd DESC LIMIT 5")->fetchAll();
+        $dados['checklists_status'] = $pdo->query("SELECT status_aprovacao, COUNT(*) FROM Checklists GROUP BY status_aprovacao")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $dados['supervisores'] = $pdo->query("SELECT s.nome,
+                (SELECT COUNT(*) FROM Usuarios m WHERE m.id_supervisor = s.id_usuario AND m.perfil = 'motorista' AND m.status = 'ativo') AS motoristas,
+                (SELECT COUNT(*) FROM Checklist_Execucoes e WHERE e.id_vistoriador = s.id_usuario AND e.assinado_vistoriador_em IS NULL AND e.recusado_em IS NULL) AS pendentes,
+                (SELECT COUNT(*) FROM Checklists c WHERE c.id_criador = s.id_usuario) AS checklists
+            FROM Usuarios s WHERE s.perfil = 'supervisor' AND s.status = 'ativo' ORDER BY s.nome")->fetchAll();
         $dados['usuarios'] = $pdo->query("SELECT perfil, COUNT(*) FROM Usuarios WHERE status = 'ativo' GROUP BY perfil")->fetchAll(PDO::FETCH_KEY_PAIR);
         $dados['usuarios_inativos'] = (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE status <> 'ativo'")->fetchColumn();
     }
     if ($p === 'supervisor') {
+        $st = $pdo->prepare("SELECT status_aprovacao, COUNT(*) FROM Checklists WHERE id_criador = :me GROUP BY status_aprovacao");
+        $st->execute([':me' => $u['id']]);
+        $dados['meus_checklists'] = $st->fetchAll(PDO::FETCH_KEY_PAIR);
         $st = $pdo->prepare("SELECT id_usuario, nome, validade_cnh, categoria_cnh,
                 (SELECT MAX(data_vistoria) FROM Checklist_Execucoes x WHERE x.id_motorista = u.id_usuario) AS ultima_vistoria
             FROM Usuarios u WHERE u.id_supervisor = :me AND u.perfil = 'motorista' AND u.status = 'ativo' ORDER BY nome");
@@ -284,7 +325,7 @@ if ($acao === 'dashboard') {
 // 1b. PESSOAS PARA A VISTORIA (motoristas e supervisores, com o vínculo motorista -> supervisor)
 if ($acao === 'listar_pessoas') {
     $u = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
-    $sup = $pdo->query("SELECT id_usuario, nome, perfil FROM Usuarios WHERE perfil IN ('supervisor','admin') AND status = 'ativo' ORDER BY nome")->fetchAll();
+    $sup = $pdo->query("SELECT id_usuario, nome, perfil FROM Usuarios WHERE perfil = 'supervisor' AND status = 'ativo' ORDER BY nome")->fetchAll();
     $mot = [];
     if (axion_eh_gestor($u)) {
         $mot = $pdo->query("SELECT id_usuario, nome, categoria_cnh, id_supervisor FROM Usuarios WHERE perfil = 'motorista' AND status = 'ativo' ORDER BY nome")->fetchAll();
@@ -316,7 +357,9 @@ if ($acao === 'obter_veiculo') {
 if ($acao === 'obter_checklist') {
     axion_exigir_perfil();
     $id = (int)($_GET['id'] ?? 0);
-    $stmt = $pdo->prepare("SELECT * FROM Checklists WHERE id_checklist = :id LIMIT 1");
+    $stmt = $pdo->prepare("SELECT c.*, COALESCE(u.nome, 'Sistema Axion') AS criador_nome, a.nome AS avaliador_nome
+                           FROM Checklists c LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador LEFT JOIN Usuarios a ON a.id_usuario = c.avaliado_por
+                           WHERE c.id_checklist = :id LIMIT 1");
     $stmt->execute([':id' => $id]);
     $chk = $stmt->fetch();
     if ($chk) {
@@ -388,7 +431,7 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
     $supValido = null;
     if ($perfil === 'motorista' && $idSupervisor > 0) {
         $s = axion_buscar_usuario($pdo, $idSupervisor);
-        if (!$s || !in_array($s['perfil'], ['supervisor', 'admin'], true)) $erro = 'supervisor_invalido';
+        if (!$s || $s['perfil'] !== 'supervisor') $erro = 'supervisor_invalido';
         else $supValido = $idSupervisor;
     }
     if ($erro) {
@@ -507,11 +550,20 @@ if ($acao === 'excluir_veiculo' && $ehPost) {
     exit;
 }
 
+/** Supervisor só mexe nos modelos que ele mesmo criou; o admin mexe em todos. */
+function axion_pode_gerir_checklist(PDO $pdo, array $eu, int $id): bool {
+    if ($eu['perfil'] === 'admin') return true;
+    $st = $pdo->prepare("SELECT id_criador FROM Checklists WHERE id_checklist = :id");
+    $st->execute([':id' => $id]);
+    return (int)$st->fetchColumn() === $eu['id'];
+}
+
 // 7. SALVAR EDIÇÃO DE CHECKLIST
 if ($acao === 'salvar_edicao_checklist' && $ehPost) {
-    axion_exigir_perfil(['admin', 'supervisor']);
+    $eu = axion_exigir_perfil(['admin', 'supervisor']);
     axion_validar_csrf();
     $id        = (int)($_POST['id_checklist'] ?? 0);
+    if ($id > 0 && !axion_pode_gerir_checklist($pdo, $eu, $id)) { header("Location: ../editarChecklist.html?id=$id&erro=checklist_de_outro"); exit; }
     $titulo    = trim($_POST['titulo'] ?? '');
     $categoria = trim($_POST['categoria'] ?? 'outros');
     if (!in_array($categoria, AXION_CATEGORIAS_CHECKLIST, true)) $categoria = 'outros';
@@ -519,9 +571,14 @@ if ($acao === 'salvar_edicao_checklist' && $ehPost) {
 
     if ($id <= 0 || $titulo === '') { header("Location: ../editarChecklist.html?erro=checklist_nao_selecionado"); exit; }
     $pdo->beginTransaction();
-    // Salvar um modelo arquivado volta a deixá-lo disponível
-    $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc, ativo = 1 WHERE id_checklist = :id")
-        ->execute([':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':id' => $id]);
+    // Salvar um modelo arquivado volta a deixá-lo disponível.
+    // Alteração feita pelo supervisor volta para a aprovação do admin; a do admin já sai aprovada.
+    $novoStatus = $eu['perfil'] === 'admin' ? 'aprovado' : 'pendente';
+    $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc, ativo = 1,
+                   status_aprovacao = :st, motivo_rejeicao = NULL,
+                   avaliado_por = IF(:st2 = 'aprovado', :eu, NULL), avaliado_em = IF(:st3 = 'aprovado', NOW(), NULL)
+                   WHERE id_checklist = :id")
+        ->execute([':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':st' => $novoStatus, ':st2' => $novoStatus, ':st3' => $novoStatus, ':eu' => $eu['id'], ':id' => $id]);
 
     if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
         // Atualiza as perguntas principais preservando as subperguntas condicionais já cadastradas
@@ -556,16 +613,17 @@ if ($acao === 'salvar_edicao_checklist' && $ehPost) {
         }
     }
     $pdo->commit();
-    header("Location: ../oqfazer.php?aba=checklists&sucesso=checklist_editado");
+    header("Location: ../oqfazer.php?aba=checklists&sucesso=" . ($novoStatus === 'pendente' ? 'checklist_enviado_aprovacao' : 'checklist_editado'));
     exit;
 }
 
 // 8. EXCLUIR CHECKLIST
 if ($acao === 'excluir_checklist' && $ehPost) {
-    axion_exigir_perfil(['admin', 'supervisor']);
+    $eu = axion_exigir_perfil(['admin', 'supervisor']);
     axion_validar_csrf();
     $id = (int)($_POST['id_checklist'] ?? 0);
     if ($id <= 0) { header("Location: ../excluirChecklist.html?erro=checklist_nao_selecionado"); exit; }
+    if (!axion_pode_gerir_checklist($pdo, $eu, $id)) { header("Location: ../excluirChecklist.html?id=$id&erro=checklist_de_outro"); exit; }
     $hist = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE id_checklist = :id");
     $hist->execute([':id' => $id]);
     if ((int)$hist->fetchColumn() > 0) {
@@ -580,9 +638,32 @@ if ($acao === 'excluir_checklist' && $ehPost) {
     exit;
 }
 
+// 8b. APROVAR / REJEITAR MODELO DE CHECKLIST (só admin)
+if (in_array($acao, ['aprovar_checklist', 'rejeitar_checklist'], true) && $ehPost) {
+    $eu = axion_exigir_perfil(['admin']);
+    axion_validar_csrf();
+    $id = (int)($_POST['id_checklist'] ?? 0);
+    $st = $pdo->prepare("SELECT status_aprovacao FROM Checklists WHERE id_checklist = :id");
+    $st->execute([':id' => $id]);
+    $atual = $st->fetchColumn();
+    if ($atual === false) axion_json(['sucesso' => false, 'erro' => 'Modelo não encontrado.'], 404);
+    if ($atual !== 'pendente') axion_json(['sucesso' => false, 'erro' => 'Este modelo não está aguardando aprovação.'], 409);
+    if ($acao === 'aprovar_checklist') {
+        $pdo->prepare("UPDATE Checklists SET status_aprovacao = 'aprovado', motivo_rejeicao = NULL, avaliado_por = :eu, avaliado_em = NOW() WHERE id_checklist = :id")
+            ->execute([':eu' => $eu['id'], ':id' => $id]);
+        axion_json(['sucesso' => true, 'redirecionar' => "verChecklist.html?id=$id&sucesso=aprovado"]);
+    }
+    $motivo = trim((string)($_POST['motivo'] ?? ''));
+    if (mb_strlen($motivo) < 5) axion_json(['sucesso' => false, 'erro' => 'Explique o motivo da rejeição para o supervisor poder corrigir.'], 422);
+    $pdo->prepare("UPDATE Checklists SET status_aprovacao = 'rejeitado', motivo_rejeicao = :m, avaliado_por = :eu, avaliado_em = NOW() WHERE id_checklist = :id")
+        ->execute([':m' => mb_substr($motivo, 0, 2000), ':eu' => $eu['id'], ':id' => $id]);
+    axion_json(['sucesso' => true, 'redirecionar' => "verChecklist.html?id=$id&sucesso=rejeitado"]);
+}
+
 // 9. REGISTRAR PREENCHIMENTO DE CHECKLIST / VISTORIA
 if ($acao === 'registrar_vistoria' && $ehPost) {
-    $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
+    // Vistoria é trabalho operacional: supervisor e motorista (o admin cuida da gestão)
+    $eu = axion_exigir_perfil(['supervisor', 'motorista']);
     axion_validar_csrf();
     $voltar = function (string $erro) {
         header("Location: ../cadcheck.html?erro=$erro");
@@ -590,10 +671,11 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     };
 
     $idChecklist = (int)($_POST['id_checklist'] ?? 0);
-    $chk = $pdo->prepare("SELECT c.ativo, (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS qtd FROM Checklists c WHERE c.id_checklist = :id");
+    $chk = $pdo->prepare("SELECT c.ativo, c.status_aprovacao, (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS qtd FROM Checklists c WHERE c.id_checklist = :id");
     $chk->execute([':id' => $idChecklist]);
     $modelo = $chk->fetch();
     if (!$modelo || (int)$modelo['ativo'] !== 1) $voltar('checklist_invalido');
+    if ($modelo['status_aprovacao'] !== 'aprovado') $voltar('checklist_nao_aprovado');
     if ((int)$modelo['qtd'] === 0) $voltar('checklist_sem_perguntas');
 
     $idVeiculo = (int)($_POST['id_veiculo'] ?? 0);
@@ -623,7 +705,7 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     } else {
         $vistoriador = axion_buscar_usuario($pdo, (int)($_POST['id_vistoriador'] ?? 0));
     }
-    if (!$vistoriador || !in_array($vistoriador['perfil'], ['supervisor', 'admin'], true) || $vistoriador['status'] !== 'ativo') $voltar('vistoriador_invalido');
+    if (!$vistoriador || $vistoriador['perfil'] !== 'supervisor' || $vistoriador['status'] !== 'ativo') $voltar('vistoriador_invalido');
     if ($motorista['status'] !== 'ativo') $voltar('motorista_invalido');
     // Motorista com CNH vencida não pode assumir veículo
     if (!empty($motorista['validade_cnh']) && $motorista['validade_cnh'] < date('Y-m-d')) $voltar('cnh_vencida');

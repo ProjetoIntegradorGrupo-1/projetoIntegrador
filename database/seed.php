@@ -202,6 +202,14 @@ function axion_garantir_estrutura(PDO $pdo): void {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    // Aprovação de modelos de checklist: o supervisor cria, o admin aprova
+    axion_garantir_colunas($pdo, 'Checklists', [
+        'status_aprovacao' => "VARCHAR(20) NOT NULL DEFAULT 'aprovado'",
+        'motivo_rejeicao'  => "TEXT DEFAULT NULL",
+        'avaliado_por'     => "INT DEFAULT NULL",
+        'avaliado_em'      => "DATETIME DEFAULT NULL",
+    ]);
+
     // Vínculo fixo Motorista -> Supervisor responsável
     axion_garantir_colunas($pdo, 'Usuarios', [
         'id_supervisor' => "INT DEFAULT NULL",

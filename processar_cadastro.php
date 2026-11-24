@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Motorista fica vinculado a um supervisor responsável (escolhido no cadastro)
     $id_supervisor = null;
     if ($perfil_solicitado === 'motorista' && !empty($_POST['id_supervisor'])) {
-        $stSup = $pdo->prepare("SELECT id_usuario FROM Usuarios WHERE id_usuario = :id AND perfil IN ('supervisor','admin')");
+        $stSup = $pdo->prepare("SELECT id_usuario FROM Usuarios WHERE id_usuario = :id AND perfil = 'supervisor'");
         $stSup->execute([':id' => (int)$_POST['id_supervisor']]);
         $id_supervisor = $stSup->fetchColumn() ?: null;
     }

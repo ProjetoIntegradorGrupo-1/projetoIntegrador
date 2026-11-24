@@ -2,7 +2,9 @@
 // criar_checklist_dinamico.php
 require_once __DIR__ . '/conexao.php';
 require_once __DIR__ . '/backend/auth.php';
-axion_exigir_perfil(['admin', 'supervisor']);
+$eu = axion_exigir_perfil(['admin', 'supervisor']);
+// Checklist criado pelo supervisor vai para o admin aprovar antes de poder ser usado
+$statusAprovacao = $eu['perfil'] === 'admin' ? 'aprovado' : 'pendente';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     axion_validar_csrf();
@@ -14,14 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $pdo->beginTransaction();
 
-        $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo)
-                VALUES (:id_criador, :titulo, :categoria, :descricao, 1)";
+        $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo, status_aprovacao)
+                VALUES (:id_criador, :titulo, :categoria, :descricao, 1, :status_aprovacao)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':id_criador' => $id_criador,
             ':titulo'     => $titulo,
             ':categoria'  => $categoria,
-            ':descricao'  => $descricao
+            ':descricao'  => $descricao,
+            ':status_aprovacao' => $statusAprovacao
         ]);
         $idChecklist = (int)$pdo->lastInsertId();
 
@@ -73,8 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+        // Um modelo sem nenhuma pergunta não serve para vistoria
+        if (empty($ordem) || $ordem === 1 || $titulo === '') {
+            $pdo->rollBack();
+            echo "<script>alert('Informe o título e pelo menos uma pergunta.'); window.history.back();</script>";
+            exit;
+        }
         $pdo->commit();
-        header("Location: oqfazer.php?aba=checklists&sucesso=checklist_criado");
+        header("Location: oqfazer.php?aba=checklists&sucesso=" . ($statusAprovacao === 'pendente' ? 'checklist_enviado_aprovacao' : 'checklist_criado'));
         exit;
 
     } catch (PDOException $e) {

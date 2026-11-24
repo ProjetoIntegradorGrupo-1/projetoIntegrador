@@ -111,6 +111,11 @@
             const ctx = await AxionSessao.pronta;
             if (!ctx) return;
             const eu = ctx.usuario;
+            // Vistoria é feita por supervisores e motoristas; o administrador acompanha pelos relatórios
+            if (eu.perfil === 'admin' || eu.perfil === 'cliente') {
+                document.getElementById('formVistoria').outerHTML = '<div class="alert alert-info mb-0">Vistorias são feitas pelos supervisores e motoristas. Você pode acompanhar todas na área <a href="oqfazer.php?aba=vistorias">Vistorias</a>.</div>';
+                return;
+            }
             const ehGestor = eu.perfil === 'admin' || eu.perfil === 'supervisor';
 
             // Modelos de checklist

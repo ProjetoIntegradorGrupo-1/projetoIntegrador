@@ -282,3 +282,8 @@ body {
 @media print { .painel-layout, .axion-navbar { display: none !important; } }
 /* Evita "piscar" o cabeçalho antigo enquanto o layout padrão é montado */
 body[data-secao]:not(.layout-pronto) { visibility: hidden; }
+
+/* ===== Visual do Administrador (diferente do supervisor/motorista) ===== */
+body.tema-admin .axion-navbar { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%); box-shadow: 0 4px 16px rgba(49, 46, 129, .25); }
+body.tema-admin .painel-menu .menu-link.ativo { background: #312e81; }
+body.tema-admin .painel-menu .menu-box { border-top: 3px solid #4338ca; }

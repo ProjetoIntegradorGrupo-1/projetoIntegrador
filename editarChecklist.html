@@ -30,6 +30,7 @@
         <div class="axion-form-card" style="max-width: 960px;">
             <h1 class="h4 fw-bold mb-1"><i class="bi bi-pencil-square text-primary me-2"></i>Editar modelo de checklist</h1>
             <p class="text-muted small mb-4">Altere perguntas, respostas esperadas e recomendações de não conformidade.</p>
+            <div id="aviso-aprovacao"></div>
 
             <div class="mb-4 p-3 bg-light border rounded">
                 <label for="select-checklist" class="form-label fw-bold small">Selecione o Modelo de Checklist Cadastrado</label>
@@ -197,6 +198,16 @@
         }
 
         document.addEventListener('DOMContentLoaded', inicializarEdicaoChecklist);
+    </script>
+
+    <script>
+        // Aviso do fluxo de aprovação para o supervisor
+        AxionSessao.pronta.then(ctx => {
+            if (ctx && ctx.usuario.perfil === 'supervisor') {
+                document.getElementById('aviso-aprovacao').innerHTML =
+                    '<div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>Ao salvar, o modelo volta para o administrador aprovar e só fica disponível para as vistorias depois da aprovação.</div>';
+            }
+        });
     </script>
 </body>
 

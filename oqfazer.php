@@ -17,27 +17,46 @@ $isSupervisor = ($perfil_usuario === 'supervisor');
 $isGestor     = $isAdmin || $isSupervisor;
 $isMotorista  = ($perfil_usuario === 'motorista');
 $isCliente    = ($perfil_usuario === 'cliente');
-$podeVistoriar = $isGestor || $isMotorista;
+// Vistoria é operacional (supervisor e motorista); o admin cuida da gestão do sistema
+$podeVistoriar = $isSupervisor || $isMotorista;
 
 // Solicitações que dependem da assinatura do usuário logado
 $stPend = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE recusado_em IS NULL AND
     ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
 $stPend->execute([':a' => $eu['id'], ':b' => $eu['id']]);
 $minhasPendencias = (int)$stPend->fetchColumn();
-
-// Menu de acordo com o perfil
-$menu = [
-    'inicio'     => ['bi-speedometer2', 'Painel'],
-    'vistorias'  => ['bi-clipboard2-check', $isMotorista ? 'Minhas vistorias' : 'Vistorias'],
-    'frota'      => ['bi-truck-front', 'Frota'],
-];
-if ($isGestor) {
-    $menu['usuarios']   = ['bi-people', $isSupervisor ? 'Equipe e usuários' : 'Usuários'];
-    $menu['checklists'] = ['bi-ui-checks-grid', 'Modelos de checklist'];
-}
+// Pendência do admin: modelos de checklist aguardando aprovação
 if ($isAdmin) {
-    $menu['admin'] = ['bi-gear', 'Administração'];
+    $minhasPendencias = (int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE status_aprovacao = 'pendente'")->fetchColumn();
 }
+
+// Menu de acordo com o perfil (o mesmo é montado pelo axion.js nas outras telas)
+if ($isAdmin) {
+    $menu = [
+        'inicio'     => ['bi-speedometer2', 'Painel'],
+        'aprovacoes' => ['bi-patch-check', 'Aprovações'],
+        'usuarios'   => ['bi-people', 'Usuários'],
+        'checklists' => ['bi-ui-checks-grid', 'Modelos de checklist'],
+        'frota'      => ['bi-truck-front', 'Frota'],
+        'vistorias'  => ['bi-clipboard2-check', 'Vistorias'],
+        'admin'      => ['bi-gear', 'Administração'],
+    ];
+} elseif ($isSupervisor) {
+    $menu = [
+        'inicio'     => ['bi-speedometer2', 'Painel'],
+        'vistorias'  => ['bi-clipboard2-check', 'Vistorias da equipe'],
+        'usuarios'   => ['bi-people', 'Minha equipe'],
+        'frota'      => ['bi-truck-front', 'Frota'],
+        'checklists' => ['bi-ui-checks-grid', 'Checklists'],
+    ];
+} else {
+    $menu = [
+        'inicio'    => ['bi-speedometer2', 'Painel'],
+        'vistorias' => ['bi-clipboard2-check', $isMotorista ? 'Minhas vistorias' : 'Vistorias'],
+        'frota'     => ['bi-truck-front', 'Frota'],
+    ];
+}
+$secaoPendencia = $isAdmin ? 'aprovacoes' : 'vistorias';
 
 // Compatibilidade com os links antigos (?aba=veiculos / ?aba=checklists)
 $aba = $_GET['aba'] ?? 'inicio';
@@ -45,7 +64,7 @@ $aba = ['veiculos' => 'frota'][$aba] ?? $aba;
 if (!isset($menu[$aba])) $aba = 'inicio';
 
 $subtitulos = [
-    'admin'      => 'Visão geral de todo o sistema: frota, usuários e vistorias.',
+    'admin'      => 'Gestão do sistema: aprove os checklists dos supervisores, administre os usuários e compare as equipes.',
     'supervisor' => 'Acompanhe a sua equipe e aprove as vistorias que chegam para você.',
     'motorista'  => 'Faça suas vistorias e acompanhe o que ainda falta assinar.',
     'cliente'    => 'Consulta da frota e do histórico de vistorias.',
@@ -65,7 +84,8 @@ $mapaMensagens = [
     'veiculo_cadastrado'    => 'Veículo cadastrado na frota.',
     'veiculo_editado'       => 'Alterações do veículo salvas.',
     'veiculo_excluido'      => 'Veículo excluído da frota.',
-    'checklist_criado'      => 'Modelo de checklist criado.',
+    'checklist_criado'      => 'Modelo de checklist criado e já disponível para as vistorias.',
+    'checklist_enviado_aprovacao' => 'Modelo enviado para o administrador aprovar. Ele aparece para as vistorias assim que for aprovado.',
     'checklist_editado'     => 'Alterações do modelo de checklist salvas.',
     'checklist_excluido'    => 'Modelo de checklist excluído.',
     'checklist_arquivado'   => 'Modelo arquivado: ele já tem vistorias registradas, por isso não foi apagado. Para usar de novo, edite e salve o modelo.',
@@ -90,18 +110,18 @@ $mapaErros = [
     <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body>
+<body class="<?php echo $isAdmin ? 'tema-admin' : ''; ?>">
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <a href="oqfazer.php" class="axion-brand">
                 <i class="bi bi-truck-front-fill fs-4"></i>
                 <span>AXION</span>
-                <span class="axion-brand-badge">Frota & Checklists</span>
+                <span class="axion-brand-badge"><?php echo $isAdmin ? 'Administração' : 'Frota & Checklists'; ?></span>
             </a>
             <div class="d-flex align-items-center gap-2 gap-md-3">
                 <?php if ($minhasPendencias > 0): ?>
-                <a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold" title="Vistorias aguardando a sua assinatura">
-                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?> para assinar
+                <a href="<?php echo $isAdmin ? 'oqfazer.php?aba=aprovacoes' : 'oqfazer.php?aba=vistorias&filtro=minhas_pendencias'; ?>" class="btn btn-sm btn-warning fw-semibold">
+                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias . ($isMotorista ? ' para assinar' : ' para aprovar'); ?>
                 </a>
                 <?php endif; ?>
                 <div class="d-none d-md-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25">
@@ -127,7 +147,7 @@ $mapaErros = [
                 <?php foreach ($menu as $chave => [$icone, $rotulo]): ?>
                 <a href="#<?php echo $chave; ?>" class="menu-link <?php echo $aba === $chave ? 'ativo' : ''; ?>" data-secao="<?php echo $chave; ?>">
                     <i class="bi <?php echo $icone; ?>"></i><span><?php echo htmlspecialchars($rotulo); ?></span>
-                    <?php if ($chave === 'vistorias' && $minhasPendencias > 0): ?>
+                    <?php if ($chave === $secaoPendencia && $minhasPendencias > 0): ?>
                     <span class="badge rounded-pill bg-warning text-dark"><?php echo $minhasPendencias; ?></span>
                     <?php endif; ?>
                 </a>
@@ -159,7 +179,7 @@ $mapaErros = [
                         <?php if ($isGestor): ?>
                         <a href="caduser.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i><?php echo $isSupervisor ? 'Cadastrar motorista' : 'Cadastrar usuário'; ?></a>
                         <a href="cadcar.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-truck me-1"></i>Cadastrar veículo</a>
-                        <a href="criarChecklist.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-ui-checks me-1"></i>Criar checklist</a>
+                        <a href="criarChecklist.html" class="btn btn-outline-primary btn-sm" title="<?php echo $isSupervisor ? 'Vai para aprovação do administrador' : ''; ?>"><i class="bi bi-ui-checks me-1"></i>Criar checklist</a>
                         <?php endif; ?>
                         <?php if ($podeVistoriar): ?>
                         <a href="cadcheck.html" class="btn btn-warning btn-sm fw-semibold"><i class="bi bi-plus-circle me-1"></i>Nova vistoria</a>
@@ -171,7 +191,7 @@ $mapaErros = [
                 <div class="card border-warning shadow-sm mb-3">
                     <div class="card-header bg-warning-subtle fw-semibold">
                         <i class="bi bi-bell-fill text-warning-emphasis me-1"></i>
-                        <?php echo $isSupervisor || $isAdmin ? 'Vistorias aguardando a sua aprovação' : 'Vistorias aguardando a sua assinatura'; ?> (<?php echo $minhasPendencias; ?>)
+                        <?php echo $isAdmin ? 'Modelos de checklist aguardando a sua aprovação' : ($isSupervisor ? 'Vistorias aguardando a sua aprovação' : 'Vistorias aguardando a sua assinatura'); ?> (<?php echo $minhasPendencias; ?>)
                     </div>
                     <div class="list-group list-group-flush" id="lista-solicitacoes">
                         <div class="list-group-item text-muted small">Carregando...</div>
@@ -185,11 +205,19 @@ $mapaErros = [
                 <!-- Gráficos e quadros do perfil -->
                 <div class="row g-3" id="graficos">
                     <?php if ($isAdmin): ?>
-                    <div class="col-xl-8"><div class="cartao"><h3>Vistorias nos últimos 14 dias</h3><div class="cartao-sub">Quantidade por dia, separando conformes e não conformes</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
-                    <div class="col-xl-4"><div class="cartao"><h3>Frota por situação</h3><div class="cartao-sub">Veículos cadastrados</div><div class="grafico"><canvas id="g-frota"></canvas></div></div></div>
+                    <div class="col-xl-7"><div class="cartao"><h3>Comparativo entre equipes</h3><div class="cartao-sub">Vistorias aprovadas por cada supervisor nos últimos 30 dias</div><div class="grafico"><canvas id="g-supervisores"></canvas></div></div></div>
+                    <div class="col-xl-5"><div class="cartao">
+                        <h3>Supervisores</h3><div class="cartao-sub">Tamanho da equipe e o que está parado com cada um</div>
+                        <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>Supervisor</th><th class="text-center">Motoristas</th><th class="text-center">Vistorias p/ aprovar</th><th class="text-center">Checklists</th></tr></thead>
+                            <tbody id="tbody-supervisores"><tr><td colspan="4" class="text-muted small">Carregando...</td></tr></tbody>
+                        </table></div>
+                    </div></div>
                     <div class="col-xl-4"><div class="cartao"><h3>Usuários ativos por perfil</h3><div class="cartao-sub" id="sub-usuarios">Contas que podem entrar no sistema</div><div class="grafico"><canvas id="g-usuarios"></canvas></div></div></div>
-                    <div class="col-xl-4"><div class="cartao"><h3>Vistorias por motorista</h3><div class="cartao-sub">Últimos 30 dias</div><div class="grafico"><canvas id="g-motoristas"></canvas></div></div></div>
-                    <div class="col-xl-4"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Vistorias não conformes nos últimos 90 dias</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Modelos de checklist</h3><div class="cartao-sub">Situação da aprovação</div><div class="grafico"><canvas id="g-checklists"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Frota por situação</h3><div class="cartao-sub">Veículos cadastrados</div><div class="grafico"><canvas id="g-frota"></canvas></div></div></div>
+                    <div class="col-xl-8"><div class="cartao"><h3>Vistorias no sistema (14 dias)</h3><div class="cartao-sub">Todas as equipes, por dia</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Não conformes nos últimos 90 dias</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
                     <?php elseif ($isSupervisor): ?>
                     <div class="col-xl-7"><div class="cartao"><h3>Vistorias da sua equipe (14 dias)</h3><div class="cartao-sub">Quantidade por dia, separando conformes e não conformes</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
                     <div class="col-xl-5"><div class="cartao"><h3>Vistorias por motorista</h3><div class="cartao-sub">Sua equipe nos últimos 30 dias</div><div class="grafico"><canvas id="g-motoristas"></canvas></div></div></div>
@@ -200,7 +228,12 @@ $mapaErros = [
                             <tbody id="tbody-equipe"><tr><td colspan="3" class="text-muted small">Carregando...</td></tr></tbody>
                         </table></div>
                     </div></div>
-                    <div class="col-xl-5"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Vistorias não conformes da equipe (90 dias)</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
+                    <div class="col-xl-5"><div class="cartao">
+                        <h3>Meus checklists</h3><div class="cartao-sub">Modelos que você criou e a situação da aprovação pelo administrador</div>
+                        <div id="meus-checklists" class="d-flex flex-column gap-2"><span class="text-muted small">Carregando...</span></div>
+                        <a href="oqfazer.php?aba=checklists&filtro=meus" class="btn btn-sm btn-outline-primary mt-3">Ver meus checklists</a>
+                    </div></div>
+                    <div class="col-xl-7"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Vistorias não conformes da equipe (90 dias)</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
                     <?php elseif ($isMotorista): ?>
                     <div class="col-xl-7"><div class="cartao"><h3>Suas vistorias nos últimos 14 dias</h3><div class="cartao-sub">Conformes e não conformes por dia</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
                     <div class="col-xl-5"><div class="cartao">
@@ -233,7 +266,7 @@ $mapaErros = [
                         <div class="col-md-5">
                             <select id="busca-vistorias-status" class="form-select" onchange="carregarBusca('vistorias')">
                                 <option value="">Todas</option>
-                                <?php if (!$isCliente): ?><option value="minhas_pendencias">Aguardando a minha assinatura</option><?php endif; ?>
+                                <?php if ($podeVistoriar): ?><option value="minhas_pendencias">Aguardando a minha assinatura</option><?php endif; ?>
                                 <option value="pendente">Aguardando assinatura</option>
                                 <option value="conforme">Conformes</option>
                                 <option value="nao_conforme">Não conformes</option>
@@ -288,8 +321,8 @@ $mapaErros = [
             <section class="secao" id="secao-usuarios">
                 <div class="secao-topo">
                     <div>
-                        <h1><?php echo $isSupervisor ? 'Equipe e usuários' : 'Usuários'; ?></h1>
-                        <p><?php echo $isSupervisor ? 'Você gerencia motoristas e clientes. Filtre por "Minha equipe" para ver só os seus motoristas.' : 'Todas as contas do sistema.'; ?></p>
+                        <h1><?php echo $isSupervisor ? 'Minha equipe' : 'Usuários'; ?></h1>
+                        <p><?php echo $isSupervisor ? 'Seus motoristas e os clientes. Contas de supervisor e de administrador são gerenciadas pelo administrador.' : 'Todas as contas do sistema, de todos os perfis.'; ?></p>
                     </div>
                     <a href="caduser.html" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Cadastrar usuário</a>
                 </div>
@@ -302,8 +335,10 @@ $mapaErros = [
                                 <?php if ($isSupervisor): ?><option value="minha_equipe" selected>Minha equipe</option><?php endif; ?>
                                 <option value="motorista">Motoristas</option>
                                 <option value="cliente">Clientes</option>
+                                <?php if ($isAdmin): ?>
                                 <option value="supervisor">Supervisores</option>
                                 <option value="admin">Administradores</option>
+                                <?php endif; ?>
                                 <option value="inativo">Contas desativadas</option>
                             </select>
                         </div>
@@ -319,18 +354,43 @@ $mapaErros = [
                 </div>
             </section>
 
+            <?php if ($isAdmin): ?>
+            <!-- ===================== APROVAÇÕES (ADMIN) ===================== -->
+            <section class="secao" id="secao-aprovacoes">
+                <div class="secao-topo">
+                    <div><h1>Aprovações</h1><p>Modelos de checklist criados ou alterados pelos supervisores. Revise as perguntas e aprove ou rejeite.</p></div>
+                </div>
+                <div class="axion-table-wrapper">
+                    <div class="table-responsive">
+                        <table class="table table-hover axion-table mb-0">
+                            <thead><tr><th>Modelo</th><th>Categoria</th><th>Perguntas</th><th>Enviado por</th><th class="text-end">Ação</th></tr></thead>
+                            <tbody id="tbody-aprovacoes"><tr><td colspan="5" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <!-- ===================== MODELOS DE CHECKLIST ===================== -->
             <section class="secao" id="secao-checklists">
                 <div class="secao-topo">
-                    <div><h1>Modelos de checklist</h1><p>Os formulários usados nas vistorias.</p></div>
-                    <a href="criarChecklist.html" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Criar modelo</a>
+                    <div>
+                        <h1><?php echo $isSupervisor ? 'Checklists' : 'Modelos de checklist'; ?></h1>
+                        <p><?php echo $isSupervisor ? 'Modelos aprovados para usar nas vistorias e os que você criou. Modelo novo ou alterado vai para o administrador aprovar.' : 'Todos os modelos. Os criados por supervisores só ficam disponíveis depois da sua aprovação.'; ?></p>
+                    </div>
+                    <a href="criarChecklist.html" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i><?php echo $isSupervisor ? 'Criar e enviar para aprovação' : 'Criar modelo'; ?></a>
                 </div>
                 <div class="cartao mb-3">
                     <div class="row g-2">
                         <div class="col-md-8"><input type="search" id="busca-checklists-q" class="form-control" placeholder="Buscar por título ou descrição..." oninput="buscarComAtraso('checklists')"></div>
                         <div class="col-md-4">
                             <select id="busca-checklists-cat" class="form-select" onchange="carregarBusca('checklists')">
-                                <option value="">Todas as categorias</option>
+                                <option value="">Todos</option>
+                                <?php if ($isSupervisor): ?><option value="meus">Criados por mim</option><?php endif; ?>
+                                <option value="pendente">Aguardando aprovação</option>
+                                <option value="rejeitado">Rejeitados</option>
+                                <option value="aprovado">Aprovados</option>
+                                <option disabled>── Categoria ──</option>
                                 <option value="pre_viagem">Pré-viagem</option>
                                 <option value="mecanico">Mecânico</option>
                                 <option value="eletrico">Elétrico</option>
@@ -344,7 +404,7 @@ $mapaErros = [
                 <div class="axion-table-wrapper">
                     <div class="table-responsive">
                         <table class="table table-hover axion-table mb-0">
-                            <thead><tr><th>Modelo</th><th>Categoria</th><th>Perguntas</th><th>Vistorias</th><th>Criado por</th><th class="text-end">Ações</th></tr></thead>
+                            <thead><tr><th>Modelo</th><th>Aprovação</th><th>Perguntas</th><th>Vistorias</th><th>Criado por</th><th class="text-end">Ações</th></tr></thead>
                             <tbody id="tbody-checklists"><tr><td colspan="6" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
                         </table>
                     </div>
@@ -405,6 +465,7 @@ $mapaErros = [
                 carregadas[nome] = true;
                 const tipo = { vistorias: 'vistorias', frota: 'veiculos', usuarios: 'usuarios', checklists: 'checklists' }[nome];
                 if (tipo) carregarBusca(tipo);
+                if (nome === 'aprovacoes') carregarAprovacoes();
             }
             window.scrollTo({ top: 0 });
         }
@@ -423,6 +484,31 @@ $mapaErros = [
         function badgeConformidade(st) {
             return st === 'nao_conforme' ? '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Não conforme</span>' : '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Conforme</span>';
         }
+        const CATEGORIAS = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', outros: 'Outros' };
+        const nomeCategoria = (c) => CATEGORIAS[c] || c || '-';
+        function badgeAprovacao(st) {
+            return {
+                pendente: '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Aguardando</span>',
+                aprovado: '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Aprovado</span>',
+                rejeitado: '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rejeitado</span>'
+            }[st] || '';
+        }
+
+        async function carregarAprovacoes() {
+            const tbody = document.getElementById('tbody-aprovacoes');
+            if (!tbody) return;
+            const json = await getJson('backend/api.php?acao=buscar&tipo=checklists&filtro=pendente&limite=250');
+            const dados = json.dados || [];
+            tbody.innerHTML = dados.length ? dados.map(c => `
+                <tr>
+                    <td><div class="fw-semibold">${esc(c.titulo)}</div><div class="small text-muted">${esc(c.descricao || '')}</div></td>
+                    <td>${esc(nomeCategoria(c.categoria))}</td>
+                    <td>${c.total_perguntas}</td>
+                    <td class="small">${esc(c.criador_nome)}</td>
+                    <td class="text-end"><a href="verChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-patch-check me-1"></i>Revisar</a></td>
+                </tr>`).join('') : '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="bi bi-check2-all me-1"></i>Nenhum modelo aguardando aprovação.</td></tr>';
+        }
+
         function badgeSituacao(sit) {
             return {
                 concluida: '<span class="badge bg-success-subtle text-success">Concluída</span>',
@@ -505,22 +591,27 @@ $mapaErros = [
                         ${Number(u.id_usuario) !== MEU_ID ? `<a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}` : ''}
                     </td>
                 </tr>`,
-            checklists: (c) => `
+            checklists: (c) => {
+                const podeGerir = IS_ADMIN || Number(c.id_criador) === MEU_ID;
+                return `
                 <tr>
                     <td>
                         <div class="fw-semibold">${esc(c.titulo)} ${Number(c.ativo) === 1 ? '' : '<span class="badge bg-secondary">Arquivado</span>'}</div>
-                        <div class="small text-muted">${esc(c.descricao || '')}</div>
+                        <div class="small text-muted">${esc(nomeCategoria(c.categoria))}${c.descricao ? ' · ' + esc(c.descricao) : ''}</div>
                     </td>
-                    <td><span class="badge bg-primary-subtle text-primary">${esc(c.categoria)}</span></td>
+                    <td>${badgeAprovacao(c.status_aprovacao)}${c.status_aprovacao === 'rejeitado' && c.motivo_rejeicao ? `<div class="small text-danger mt-1">${esc(c.motivo_rejeicao)}</div>` : ''}</td>
                     <td>${c.total_perguntas}</td>
                     <td>${c.total_execucoes}</td>
                     <td class="small">${esc(c.criador_nome)}</td>
                     <td class="text-end text-nowrap">
-                        ${Number(c.ativo) === 1 ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Usar em uma vistoria"><i class="bi bi-clipboard2-plus"></i></a>` : ''}
-                        <a href="editarChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
-                        <a href="excluirChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                        ${IS_ADMIN && c.status_aprovacao === 'pendente' ? `<a href="verChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-patch-check"></i> Revisar</a>` : ''}
+                        ${PODE_VISTORIAR && c.status_aprovacao === 'aprovado' && Number(c.ativo) === 1 ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Usar em uma vistoria"><i class="bi bi-clipboard2-plus"></i></a>` : ''}
+                        <a href="verChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-secondary" title="Ver perguntas"><i class="bi bi-eye"></i></a>
+                        ${podeGerir ? `<a href="editarChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="excluirChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}
                     </td>
-                </tr>`
+                </tr>`;
+            }
         };
 
         // ---------- Painel inicial: indicadores e gráficos ----------
@@ -566,13 +657,22 @@ $mapaErros = [
             if (PERFIL === 'admin') {
                 const u = d.usuarios || {};
                 const totalUsu = Object.values(u).reduce((a, b) => a + Number(b), 0);
+                const cs = d.checklists_status || {};
                 cards = [
+                    kpi('bi-patch-check', 'Checklists para aprovar', Number(cs.pendente || 0), Number(cs.pendente || 0) ? 'Enviados pelos supervisores' : 'Nada pendente', '#b07c00'),
+                    kpi('bi-people', 'Usuários ativos', totalUsu, `${u.supervisor || 0} supervisores · ${u.motorista || 0} motoristas · ${u.cliente || 0} clientes`),
                     kpi('bi-truck-front', 'Veículos na frota', frotaTotal, `${d.frota.manutencao} em manutenção`),
-                    kpi('bi-people', 'Usuários ativos', totalUsu, `${u.motorista || 0} motoristas · ${u.supervisor || 0} supervisores`),
-                    kpi('bi-clipboard2-check', 'Vistorias (30 dias)', v.ultimos30, `${v.total} no total`),
-                    kpi('bi-shield-check', 'Taxa de conformidade', taxa, `${v.nao_conformes} não conformes no total`, COR.conforme),
+                    kpi('bi-shield-check', 'Conformidade geral', taxa, `${v.total} vistorias · ${v.nao_conformes} não conformes`, COR.conforme),
                 ];
             } else if (PERFIL === 'supervisor') {
+                const mc = d.meus_checklists || {};
+                const totalMc = Object.values(mc).reduce((a, b) => a + Number(b), 0);
+                document.getElementById('meus-checklists').innerHTML = totalMc ? [
+                    ['aprovado', 'Aprovados', 'bg-success-subtle text-success'],
+                    ['pendente', 'Aguardando o administrador', 'bg-warning text-dark'],
+                    ['rejeitado', 'Rejeitados (veja o motivo e corrija)', 'bg-danger']
+                ].map(([k, rot, cls]) => `<div class="d-flex justify-content-between align-items-center"><span>${rot}</span><span class="badge ${cls} fs-6">${Number(mc[k] || 0)}</span></div>`).join('')
+                    : '<span class="text-muted small">Você ainda não criou nenhum modelo.</span>';
                 cards = [
                     kpi('bi-bell', 'Aguardando sua aprovação', d.minhas_pendencias, d.minhas_pendencias ? 'Veja a lista acima' : 'Nada pendente', '#b07c00'),
                     kpi('bi-people', 'Motoristas na equipe', (d.equipe || []).length, 'Vinculados a você'),
@@ -660,6 +760,39 @@ $mapaErros = [
                 }, ta.length === 0);
             }
 
+            // Comparativo entre equipes (admin)
+            if (d.por_supervisor) {
+                const ps = d.por_supervisor;
+                grafico('g-supervisores', {
+                    type: 'bar',
+                    data: {
+                        labels: ps.map(x => x.nome),
+                        datasets: [
+                            { label: 'Conformes', data: ps.map(x => Number(x.conforme)), ...barra(COR.conforme) },
+                            { label: 'Não conformes', data: ps.map(x => Number(x.nao_conforme)), ...barra(COR.nao) }
+                        ]
+                    },
+                    options: { indexAxis: 'y', scales: eixos(true, true), plugins: { legend: { position: 'top', align: 'end' } } }
+                }, ps.length === 0);
+            }
+            if (d.checklists_status) {
+                const cs = d.checklists_status;
+                grafico('g-checklists', {
+                    type: 'bar',
+                    data: { labels: ['Aprovados', 'Aguardando', 'Rejeitados'], datasets: [{ label: 'Modelos', data: [Number(cs.aprovado || 0), Number(cs.pendente || 0), Number(cs.rejeitado || 0)], ...barra([COR.conforme, COR.aviso, COR.nao]) }] },
+                    options: { indexAxis: 'y', scales: eixos(false, true), plugins: { legend: { display: false } } }
+                }, !Object.values(cs).some(Number));
+            }
+            if (d.supervisores) {
+                document.getElementById('tbody-supervisores').innerHTML = d.supervisores.length ? d.supervisores.map(sv => `
+                    <tr>
+                        <td class="fw-semibold">${esc(sv.nome)}</td>
+                        <td class="text-center">${sv.motoristas}</td>
+                        <td class="text-center">${Number(sv.pendentes) ? `<span class="badge bg-warning text-dark">${sv.pendentes}</span>` : '0'}</td>
+                        <td class="text-center">${sv.checklists}</td>
+                    </tr>`).join('') : '<tr><td colspan="4" class="text-muted small">Nenhum supervisor ativo.</td></tr>';
+            }
+
             // Equipe do supervisor
             if (d.equipe) {
                 const hoje = new Date().toISOString().slice(0, 10);
@@ -677,6 +810,15 @@ $mapaErros = [
         async function carregarSolicitacoes() {
             const box = document.getElementById('lista-solicitacoes');
             if (!box) return;
+            if (IS_ADMIN) {
+                const jc = await getJson('backend/api.php?acao=buscar&tipo=checklists&filtro=pendente&limite=20');
+                box.innerHTML = (jc.dados || []).map(c => `
+                    <a href="verChecklist.html?id=${c.id_checklist}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div><div class="fw-semibold">${esc(c.titulo)}</div><div class="small text-muted">${esc(nomeCategoria(c.categoria))} · ${c.total_perguntas} perguntas · enviado por ${esc(c.criador_nome)}</div></div>
+                        <span class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-patch-check me-1"></i>Revisar</span>
+                    </a>`).join('') || '<div class="list-group-item text-muted small">Nenhuma pendência.</div>';
+                return;
+            }
             const json = await getJson('backend/api.php?acao=buscar&tipo=vistorias&filtro=minhas_pendencias&limite=50');
             const dados = json.dados || [];
             box.innerHTML = dados.length ? dados.map(v => {
@@ -709,8 +851,9 @@ $mapaErros = [
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (FILTRO_INICIAL && document.getElementById('busca-vistorias-status')) {
-                document.getElementById('busca-vistorias-status').value = FILTRO_INICIAL;
+            if (FILTRO_INICIAL) {
+                const alvo = ABA_INICIAL === 'checklists' ? 'busca-checklists-cat' : 'busca-vistorias-status';
+                if (document.getElementById(alvo)) document.getElementById(alvo).value = FILTRO_INICIAL;
             }
             abrirSecao(ABA_INICIAL);
             carregarPainel();
