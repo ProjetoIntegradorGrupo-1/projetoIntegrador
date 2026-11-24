@@ -100,7 +100,7 @@
 
                 <!-- CNH e supervisor: só para motorista -->
                 <div id="bloco-motorista">
-                <div class="axion-section-title mt-3"><i class="bi bi-card-heading"></i> Habilitação e equipe (motorista)</div>
+                <div class="axion-section-title mt-3"><i class="bi bi-card-heading"></i> Habilitação (CNH)</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="cnh" class="form-label fw-semibold">Número da CNH</label>
@@ -199,22 +199,27 @@
     <script>
         const explicacoes = {
             motorista: 'Faz vistorias nos veículos. Precisa de CNH e de um supervisor responsável, que aprova as vistorias dele.',
-            cliente: 'Só consulta a frota e o histórico de vistorias.',
+            cliente: 'Consulta a frota e o histórico de vistorias. Precisa de CNH, porque pode conduzir os veículos.',
             supervisor: 'Gerencia motoristas, veículos e checklists, e aprova as vistorias da equipe.',
             admin: 'Acesso total ao sistema, incluindo a administração da base de dados.'
         };
         const nomesBotao = { motorista: 'Cadastrar motorista', cliente: 'Cadastrar cliente', supervisor: 'Cadastrar supervisor', admin: 'Cadastrar administrador' };
 
-        // Mostra só os campos que fazem sentido para o tipo escolhido
+        // Mostra só os campos que fazem sentido para o tipo escolhido:
+        // CNH para motorista e cliente; supervisor responsável só para motorista
         function aplicarTipo(perfil) {
             document.getElementById('inputPerfilSelecionado').value = perfil;
             const ehMotorista = perfil === 'motorista';
-            ['cnh', 'categoria-cnh', 'validade-cnh', 'id_supervisor'].forEach(id => {
+            const precisaCnh = ehMotorista || perfil === 'cliente';
+            ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => {
                 const el = document.getElementById(id);
-                el.required = ehMotorista;
-                el.disabled = !ehMotorista;
+                el.required = precisaCnh;
+                el.disabled = !precisaCnh;
             });
-            document.getElementById('bloco-motorista').style.display = ehMotorista ? '' : 'none';
+            const sup = document.getElementById('id_supervisor');
+            sup.required = ehMotorista;
+            sup.disabled = !ehMotorista;
+            document.getElementById('bloco-motorista').style.display = precisaCnh ? '' : 'none';
             document.getElementById('bloco-supervisor').style.display = ehMotorista ? '' : 'none';
             document.getElementById('explica-tipo').textContent = explicacoes[perfil];
             document.getElementById('btn-cadastrar').innerHTML = `<i class="bi bi-check2-circle me-1"></i>${nomesBotao[perfil]}`;

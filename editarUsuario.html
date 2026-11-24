@@ -233,10 +233,11 @@
         }
 
         function atualizarLinhaSupervisor() {
-            const ehMotorista = document.getElementById('perfil').value === 'motorista';
+            const perfil = document.getElementById('perfil').value;
+            const ehMotorista = perfil === 'motorista';
             document.getElementById('linha-supervisor').style.display = ehMotorista ? '' : 'none';
-            // Motorista precisa de CNH completa
-            ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista);
+            // Motorista e cliente precisam de CNH completa
+            ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista || perfil === 'cliente');
         }
 
         async function carregarUsuarioPorId(id) {

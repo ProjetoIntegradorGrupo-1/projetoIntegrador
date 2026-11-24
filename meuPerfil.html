@@ -155,8 +155,8 @@
                 ['E-mail', d.email], ['CPF', d.cpf_matricula], ['Telefone', d.telefone || '-'],
                 ['Cidade', d.cidade ? `${d.cidade}/${d.estado || ''}` : '-'],
             ];
-            if (d.perfil === 'motorista') {
-                campos.push(['Supervisor responsável', d.supervisor_nome || 'Não definido']);
+            if (d.perfil === 'motorista') campos.push(['Supervisor responsável', d.supervisor_nome || 'Não definido']);
+            if (d.perfil === 'motorista' || d.perfil === 'cliente') {
                 campos.push(['CNH', d.cnh ? `${d.cnh} · categoria ${d.categoria_cnh || '-'}` : '-']);
                 campos.push(['Validade da CNH', dataBR(d.validade_cnh)]);
             }

@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($perfil_solicitado === 'motorista' && !$id_supervisor && $eu['perfil'] === 'supervisor') {
         $id_supervisor = $eu['id']; // supervisor que cadastrou vira o responsável
     }
-    if ($perfil_solicitado === 'motorista' && (strlen($cnh) !== 11 || $categoria_cnh === '' || !$validade_cnh)) {
-        echo "<script>alert('Motorista precisa de CNH (11 dígitos), categoria e validade.'); window.history.back();</script>";
+    if (in_array($perfil_solicitado, ['motorista', 'cliente'], true) && (strlen($cnh) !== 11 || $categoria_cnh === '' || !$validade_cnh)) {
+        echo "<script>alert('Motorista e cliente precisam de CNH (11 dígitos), categoria e validade.'); window.history.back();</script>";
         exit;
     }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

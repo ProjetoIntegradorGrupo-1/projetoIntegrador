@@ -447,8 +447,8 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
     $statusConta   = ($_POST['status'] ?? $alvo['status'] ?? 'ativo') === 'inativo' ? 'inativo' : 'ativo';
 
     $erro = null;
-    if ($perfil === 'motorista') {
-        // Motorista precisa de CNH completa para dirigir a frota
+    if (in_array($perfil, ['motorista', 'cliente'], true)) {
+        // Motorista e cliente precisam de CNH completa (os dois podem conduzir os veículos)
         if (strlen($cnh) !== 11) $erro = 'cnh_obrigatoria';
         elseif ($catCnh === '') $erro = 'categoria_cnh_obrigatoria';
         elseif (!$valCnh) $erro = 'validade_cnh_obrigatoria';
