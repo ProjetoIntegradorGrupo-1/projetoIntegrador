@@ -383,3 +383,100 @@ document.addEventListener('DOMContentLoaded', () => {
     div.textContent = textos[erro] || ('Não foi possível concluir: ' + erro.replace(/_/g, ' '));
     main.prepend(div);
 });
+
+/**
+ * Layout padrão das telas internas: mesmo cabeçalho e mesmo menu lateral do Painel.
+ * A página só precisa ter <body data-secao="frota" data-titulo="Cadastrar veículo">.
+ */
+const AxionLayout = {
+    secoes: {
+        inicio: ['bi-speedometer2', 'Painel'],
+        vistorias: ['bi-clipboard2-check', 'Vistorias'],
+        frota: ['bi-truck-front', 'Frota'],
+        usuarios: ['bi-people', 'Usuários'],
+        checklists: ['bi-ui-checks-grid', 'Modelos de checklist'],
+        admin: ['bi-gear', 'Administração'],
+    },
+
+    menuDoPerfil(perfil) {
+        const itens = ['inicio', 'vistorias', 'frota'];
+        if (perfil === 'admin' || perfil === 'supervisor') itens.push('usuarios', 'checklists');
+        if (perfil === 'admin') itens.push('admin');
+        return itens;
+    },
+
+    rotulo(secao, perfil) {
+        if (secao === 'vistorias' && perfil === 'motorista') return 'Minhas vistorias';
+        if (secao === 'usuarios' && perfil === 'supervisor') return 'Equipe e usuários';
+        return this.secoes[secao][1];
+    },
+
+    montar(ctx) {
+        const body = document.body;
+        const secaoAtual = body.dataset.secao;
+        const u = ctx.usuario;
+        const podeVistoriar = ['admin', 'supervisor', 'motorista'].includes(u.perfil);
+        const pend = Number(ctx.pendencias || 0);
+
+        // Cabeçalho
+        document.querySelectorAll('nav.axion-navbar').forEach(n => n.remove());
+        const nav = document.createElement('nav');
+        nav.className = 'axion-navbar text-white';
+        nav.innerHTML = `
+            <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <a href="oqfazer.php" class="axion-brand"><i class="bi bi-truck-front-fill fs-4"></i><span>AXION</span><span class="axion-brand-badge">Frota & Checklists</span></a>
+                <div class="d-flex align-items-center gap-2 gap-md-3">
+                    ${pend > 0 ? `<a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} para assinar</a>` : ''}
+                    <div class="d-none d-md-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25">
+                        <i class="bi bi-person-circle fs-4"></i>
+                        <div class="lh-sm"><div class="fw-semibold">${axionEsc(u.nome)}</div><div class="text-white-50">${axionEsc(u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1))}</div></div>
+                    </div>
+                    <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
+                </div>
+            </div>`;
+
+        // Menu lateral
+        const menu = this.menuDoPerfil(u.perfil).map(s => `
+            <a href="oqfazer.php?aba=${s}" class="menu-link ${s === secaoAtual ? 'ativo' : ''}">
+                <i class="bi ${this.secoes[s][0]}"></i><span>${this.rotulo(s, u.perfil)}</span>
+                ${s === 'vistorias' && pend > 0 ? `<span class="badge rounded-pill bg-warning text-dark">${pend}</span>` : ''}
+            </a>`).join('');
+
+        const layout = document.createElement('div');
+        layout.className = 'painel-layout';
+        layout.innerHTML = `
+            <aside class="painel-menu"><div class="menu-box">
+                ${podeVistoriar ? '<a href="cadcheck.html" class="btn btn-warning fw-semibold w-100 mb-2 menu-cta"><i class="bi bi-plus-circle me-1"></i>Nova vistoria</a>' : ''}
+                <div class="menu-titulo">Menu</div>${menu}
+            </div></aside>
+            <div class="painel-conteudo"></div>`;
+        const conteudo = layout.querySelector('.painel-conteudo');
+
+        // Caminho: Painel › Seção › Tela atual
+        if (secaoAtual && secaoAtual !== 'inicio') {
+            conteudo.insertAdjacentHTML('beforeend', `<div class="trilha">
+                <a href="oqfazer.php"><i class="bi bi-house-door"></i> Painel</a><i class="bi bi-chevron-right small"></i>
+                <a href="oqfazer.php?aba=${secaoAtual}">${this.rotulo(secaoAtual, u.perfil)}</a>
+                ${body.dataset.titulo ? `<i class="bi bi-chevron-right small"></i><span class="atual">${axionEsc(body.dataset.titulo)}</span>` : ''}
+            </div>`);
+        }
+
+        const principal = document.querySelector('body > main');
+        if (principal) {
+            principal.classList.remove('min-vh-100', 'align-items-center', 'justify-content-center', 'd-flex', 'container');
+            conteudo.appendChild(principal);
+        }
+        body.prepend(layout);
+        body.prepend(nav);
+        body.classList.remove('bg-light');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (document.body.dataset.secao === undefined) return;
+    const mostrar = () => document.body.classList.add('layout-pronto');
+    setTimeout(mostrar, 1500);
+    const ctx = await AxionSessao.pronta;
+    if (ctx) AxionLayout.montar(ctx);
+    mostrar();
+});

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body>
+<body data-secao="vistorias" data-titulo="Nova vistoria">
 
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
@@ -28,11 +28,11 @@
 
     <main class="axion-web-container">
         <div class="axion-form-card" style="max-width: 920px;">
-            <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Preencher Checklist de Vistoria</h1>
-            <p class="text-muted small mb-4">Selecione o modelo de checklist, informe os dados do veículo e responda aos itens inspecionados.</p>
+            <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Nova vistoria</h1>
+            <p class="text-muted small mb-4">Escolha o checklist e o veículo, e responda às perguntas.</p>
 
             <form action="backend/api.php?acao=registrar_vistoria" method="post" id="formVistoria">
-                <div class="axion-section-title"><i class="bi bi-car-front"></i> 1. Identificação da Vistoria</div>
+                <div class="axion-section-title"><i class="bi bi-car-front"></i> Veículo e responsáveis</div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="id_checklist" class="form-label fw-semibold">Modelo de Checklist</label>
@@ -68,7 +68,7 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-3"><i class="bi bi-list-check"></i> 2. Itens do Checklist Selecionado</div>
+                <div class="axion-section-title mt-3"><i class="bi bi-list-check"></i> Perguntas do checklist</div>
                 <div id="perguntas-dinamicas-vistoria" class="mb-3">
                     <div class="text-muted small py-2">Escolha um modelo de checklist.</div>
                 </div>

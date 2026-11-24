@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body>
+<body data-secao="usuarios" data-titulo="Cadastrar usuário">
 
     <!-- Navbar Web com navegação direta -->
     <nav class="axion-navbar text-white">
@@ -31,17 +31,32 @@
         <div class="axion-form-card">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
                 <div>
-                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-person-plus-fill text-primary me-2"></i>Cadastro de Usuários</h1>
-                    <p class="text-muted small mb-0">Preencha os dados com validação automática de CPF, filtro de Categoria CNH e busca de CEP gratuita.</p>
+                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-person-plus-fill text-primary me-2"></i>Cadastrar usuário</h1>
+                    <p class="text-muted small mb-0">A pessoa entra no sistema com o e-mail ou CPF e a senha inicial <strong>mudar123</strong>.</p>
                 </div>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Senha inicial padrão: mudar123</span>
             </div>
 
             <form action="processar_cadastro.php" method="post" id="formCadUser">
                 <input type="hidden" name="perfil" id="inputPerfilSelecionado" value="motorista">
 
+                <!-- 0. TIPO DE USUÁRIO: define quais campos aparecem -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Tipo de usuário</label>
+                    <div class="d-flex flex-wrap gap-2" id="tipos-usuario">
+                        <input type="radio" class="btn-check" name="tipo_usuario" id="tipo-motorista" value="motorista" checked>
+                        <label class="btn btn-outline-primary" for="tipo-motorista"><i class="bi bi-person-vcard me-1"></i>Motorista</label>
+                        <input type="radio" class="btn-check" name="tipo_usuario" id="tipo-cliente" value="cliente">
+                        <label class="btn btn-outline-primary" for="tipo-cliente"><i class="bi bi-person me-1"></i>Cliente</label>
+                        <input type="radio" class="btn-check somente-admin" name="tipo_usuario" id="tipo-supervisor" value="supervisor">
+                        <label class="btn btn-outline-primary somente-admin" for="tipo-supervisor"><i class="bi bi-person-badge me-1"></i>Supervisor</label>
+                        <input type="radio" class="btn-check somente-admin" name="tipo_usuario" id="tipo-admin" value="admin">
+                        <label class="btn btn-outline-primary somente-admin" for="tipo-admin"><i class="bi bi-stars me-1"></i>Administrador</label>
+                    </div>
+                    <div class="form-text" id="explica-tipo"></div>
+                </div>
+
                 <!-- 1. DADOS PESSOAIS & CPF COM MÁSCARA E VALIDAÇÃO -->
-                <div class="axion-section-title"><i class="bi bi-person-vcard"></i> 1. Dados Pessoais e Identificação</div>
+                <div class="axion-section-title"><i class="bi bi-person-vcard"></i> Dados pessoais</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="nome" class="form-label fw-semibold">Nome</label>
@@ -52,7 +67,7 @@
                         <input type="text" id="sobrenome" name="sobrenome" class="form-control" placeholder="Digite o sobrenome" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="cpf" class="form-label fw-semibold">CPF <span class="badge bg-secondary-subtle text-secondary small">Validação Automática</span></label>
+                        <label for="cpf" class="form-label fw-semibold">CPF</label>
                         <input type="text" id="cpf" name="cpf" data-mask="cpf" class="form-control font-monospace" placeholder="000.000.000-00" maxlength="14" required>
                     </div>
                 </div>
@@ -81,15 +96,16 @@
                     </div>
                 </div>
 
-                <!-- 2. DADOS DA CNH (COM MENU DROPDOWN DE CATEGORIA) -->
-                <div class="axion-section-title mt-3"><i class="bi bi-card-heading"></i> 2. Carteira Nacional de Habilitação (CNH)</div>
+                <!-- CNH e supervisor: só para motorista -->
+                <div id="bloco-motorista">
+                <div class="axion-section-title mt-3"><i class="bi bi-card-heading"></i> Habilitação e equipe (motorista)</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="cnh" class="form-label fw-semibold">N° de Registro da CNH (11 dígitos)</label>
+                        <label for="cnh" class="form-label fw-semibold">Número da CNH</label>
                         <input type="text" name="cnh" id="cnh" data-mask="cnh" class="form-control font-monospace" placeholder="00000000000" maxlength="11" required>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria da CNH (Filtro Dropdown)</label>
+                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria</label>
                         <select id="categoria-cnh" name="categoria-cnh" class="form-select" required>
                             <option value="" selected disabled>Selecione a Categoria...</option>
                             <option value="A">Categoria A (Motocicletas)</option>
@@ -104,26 +120,28 @@
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="validade-cnh" class="form-label fw-semibold">Validade da CNH</label>
+                        <label for="validade-cnh" class="form-label fw-semibold">Validade</label>
                         <input type="date" name="validade-cnh" id="validade-cnh" class="form-control" required>
                     </div>
                 </div>
 
-                <!-- 3. ENDEREÇO COM BUSCA AUTOMÁTICA POR CEP (API GRATUITA VIACEP) -->
-                <div class="axion-section-title mt-3"><i class="bi bi-geo-alt-fill"></i> 3. Endereço (Busca Automática por CEP)</div>
+                </div><!-- /bloco-motorista -->
+
+                <!-- Endereço (o CEP preenche rua, bairro, cidade e estado) -->
+                <div class="axion-section-title mt-3"><i class="bi bi-geo-alt-fill"></i> Endereço</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="cep" class="form-label fw-semibold">CEP <span class="badge bg-info-subtle text-info-emphasis small">ViaCEP Automático</span></label>
+                        <label for="cep" class="form-label fw-semibold">CEP</label>
                         <div class="input-group">
                             <input type="text" id="cep" name="cep" data-mask="cep" class="form-control font-monospace" placeholder="00000-000" maxlength="9" required>
-                            <button class="btn btn-outline-primary" type="button" id="btn-buscar-cep" title="Consultar CEP na API gratuita">
+                            <button class="btn btn-outline-primary" type="button" id="btn-buscar-cep" title="Buscar endereço pelo CEP">
                                 <i class="bi bi-search"></i> Buscar CEP
                             </button>
                         </div>
                         <div id="cep-feedback" class="form-text">Digite o CEP para preencher rua, bairro, cidade e UF automaticamente.</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="logradouro" class="form-label fw-semibold">Logradouro (Rua / Avenida)</label>
+                        <label for="logradouro" class="form-label fw-semibold">Rua / Avenida</label>
                         <input type="text" id="logradouro" name="logradouro" class="form-control" placeholder="Preenchido pelo CEP..." required>
                     </div>
                     <div class="col-md-2 mb-3">
@@ -156,9 +174,9 @@
                     </div>
                 </div>
 
-                <div class="row">
+                <div class="row" id="bloco-supervisor">
                     <div class="col-md-6 mb-3">
-                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável <span class="text-muted small">(só para Motorista)</span></label>
+                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável</label>
                         <select id="id_supervisor" name="id_supervisor" class="form-select">
                             <option value="">Carregando supervisores...</option>
                         </select>
@@ -166,35 +184,9 @@
                     </div>
                 </div>
 
-                <!-- 4. NÍVEL DE ACESSO / PERFIL E ENVIO DIRETO -->
-                <div class="axion-section-title mt-3"><i class="bi bi-shield-check"></i> 4. Nível de Acesso e Confirmação</div>
-                <p class="small text-muted mb-2">Clique diretamente no botão do perfil desejado para concluir o cadastro:</p>
-
-                <div class="row g-2 mb-4">
-                    <div class="col-6 col-md-3">
-                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('motorista', 'processar_cadastro_motorista.php')">
-                            <i class="bi bi-person-vcard me-1"></i>Cadastrar Motorista
-                        </button>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <button type="submit" class="btn btn-info text-white w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('cliente', 'processar_cadastro_cliente.php')">
-                            <i class="bi bi-people-fill me-1"></i>Cadastrar Cliente
-                        </button>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <button type="submit" id="btn-cad-supervisor" class="btn btn-warning text-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('supervisor', 'processar_cadastro_supervisor.php')">
-                            <i class="bi bi-person-badge-fill me-1"></i>Cadastrar Supervisor
-                        </button>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <button type="submit" id="btn-cad-admin" class="btn btn-dark w-100 py-2 fw-semibold" onclick="definirPerfilEnvio('admin', 'processar_cadastro.php')">
-                            <i class="bi bi-stars me-1"></i>Cadastrar Admin
-                        </button>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end">
-                    <a href="oqfazer.php" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar ao Painel Principal</a>
+                <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+                    <a href="oqfazer.php?aba=usuarios" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold" id="btn-cadastrar"><i class="bi bi-check2-circle me-1"></i>Cadastrar motorista</button>
                 </div>
             </form>
         </div>
@@ -203,21 +195,35 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="frontend/js/axion.js"></script>
     <script>
-        function definirPerfilEnvio(perfil, actionUrl) {
+        const explicacoes = {
+            motorista: 'Faz vistorias nos veículos. Precisa de CNH e de um supervisor responsável, que aprova as vistorias dele.',
+            cliente: 'Só consulta a frota e o histórico de vistorias.',
+            supervisor: 'Gerencia motoristas, veículos e checklists, e aprova as vistorias da equipe.',
+            admin: 'Acesso total ao sistema, incluindo a administração da base de dados.'
+        };
+        const nomesBotao = { motorista: 'Cadastrar motorista', cliente: 'Cadastrar cliente', supervisor: 'Cadastrar supervisor', admin: 'Cadastrar administrador' };
+
+        // Mostra só os campos que fazem sentido para o tipo escolhido
+        function aplicarTipo(perfil) {
             document.getElementById('inputPerfilSelecionado').value = perfil;
-            document.getElementById('formCadUser').action = actionUrl;
-            // CNH e supervisor responsável só são obrigatórios para Motorista
             const ehMotorista = perfil === 'motorista';
-            ['cnh', 'categoria-cnh', 'validade-cnh', 'id_supervisor'].forEach(id => document.getElementById(id).required = ehMotorista);
+            ['cnh', 'categoria-cnh', 'validade-cnh', 'id_supervisor'].forEach(id => {
+                const el = document.getElementById(id);
+                el.required = ehMotorista;
+                el.disabled = !ehMotorista;
+            });
+            document.getElementById('bloco-motorista').style.display = ehMotorista ? '' : 'none';
+            document.getElementById('bloco-supervisor').style.display = ehMotorista ? '' : 'none';
+            document.getElementById('explica-tipo').textContent = explicacoes[perfil];
+            document.getElementById('btn-cadastrar').innerHTML = `<i class="bi bi-check2-circle me-1"></i>${nomesBotao[perfil]}`;
         }
+        document.querySelectorAll('input[name="tipo_usuario"]').forEach(r => r.addEventListener('change', () => aplicarTipo(r.value)));
 
         document.addEventListener('DOMContentLoaded', async () => {
+            aplicarTipo('motorista');
             const ctx = await AxionSessao.pronta;
-            const ehAdmin = ctx && ctx.usuario.perfil === 'admin';
             // Só o Admin cadastra Supervisores e Admins
-            if (!ehAdmin) {
-                ['btn-cad-supervisor', 'btn-cad-admin'].forEach(id => document.getElementById(id).closest('.col-6').remove());
-            }
+            if (!ctx || ctx.usuario.perfil !== 'admin') document.querySelectorAll('.somente-admin').forEach(el => el.remove());
             const resp = await fetch('backend/api.php?acao=listar_pessoas');
             const json = await resp.json();
             const sel = document.getElementById('id_supervisor');

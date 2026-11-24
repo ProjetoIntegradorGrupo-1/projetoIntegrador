@@ -227,3 +227,58 @@ body {
         padding: 1rem 0.75rem;
     }
 }
+
+/* ===== Painel principal (oqfazer.php) ===== */
+:root {
+    --st-good: #0ca30c; --st-critical: #d03b3b; --st-warning: #fab219;
+    --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a;
+}
+.painel-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.25rem; width: 100%; flex: 1; }
+.painel-menu { width: 230px; flex-shrink: 0; }
+.painel-menu .menu-box { position: sticky; top: 1rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .75rem; }
+.painel-menu .menu-link { display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: 10px; color: var(--axion-text); text-decoration: none; font-weight: 500; }
+.painel-menu .menu-link:hover { background: #eef3f9; }
+.painel-menu .menu-link.ativo { background: var(--axion-primary); color: #fff; }
+.painel-menu .menu-link .badge { margin-left: auto; }
+.painel-menu .menu-titulo { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--axion-muted); padding: .5rem .75rem .25rem; }
+.painel-conteudo { flex: 1; min-width: 0; }
+.secao { display: none; }
+.secao.ativa { display: block; }
+.kpi { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1rem 1.1rem; height: 100%; }
+.kpi .kpi-rotulo { font-size: .8rem; color: var(--axion-muted); display: flex; align-items: center; gap: .4rem; }
+.kpi .kpi-valor { font-size: 1.9rem; font-weight: 700; line-height: 1.1; margin-top: .25rem; }
+.kpi .kpi-detalhe { font-size: .78rem; color: var(--axion-muted); }
+.cartao { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1.1rem 1.2rem; height: 100%; }
+.cartao h3 { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+.cartao .cartao-sub { font-size: .78rem; color: var(--axion-muted); margin-bottom: .75rem; }
+.grafico { position: relative; height: 240px; }
+.grafico-vazio { height: 240px; display: flex; align-items: center; justify-content: center; color: var(--axion-muted); font-size: .9rem; text-align: center; }
+.acao-rapida { display: flex; align-items: center; gap: .75rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .9rem 1rem; text-decoration: none; color: var(--axion-text); height: 100%; transition: .15s; }
+.acao-rapida:hover { border-color: var(--axion-accent); box-shadow: 0 6px 18px rgba(37, 99, 235, .12); transform: translateY(-1px); }
+.acao-rapida .ic { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+.acao-rapida .t { font-weight: 600; line-height: 1.2; }
+.acao-rapida .d { font-size: .78rem; color: var(--axion-muted); }
+.acao-rapida.destaque { background: var(--axion-primary); color: #fff; border-color: var(--axion-primary); }
+.acao-rapida.destaque .d { color: rgba(255, 255, 255, .8); }
+.secao-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+.secao-topo h1 { font-size: 1.35rem; font-weight: 700; margin: 0; }
+.secao-topo p { margin: 0; color: var(--axion-muted); font-size: .9rem; }
+@media (max-width: 991px) {
+    .painel-layout { flex-direction: column; padding-top: 1rem; }
+    .painel-menu { width: 100%; }
+    .painel-menu .menu-box { position: static; display: flex; overflow-x: auto; gap: .25rem; padding: .5rem; }
+    .painel-menu .menu-titulo, .painel-menu .menu-cta { display: none; }
+    .painel-menu .menu-link { white-space: nowrap; }
+}
+
+/* ===== Layout padrão de todas as telas internas (menu lateral + conteúdo) ===== */
+.painel-conteudo > main, .painel-conteudo > .axion-web-container { max-width: none; padding: 0; margin: 0; min-height: 0 !important; display: block !important; }
+.painel-conteudo .axion-form-card { max-width: 980px; margin: 0; }
+.painel-conteudo > main > .card { max-width: 760px !important; }
+.trilha { font-size: .85rem; color: var(--axion-muted); margin-bottom: .75rem; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.trilha a { color: var(--axion-muted); text-decoration: none; }
+.trilha a:hover { color: var(--axion-accent); }
+.trilha .atual { color: var(--axion-text); font-weight: 600; }
+@media print { .painel-layout, .axion-navbar { display: none !important; } }
+/* Evita "piscar" o cabeçalho antigo enquanto o layout padrão é montado */
+body[data-secao]:not(.layout-pronto) { visibility: hidden; }

@@ -88,49 +88,6 @@ $mapaErros = [
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="frontend/css/axion-web.css">
-    <style>
-        :root {
-            --st-good: #0ca30c; --st-critical: #d03b3b; --st-warning: #fab219;
-            --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a;
-        }
-        .painel-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.25rem; width: 100%; flex: 1; }
-        .painel-menu { width: 230px; flex-shrink: 0; }
-        .painel-menu .menu-box { position: sticky; top: 1rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .75rem; }
-        .painel-menu .menu-link { display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: 10px; color: var(--axion-text); text-decoration: none; font-weight: 500; }
-        .painel-menu .menu-link:hover { background: #eef3f9; }
-        .painel-menu .menu-link.ativo { background: var(--axion-primary); color: #fff; }
-        .painel-menu .menu-link .badge { margin-left: auto; }
-        .painel-menu .menu-titulo { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--axion-muted); padding: .5rem .75rem .25rem; }
-        .painel-conteudo { flex: 1; min-width: 0; }
-        .secao { display: none; }
-        .secao.ativa { display: block; }
-        .kpi { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1rem 1.1rem; height: 100%; }
-        .kpi .kpi-rotulo { font-size: .8rem; color: var(--axion-muted); display: flex; align-items: center; gap: .4rem; }
-        .kpi .kpi-valor { font-size: 1.9rem; font-weight: 700; line-height: 1.1; margin-top: .25rem; }
-        .kpi .kpi-detalhe { font-size: .78rem; color: var(--axion-muted); }
-        .cartao { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1.1rem 1.2rem; height: 100%; }
-        .cartao h3 { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
-        .cartao .cartao-sub { font-size: .78rem; color: var(--axion-muted); margin-bottom: .75rem; }
-        .grafico { position: relative; height: 240px; }
-        .grafico-vazio { height: 240px; display: flex; align-items: center; justify-content: center; color: var(--axion-muted); font-size: .9rem; text-align: center; }
-        .acao-rapida { display: flex; align-items: center; gap: .75rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .9rem 1rem; text-decoration: none; color: var(--axion-text); height: 100%; transition: .15s; }
-        .acao-rapida:hover { border-color: var(--axion-accent); box-shadow: 0 6px 18px rgba(37, 99, 235, .12); transform: translateY(-1px); }
-        .acao-rapida .ic { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
-        .acao-rapida .t { font-weight: 600; line-height: 1.2; }
-        .acao-rapida .d { font-size: .78rem; color: var(--axion-muted); }
-        .acao-rapida.destaque { background: var(--axion-primary); color: #fff; border-color: var(--axion-primary); }
-        .acao-rapida.destaque .d { color: rgba(255, 255, 255, .8); }
-        .secao-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
-        .secao-topo h1 { font-size: 1.35rem; font-weight: 700; margin: 0; }
-        .secao-topo p { margin: 0; color: var(--axion-muted); font-size: .9rem; }
-        @media (max-width: 991px) {
-            .painel-layout { flex-direction: column; padding-top: 1rem; }
-            .painel-menu { width: 100%; }
-            .painel-menu .menu-box { position: static; display: flex; overflow-x: auto; gap: .25rem; padding: .5rem; }
-            .painel-menu .menu-titulo, .painel-menu .menu-cta { display: none; }
-            .painel-menu .menu-link { white-space: nowrap; }
-        }
-    </style>
 </head>
 
 <body>
@@ -197,6 +154,17 @@ $mapaErros = [
                         <h1><?php echo $saudacao . ', ' . htmlspecialchars($primeiro_nome); ?></h1>
                         <p><?php echo $subtitulos[$perfil_usuario]; ?></p>
                     </div>
+                    <!-- Atalhos do perfil -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php if ($isGestor): ?>
+                        <a href="caduser.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i><?php echo $isSupervisor ? 'Cadastrar motorista' : 'Cadastrar usuário'; ?></a>
+                        <a href="cadcar.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-truck me-1"></i>Cadastrar veículo</a>
+                        <a href="criarChecklist.html" class="btn btn-outline-primary btn-sm"><i class="bi bi-ui-checks me-1"></i>Criar checklist</a>
+                        <?php endif; ?>
+                        <?php if ($podeVistoriar): ?>
+                        <a href="cadcheck.html" class="btn btn-warning btn-sm fw-semibold"><i class="bi bi-plus-circle me-1"></i>Nova vistoria</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <?php if ($minhasPendencias > 0): ?>
@@ -210,31 +178,6 @@ $mapaErros = [
                     </div>
                 </div>
                 <?php endif; ?>
-
-                <!-- Atalhos do perfil -->
-                <div class="row g-3 mb-3">
-                    <?php
-                    $atalhos = [];
-                    if ($podeVistoriar) $atalhos[] = ['cadcheck.html', 'bi-clipboard2-plus', 'Nova vistoria', 'Preencher o checklist de um veículo', true];
-                    if ($isGestor) {
-                        $atalhos[] = ['caduser.html', 'bi-person-plus', $isSupervisor ? 'Cadastrar motorista' : 'Cadastrar usuário', $isSupervisor ? 'Já vinculado à sua equipe' : 'Motorista, cliente, supervisor ou admin', false];
-                        $atalhos[] = ['cadcar.html', 'bi-truck', 'Cadastrar veículo', 'Incluir um carro na frota', false];
-                        $atalhos[] = ['criarChecklist.html', 'bi-ui-checks', 'Criar modelo de checklist', 'Perguntas e subperguntas', false];
-                    }
-                    if ($isMotorista) $atalhos[] = ['#vistorias', 'bi-clock-history', 'Minhas vistorias', 'Histórico e situação de cada uma', false];
-                    if ($isCliente) {
-                        $atalhos[] = ['#frota', 'bi-truck-front', 'Consultar frota', 'Veículos e situação atual', true];
-                        $atalhos[] = ['#vistorias', 'bi-clipboard2-check', 'Consultar vistorias', 'Histórico de inspeções', false];
-                    }
-                    foreach ($atalhos as [$href, $ic, $t, $d, $destaque]): ?>
-                    <div class="col-12 col-sm-6 col-xl-3">
-                        <a href="<?php echo $href; ?>" class="acao-rapida <?php echo $destaque ? 'destaque' : ''; ?>" <?php echo $href[0] === '#' ? 'data-secao="' . substr($href, 1) . '"' : ''; ?>>
-                            <span class="ic <?php echo $destaque ? 'bg-white text-primary' : 'bg-primary-subtle text-primary'; ?>"><i class="bi <?php echo $ic; ?>"></i></span>
-                            <span><span class="t d-block"><?php echo $t; ?></span><span class="d"><?php echo $d; ?></span></span>
-                        </a>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
 
                 <!-- Indicadores (preenchidos pelo JS conforme o perfil) -->
                 <div class="row g-3 mb-3" id="kpis"></div>

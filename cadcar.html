@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="frontend/css/axion-web.css">
 </head>
 
-<body>
+<body data-secao="frota" data-titulo="Cadastrar veículo">
 
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
@@ -30,13 +30,13 @@
         <div class="axion-form-card" style="max-width: 860px;">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
                 <div>
-                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-car-front-fill text-success me-2"></i>Cadastro de Veículos da Frota</h1>
-                    <p class="text-muted small mb-0">Informe os dados do veículo com conferência automática de Placa Mercosul, Renavam e Chassi.</p>
+                    <h1 class="h4 fw-bold mb-1"><i class="bi bi-car-front-fill text-success me-2"></i>Cadastrar veículo</h1>
+                    <p class="text-muted small mb-0">Preencha os dados do veículo. Placa, Renavam e chassi não podem se repetir.</p>
                 </div>
             </div>
 
             <form action="processar_cadastro_veiculo.php" method="post">
-                <div class="axion-section-title"><i class="bi bi-info-circle"></i> 1. Identificação do Veículo</div>
+                <div class="axion-section-title"><i class="bi bi-info-circle"></i> Veículo</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="marca" class="form-label fw-semibold">Marca</label>
@@ -52,10 +52,10 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-2"><i class="bi bi-upc-scan"></i> 2. Documentação e Quilometragem (Com Máscaras)</div>
+                <div class="axion-section-title mt-2"><i class="bi bi-upc-scan"></i> Documentos e quilometragem</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="placa" class="form-label fw-semibold">Placa (Mercosul / Antiga)</label>
+                        <label for="placa" class="form-label fw-semibold">Placa</label>
                         <input type="text" id="placa" name="placa" data-mask="placa" class="form-control text-uppercase font-monospace" placeholder="Ex: ABC1D23" maxlength="7" required>
                         <div class="form-text small">7 caracteres (Ex: ABC1D23 ou ABC1234)</div>
                     </div>
