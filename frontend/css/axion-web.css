@@ -287,3 +287,8 @@ body[data-secao]:not(.layout-pronto) { visibility: hidden; }
 body.tema-admin .axion-navbar { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4338ca 100%); box-shadow: 0 4px 16px rgba(49, 46, 129, .25); }
 body.tema-admin .painel-menu .menu-link.ativo { background: #312e81; }
 body.tema-admin .painel-menu .menu-box { border-top: 3px solid #4338ca; }
+
+/* ===== Foto de perfil ===== */
+.axion-avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; display: inline-block; border: 2px solid rgba(255, 255, 255, .7); background: #fff; }
+.axion-avatar-iniciais { display: inline-flex; align-items: center; justify-content: center; background: #dbe7f5; color: var(--axion-primary); font-weight: 700; }
+.axion-avatar.borda-escura { border-color: var(--axion-border); }

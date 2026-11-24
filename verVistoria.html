@@ -202,8 +202,10 @@
                         <div class="small">Km: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')}</div>
                     </div></div>
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
-                        <div class="small text-muted">Motorista</div><div class="fw-semibold">${e(v.nome_motorista)}</div>
-                        <div class="small text-muted mt-2">Vistoriador</div><div class="fw-semibold">${e(v.nome_vistoriador)}</div>
+                        <div class="small text-muted">Motorista</div>
+                        <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.motorista_foto_url, v.nome_motorista, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_motorista)}</div>
+                        <div class="small text-muted mt-2">Vistoriador</div>
+                        <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.vistoriador_foto_url, v.nome_vistoriador, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_vistoriador)}</div>
                     </div></div>
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
                         <div class="small text-muted">Data / Hora</div>

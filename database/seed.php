@@ -213,6 +213,7 @@ function axion_garantir_estrutura(PDO $pdo): void {
     // Vínculo fixo Motorista -> Supervisor responsável
     axion_garantir_colunas($pdo, 'Usuarios', [
         'id_supervisor' => "INT DEFAULT NULL",
+        'foto'          => "VARCHAR(255) DEFAULT NULL", // foto de perfil (arquivo em uploads/usuarios)
     ]);
 
     // Dados que faltavam para a vistoria ser rastreável e visualizável depois

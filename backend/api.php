@@ -46,9 +46,17 @@ function axion_papel(array $v, array $eu): ?string {
     return null;
 }
 
+/** Endereço da foto de perfil (o nome do arquivo muda a cada envio, então serve de versão para o cache). */
+function axion_url_foto(int $id, ?string $arquivo): ?string {
+    return $arquivo ? "backend/api.php?acao=foto_usuario&id=$id&v=" . rawurlencode(pathinfo($arquivo, PATHINFO_FILENAME)) : null;
+}
+
 // 0. CONTEXTO DA SESSÃO (quem está logado + token dos formulários)
 if ($acao === 'contexto') {
     $u = axion_exigir_perfil();
+    $stF = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+    $stF->execute([':id' => $u['id']]);
+    $u['foto_url'] = axion_url_foto($u['id'], $stF->fetchColumn() ?: null);
     $extra = ['supervisor' => null];
     if ($u['perfil'] === 'motorista') {
         $st = $pdo->prepare("SELECT s.id_usuario, s.nome FROM Usuarios m JOIN Usuarios s ON s.id_usuario = m.id_supervisor WHERE m.id_usuario = :id");
@@ -98,7 +106,7 @@ if ($acao === 'buscar') {
     if ($tipo === 'usuarios') {
         $sql = "SELECT u.id_usuario, u.nome, u.sobrenome, u.email, u.cpf_matricula, u.perfil, u.categoria_cnh, u.cnh, u.validade_cnh,
                        u.cep, u.logradouro, u.numero, u.bairro, u.cidade, u.estado, u.telefone, u.data_nascimento, u.genero, u.status,
-                       u.id_supervisor, s.nome AS supervisor_nome
+                       u.id_supervisor, s.nome AS supervisor_nome, u.foto
                 FROM Usuarios u LEFT JOIN Usuarios s ON s.id_usuario = u.id_supervisor
                 WHERE 1=1";
         $params = [];
@@ -128,7 +136,12 @@ if ($acao === 'buscar') {
         $sql .= " ORDER BY FIELD(u.perfil, 'admin', 'supervisor', 'motorista', 'cliente'), u.nome ASC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
+        $dados = array_map(function ($r) {
+            $r['foto_url'] = axion_url_foto((int)$r['id_usuario'], $r['foto']);
+            unset($r['foto']);
+            return $r;
+        }, $stmt->fetchAll());
+        axion_json(['sucesso' => true, 'dados' => $dados]);
     }
 
     if ($tipo === 'checklists') {
@@ -308,11 +321,15 @@ if ($acao === 'dashboard') {
         $st = $pdo->prepare("SELECT status_aprovacao, COUNT(*) FROM Checklists WHERE id_criador = :me GROUP BY status_aprovacao");
         $st->execute([':me' => $u['id']]);
         $dados['meus_checklists'] = $st->fetchAll(PDO::FETCH_KEY_PAIR);
-        $st = $pdo->prepare("SELECT id_usuario, nome, validade_cnh, categoria_cnh,
+        $st = $pdo->prepare("SELECT id_usuario, nome, validade_cnh, categoria_cnh, foto,
                 (SELECT MAX(data_vistoria) FROM Checklist_Execucoes x WHERE x.id_motorista = u.id_usuario) AS ultima_vistoria
             FROM Usuarios u WHERE u.id_supervisor = :me AND u.perfil = 'motorista' AND u.status = 'ativo' ORDER BY nome");
         $st->execute([':me' => $u['id']]);
-        $dados['equipe'] = $st->fetchAll();
+        $dados['equipe'] = array_map(function ($r) {
+            $r['foto_url'] = axion_url_foto((int)$r['id_usuario'], $r['foto']);
+            unset($r['foto']);
+            return $r;
+        }, $st->fetchAll());
     }
     if ($p === 'motorista') {
         $st = $pdo->prepare("SELECT validade_cnh, categoria_cnh FROM Usuarios WHERE id_usuario = :me");
@@ -899,6 +916,12 @@ if ($acao === 'obter_vistoria') {
     unset($v['foto_evidencia']);
     $v['situacao'] = axion_situacao($v);
     $v['meu_papel'] = axion_papel($v, $eu);
+    $stF = $pdo->prepare("SELECT id_usuario, foto FROM Usuarios WHERE id_usuario IN (:m, :v)");
+    $stF->execute([':m' => (int)$v['id_motorista'], ':v' => (int)$v['id_vistoriador']]);
+    foreach ($stF->fetchAll() as $f) {
+        if ((int)$f['id_usuario'] === (int)$v['id_motorista']) $v['motorista_foto_url'] = axion_url_foto((int)$f['id_usuario'], $f['foto']);
+        if ((int)$f['id_usuario'] === (int)$v['id_vistoriador']) $v['vistoriador_foto_url'] = axion_url_foto((int)$f['id_usuario'], $f['foto']);
+    }
     $v['pode_assinar'] = $v['meu_papel'] && !in_array($v['situacao'], ['recusada', 'concluida'], true) && !$v["assinado_{$v['meu_papel']}_em"];
     $v['pode_editar_avaria'] = !$v['assinado_motorista_em'] && !$v['assinado_vistoriador_em'] && !$v['recusado_em'] && (int)$v['id_registrado_por'] === $eu['id'];
     if ($v['recusado_por']) {
@@ -923,6 +946,82 @@ if ($acao === 'foto_vistoria') {
     header('Content-Length: ' . filesize($arq));
     readfile($arq);
     exit;
+}
+
+// 10b. MEUS DADOS (tela Meu perfil)
+if ($acao === 'meus_dados') {
+    $eu = axion_exigir_perfil();
+    $st = $pdo->prepare("SELECT u.nome, u.email, u.cpf_matricula, u.perfil, u.telefone, u.cnh, u.categoria_cnh, u.validade_cnh,
+                                u.cidade, u.estado, u.foto, u.criado_em, s.nome AS supervisor_nome
+                         FROM Usuarios u LEFT JOIN Usuarios s ON s.id_usuario = u.id_supervisor WHERE u.id_usuario = :id");
+    $st->execute([':id' => $eu['id']]);
+    $d = $st->fetch();
+    $d['foto_url'] = axion_url_foto($eu['id'], $d['foto']);
+    unset($d['foto']);
+    axion_json(['sucesso' => true, 'dados' => $d]);
+}
+
+// 11. FOTO DE PERFIL (cada usuário troca a própria foto)
+if ($acao === 'salvar_foto_perfil' && $ehPost) {
+    $eu = axion_exigir_perfil();
+    axion_validar_csrf();
+    $arq = $_FILES['foto'] ?? null;
+    if (!$arq || $arq['error'] !== UPLOAD_ERR_OK) axion_json(['sucesso' => false, 'erro' => 'Escolha uma imagem.'], 422);
+    if ($arq['size'] > 3 * 1024 * 1024) axion_json(['sucesso' => false, 'erro' => 'A imagem pode ter no máximo 3 MB.'], 422);
+    $info = @getimagesize($arq['tmp_name']);
+    $ext = $info ? (['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$info['mime']] ?? null) : null;
+    if (!$ext) axion_json(['sucesso' => false, 'erro' => 'Envie uma foto em JPG, PNG ou WEBP.'], 422);
+    $dir = __DIR__ . '/../uploads/usuarios';
+    if (!is_dir($dir)) mkdir($dir, 0775, true);
+    $nome = $eu['id'] . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+    if (!move_uploaded_file($arq['tmp_name'], "$dir/$nome")) axion_json(['sucesso' => false, 'erro' => 'Não foi possível salvar a foto.'], 500);
+    $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+    $st->execute([':id' => $eu['id']]);
+    $antiga = $st->fetchColumn();
+    if ($antiga && is_file("$dir/" . basename($antiga))) @unlink("$dir/" . basename($antiga));
+    $pdo->prepare("UPDATE Usuarios SET foto = :f WHERE id_usuario = :id")->execute([':f' => $nome, ':id' => $eu['id']]);
+    axion_json(['sucesso' => true, 'foto_url' => axion_url_foto($eu['id'], $nome)]);
+}
+
+if ($acao === 'remover_foto_perfil' && $ehPost) {
+    $eu = axion_exigir_perfil();
+    axion_validar_csrf();
+    $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+    $st->execute([':id' => $eu['id']]);
+    $antiga = $st->fetchColumn();
+    $dir = __DIR__ . '/../uploads/usuarios';
+    if ($antiga && is_file("$dir/" . basename($antiga))) @unlink("$dir/" . basename($antiga));
+    $pdo->prepare("UPDATE Usuarios SET foto = NULL WHERE id_usuario = :id")->execute([':id' => $eu['id']]);
+    axion_json(['sucesso' => true]);
+}
+
+if ($acao === 'foto_usuario') {
+    axion_exigir_perfil();
+    $st = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+    $st->execute([':id' => (int)($_GET['id'] ?? 0)]);
+    $foto = $st->fetchColumn();
+    $arq = $foto ? __DIR__ . '/../uploads/usuarios/' . basename($foto) : null;
+    if (!$arq || !is_file($arq)) { http_response_code(404); exit; }
+    $tipos = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+    header('Content-Type: ' . ($tipos[strtolower(pathinfo($arq, PATHINFO_EXTENSION))] ?? 'application/octet-stream'));
+    header('Content-Length: ' . filesize($arq));
+    header('Cache-Control: private, max-age=86400');
+    readfile($arq);
+    exit;
+}
+
+// 12. TROCAR A PRÓPRIA SENHA (todos começam com mudar123)
+if ($acao === 'trocar_senha' && $ehPost) {
+    $eu = axion_exigir_perfil();
+    axion_validar_csrf();
+    $atual = (string)($_POST['senha_atual'] ?? '');
+    $nova = (string)($_POST['senha_nova'] ?? '');
+    $u = axion_buscar_usuario($pdo, $eu['id']);
+    if (!password_verify($atual, $u['senha'])) axion_json(['sucesso' => false, 'erro' => 'A senha atual está incorreta.'], 422);
+    if (mb_strlen($nova) < 6) axion_json(['sucesso' => false, 'erro' => 'A nova senha precisa ter pelo menos 6 caracteres.'], 422);
+    if ($nova === $atual) axion_json(['sucesso' => false, 'erro' => 'A nova senha precisa ser diferente da atual.'], 422);
+    $pdo->prepare("UPDATE Usuarios SET senha = :s WHERE id_usuario = :id")->execute([':s' => password_hash($nova, PASSWORD_DEFAULT), ':id' => $eu['id']]);
+    axion_json(['sucesso' => true]);
 }
 
 axion_json(['sucesso' => false, 'erro' => 'Ação inválida.'], 400);

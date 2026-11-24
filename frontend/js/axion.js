@@ -307,6 +307,15 @@ function axionEsc(valor) {
     return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+/** Foto de perfil redonda; sem foto, mostra as iniciais do nome. */
+function axionAvatar(fotoUrl, nome, tamanho = 36) {
+    const estilo = `width:${tamanho}px;height:${tamanho}px;font-size:${Math.round(tamanho * 0.4)}px`;
+    if (fotoUrl) return `<img src="${axionEsc(fotoUrl)}" alt="" class="axion-avatar" style="${estilo}">`;
+    const partes = String(nome || '?').trim().split(/\s+/);
+    const iniciais = ((partes[0] || '')[0] || '?') + (partes.length > 1 ? partes[partes.length - 1][0] : '');
+    return `<span class="axion-avatar axion-avatar-iniciais" style="${estilo}">${axionEsc(iniciais.toUpperCase())}</span>`;
+}
+
 /**
  * Sessão do usuário logado: carrega quem está logado, coloca o token de segurança (csrf) em todos
  * os formulários POST da página e manda para o login se a sessão tiver expirado.
@@ -399,6 +408,7 @@ const AxionLayout = {
         usuarios: ['bi-people', 'Usuários'],
         checklists: ['bi-ui-checks-grid', 'Modelos de checklist'],
         admin: ['bi-gear', 'Administração'],
+        perfil: ['bi-person-circle', 'Meu perfil'],
     },
 
     // Mesma ordem e mesmos nomes do menu do painel (oqfazer.php)
@@ -436,10 +446,10 @@ const AxionLayout = {
                     ${pend > 0 ? (ehAdmin
                         ? `<a href="oqfazer.php?aba=aprovacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} para aprovar</a>`
                         : `<a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} ${u.perfil === 'motorista' ? 'para assinar' : 'para aprovar'}</a>`) : ''}
-                    <div class="d-none d-md-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25">
-                        <i class="bi bi-person-circle fs-4"></i>
-                        <div class="lh-sm"><div class="fw-semibold">${axionEsc(u.nome)}</div><div class="text-white-50">${axionEsc(u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1))}</div></div>
-                    </div>
+                    <a href="meuPerfil.html" class="d-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25 text-white text-decoration-none" title="Meu perfil">
+                        ${axionAvatar(u.foto_url, u.nome, 34)}
+                        <div class="lh-sm d-none d-md-block"><div class="fw-semibold">${axionEsc(u.nome)}</div><div class="text-white-50">${axionEsc(u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1))} · Meu perfil</div></div>
+                    </a>
                     <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
                 </div>
             </div>`;
@@ -465,7 +475,7 @@ const AxionLayout = {
         if (secaoAtual && secaoAtual !== 'inicio') {
             conteudo.insertAdjacentHTML('beforeend', `<div class="trilha">
                 <a href="oqfazer.php"><i class="bi bi-house-door"></i> Painel</a><i class="bi bi-chevron-right small"></i>
-                <a href="oqfazer.php?aba=${secaoAtual}">${this.rotulo(secaoAtual, u.perfil)}</a>
+                <a href="${secaoAtual === 'perfil' ? 'meuPerfil.html' : 'oqfazer.php?aba=' + secaoAtual}">${this.rotulo(secaoAtual, u.perfil)}</a>
                 ${body.dataset.titulo ? `<i class="bi bi-chevron-right small"></i><span class="atual">${axionEsc(body.dataset.titulo)}</span>` : ''}
             </div>`);
         }

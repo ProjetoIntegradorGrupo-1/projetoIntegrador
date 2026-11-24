@@ -11,6 +11,9 @@ $nome_usuario   = $eu['nome'];
 $primeiro_nome  = explode(' ', trim($nome_usuario))[0] ?: $nome_usuario;
 $perfil_usuario = $eu['perfil'];
 $csrf           = axion_csrf_token();
+$stFoto = $pdo->prepare("SELECT foto FROM Usuarios WHERE id_usuario = :id");
+$stFoto->execute([':id' => $eu['id']]);
+$minhaFoto = $stFoto->fetchColumn() ?: null;
 
 $isAdmin      = ($perfil_usuario === 'admin');
 $isSupervisor = ($perfil_usuario === 'supervisor');
@@ -124,13 +127,20 @@ $mapaErros = [
                     <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias . ($isMotorista ? ' para assinar' : ' para aprovar'); ?>
                 </a>
                 <?php endif; ?>
-                <div class="d-none d-md-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25">
-                    <i class="bi bi-person-circle fs-4"></i>
-                    <div class="lh-sm">
+                <a href="meuPerfil.html" class="d-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25 text-white text-decoration-none" title="Meu perfil">
+                    <?php if ($minhaFoto): ?>
+                    <img src="backend/api.php?acao=foto_usuario&id=<?php echo (int)$eu['id']; ?>&v=<?php echo urlencode(pathinfo($minhaFoto, PATHINFO_FILENAME)); ?>" alt="" class="axion-avatar" style="width:34px;height:34px">
+                    <?php else: ?>
+                    <span class="axion-avatar axion-avatar-iniciais" style="width:34px;height:34px;font-size:14px"><?php
+                        $partesNome = preg_split('/\s+/', trim($nome_usuario));
+                        echo htmlspecialchars(mb_strtoupper(mb_substr($partesNome[0], 0, 1) . (count($partesNome) > 1 ? mb_substr(end($partesNome), 0, 1) : '')));
+                    ?></span>
+                    <?php endif; ?>
+                    <div class="lh-sm d-none d-md-block">
                         <div class="fw-semibold"><?php echo htmlspecialchars($nome_usuario); ?></div>
-                        <div class="text-white-50"><?php echo ucfirst(htmlspecialchars($perfil_usuario)); ?></div>
+                        <div class="text-white-50"><?php echo ucfirst(htmlspecialchars($perfil_usuario)); ?> · Meu perfil</div>
                     </div>
-                </div>
+                </a>
                 <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
             </div>
         </div>
@@ -448,6 +458,13 @@ $mapaErros = [
 
         // Escapa textos do banco antes de colocar no HTML
         const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // Foto de perfil redonda (ou iniciais do nome)
+        function avatar(url, nome, t) {
+            const est = `width:${t}px;height:${t}px;font-size:${Math.round(t * 0.4)}px`;
+            if (url) return `<img src="${esc(url)}" alt="" class="axion-avatar borda-escura" style="${est}">`;
+            const p = String(nome || '?').trim().split(/\s+/);
+            return `<span class="axion-avatar axion-avatar-iniciais borda-escura" style="${est}">${esc(((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase())}</span>`;
+        }
         const dataBR = (d) => d ? d.slice(0, 10).split('-').reverse().join('/') : '-';
         const getJson = async (url) => (await fetch(url, { headers: { Accept: 'application/json' } })).json();
 
@@ -578,8 +595,13 @@ $mapaErros = [
             usuarios: (u) => `
                 <tr class="${u.status === 'inativo' ? 'text-muted' : ''}">
                     <td>
-                        <div class="fw-semibold">${esc(u.nome)} ${u.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}</div>
-                        ${u.perfil === 'motorista' ? `<div class="small text-muted">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}
+                        <div class="d-flex align-items-center gap-2">
+                            ${avatar(u.foto_url, u.nome, 36)}
+                            <div>
+                                <div class="fw-semibold">${esc(u.nome)} ${u.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}</div>
+                                ${u.perfil === 'motorista' ? `<div class="small text-muted">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}
+                            </div>
+                        </div>
                     </td>
                     <td class="font-monospace small">${esc(u.cpf_matricula)}</td>
                     <td>${badgePerfil(u.perfil)}</td>
@@ -799,7 +821,7 @@ $mapaErros = [
                 document.getElementById('tbody-equipe').innerHTML = d.equipe.length ? d.equipe.map(m => {
                     const vencida = m.validade_cnh && m.validade_cnh < hoje;
                     return `<tr>
-                        <td class="fw-semibold">${esc(m.nome)}</td>
+                        <td class="fw-semibold"><div class="d-flex align-items-center gap-2">${avatar(m.foto_url, m.nome, 30)}${esc(m.nome)}</div></td>
                         <td class="small">${m.validade_cnh ? (vencida ? `<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Vencida ${dataBR(m.validade_cnh)}</span>` : `${esc(m.categoria_cnh || '')} · ${dataBR(m.validade_cnh)}`) : '-'}</td>
                         <td class="small">${m.ultima_vistoria ? dataBR(m.ultima_vistoria) : '<span class="text-muted">Nenhuma</span>'}</td>
                     </tr>`;
