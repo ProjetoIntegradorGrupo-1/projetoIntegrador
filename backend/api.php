@@ -108,7 +108,12 @@ if ($acao === 'buscar') {
             }
             $sql .= " AND ($cond)";
         }
-        if ($filtroExtra !== '') {
+        if ($filtroExtra === 'minha_equipe') {
+            $sql .= " AND u.id_supervisor = :me";
+            $params[':me'] = $u['id'];
+        } elseif ($filtroExtra === 'inativo') {
+            $sql .= " AND u.status <> 'ativo'";
+        } elseif ($filtroExtra !== '') {
             $sql .= " AND u.perfil = :perfil";
             $params[':perfil'] = $filtroExtra;
         }
@@ -190,6 +195,90 @@ if ($acao === 'buscar') {
     }
 
     axion_json(['sucesso' => false, 'erro' => 'Tipo de busca inválido'], 400);
+}
+
+// 1a. DADOS DO PAINEL (indicadores e gráficos), conforme o perfil de quem está logado
+if ($acao === 'dashboard') {
+    $u = axion_exigir_perfil();
+    $p = $u['perfil'];
+    // Quais vistorias entram nos números de cada perfil
+    $esc = '1=1';
+    $par = [];
+    if ($p === 'motorista') {
+        $esc = 'e.id_motorista = :me';
+        $par[':me'] = $u['id'];
+    } elseif ($p === 'supervisor') {
+        $esc = '(e.id_vistoriador = :me OR e.id_motorista IN (SELECT id_usuario FROM Usuarios WHERE id_supervisor = :me2))';
+        $par[':me'] = $u['id'];
+        $par[':me2'] = $u['id'];
+    }
+    $q = function (string $sql, array $extra = []) use ($pdo, $par) {
+        $st = $pdo->prepare($sql);
+        $st->execute($par + $extra);
+        return $st;
+    };
+
+    $tot = $q("SELECT COUNT(*) AS total,
+                      SUM(e.status_conformidade = 'conforme') AS conformes,
+                      SUM(e.status_conformidade = 'nao_conforme') AS nao_conformes,
+                      SUM(e.assinado_em IS NULL AND e.recusado_em IS NULL) AS aguardando,
+                      SUM(e.recusado_em IS NOT NULL) AS recusadas,
+                      SUM(e.data_vistoria >= CURDATE() - INTERVAL 29 DAY) AS ultimos30,
+                      MAX(e.data_vistoria) AS ultima
+               FROM Checklist_Execucoes e WHERE $esc")->fetch();
+
+    // Vistorias por dia nos últimos 14 dias (conforme x não conforme)
+    $porDia = $q("SELECT e.data_vistoria AS dia, SUM(e.status_conformidade = 'conforme') AS c, SUM(e.status_conformidade = 'nao_conforme') AS n
+                  FROM Checklist_Execucoes e WHERE $esc AND e.data_vistoria >= CURDATE() - INTERVAL 13 DAY GROUP BY e.data_vistoria")->fetchAll();
+    $mapa = [];
+    foreach ($porDia as $d) $mapa[$d['dia']] = $d;
+    $serie = [];
+    for ($i = 13; $i >= 0; $i--) {
+        $dia = date('Y-m-d', strtotime("-$i day"));
+        $serie[] = ['dia' => $dia, 'conforme' => (int)($mapa[$dia]['c'] ?? 0), 'nao_conforme' => (int)($mapa[$dia]['n'] ?? 0)];
+    }
+
+    $frota = $pdo->query("SELECT status, COUNT(*) AS qtd FROM Veiculos GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    $dados = [
+        'perfil' => $p,
+        'vistorias' => array_map('intval', array_slice($tot, 0, 6)) + ['ultima' => $tot['ultima']],
+        'por_dia' => $serie,
+        'frota' => ['ativo' => (int)($frota['ativo'] ?? 0), 'em_rota' => (int)($frota['em_rota'] ?? 0), 'manutencao' => (int)($frota['manutencao'] ?? 0)],
+        'checklists_ativos' => (int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE ativo = 1")->fetchColumn(),
+    ];
+    $stPend = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE recusado_em IS NULL AND
+        ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
+    $stPend->execute([':a' => $u['id'], ':b' => $u['id']]);
+    $dados['minhas_pendencias'] = (int)$stPend->fetchColumn();
+
+    if (in_array($p, ['admin', 'supervisor'], true)) {
+        // Vistorias por motorista nos últimos 30 dias
+        $dados['por_motorista'] = $q("SELECT e.nome_motorista AS nome, SUM(e.status_conformidade = 'conforme') AS conforme, SUM(e.status_conformidade = 'nao_conforme') AS nao_conforme
+            FROM Checklist_Execucoes e WHERE $esc AND e.data_vistoria >= CURDATE() - INTERVAL 29 DAY
+            GROUP BY e.id_motorista, e.nome_motorista ORDER BY COUNT(*) DESC LIMIT 8")->fetchAll();
+        // Veículos com mais avarias nos últimos 90 dias
+        $dados['top_avarias'] = $q("SELECT e.placa_veiculo AS placa, COUNT(*) AS qtd FROM Checklist_Execucoes e
+            WHERE $esc AND e.status_conformidade = 'nao_conforme' AND e.data_vistoria >= CURDATE() - INTERVAL 89 DAY
+            GROUP BY e.placa_veiculo ORDER BY qtd DESC LIMIT 5")->fetchAll();
+    }
+    if ($p === 'admin') {
+        $dados['usuarios'] = $pdo->query("SELECT perfil, COUNT(*) FROM Usuarios WHERE status = 'ativo' GROUP BY perfil")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $dados['usuarios_inativos'] = (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE status <> 'ativo'")->fetchColumn();
+    }
+    if ($p === 'supervisor') {
+        $st = $pdo->prepare("SELECT id_usuario, nome, validade_cnh, categoria_cnh,
+                (SELECT MAX(data_vistoria) FROM Checklist_Execucoes x WHERE x.id_motorista = u.id_usuario) AS ultima_vistoria
+            FROM Usuarios u WHERE u.id_supervisor = :me AND u.perfil = 'motorista' AND u.status = 'ativo' ORDER BY nome");
+        $st->execute([':me' => $u['id']]);
+        $dados['equipe'] = $st->fetchAll();
+    }
+    if ($p === 'motorista') {
+        $st = $pdo->prepare("SELECT validade_cnh, categoria_cnh FROM Usuarios WHERE id_usuario = :me");
+        $st->execute([':me' => $u['id']]);
+        $dados['cnh'] = $st->fetch();
+    }
+    axion_json(['sucesso' => true, 'dados' => $dados]);
 }
 
 // 1b. PESSOAS PARA A VISTORIA (motoristas e supervisores, com o vínculo motorista -> supervisor)
@@ -624,7 +713,7 @@ if ($acao === 'salvar_nao_conformidade' && $ehPost) {
     $v = axion_carregar_vistoria($pdo, $eu, $id);
     $bloqueada = !$v || $v['recusado_em'] || $v['assinado_motorista_em'] || $v['assinado_vistoriador_em']
         || (int)$v['id_registrado_por'] !== $eu['id'];
-    if ($bloqueada) { header("Location: ../oqfazer.php?aba=checklists&erro=vistoria_invalida"); exit; }
+    if ($bloqueada) { header("Location: ../oqfazer.php?aba=vistorias&erro=vistoria_invalida"); exit; }
     $descricao = trim($_POST['descricao_detalhada'] ?? '');
     if ($descricao === '') { header("Location: ../detalhesNaoConformidade.html?id=$id&erro=descricao_obrigatoria"); exit; }
 

@@ -1,41 +1,58 @@
 <?php
-// oqfazer.php — Painel Web Principal do Sistema Axion (Dashboard, Abas por Nível de Acesso e Central de Buscas)
+// oqfazer.php — Painel principal do Sistema Axion.
+// Menu lateral com as áreas do sistema e um painel inicial diferente para cada perfil
+// (Admin, Supervisor, Motorista e Cliente), com indicadores e gráficos.
 require_once __DIR__ . '/conexao.php';
 require_once __DIR__ . '/backend/auth.php';
 
-// O nível de acesso vem do banco a cada página (não existe mais "simular/trocar perfil")
+// O nível de acesso vem do banco a cada página (não existe "simular/trocar perfil")
 $eu             = axion_exigir_perfil();
 $nome_usuario   = $eu['nome'];
+$primeiro_nome  = explode(' ', trim($nome_usuario))[0] ?: $nome_usuario;
 $perfil_usuario = $eu['perfil'];
 $csrf           = axion_csrf_token();
 
 $isAdmin      = ($perfil_usuario === 'admin');
-$isGestor     = in_array($perfil_usuario, ['admin', 'supervisor'], true);
+$isSupervisor = ($perfil_usuario === 'supervisor');
+$isGestor     = $isAdmin || $isSupervisor;
 $isMotorista  = ($perfil_usuario === 'motorista');
 $isCliente    = ($perfil_usuario === 'cliente');
+$podeVistoriar = $isGestor || $isMotorista;
 
-// Estatísticas em tempo real do banco axion_db
-$stats = [
-    'veiculos'     => (int)$pdo->query("SELECT COUNT(*) FROM Veiculos")->fetchColumn(),
-    'motoristas'   => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'motorista'")->fetchColumn(),
-    'clientes'     => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'cliente'")->fetchColumn(),
-    'supervisores' => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'supervisor'")->fetchColumn(),
-    'admins'       => (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'admin'")->fetchColumn(),
-    'checklists'   => (int)$pdo->query("SELECT COUNT(*) FROM Checklists")->fetchColumn(),
-];
-// Vistorias: motorista vê só as dele; os demais veem todas
-$filtroVist = $perfil_usuario === 'motorista' ? ' WHERE id_motorista = ' . (int)$eu['id'] : '';
-$filtroVistAnd = $filtroVist ? $filtroVist . ' AND ' : ' WHERE ';
-$stats['vistorias']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes$filtroVist")->fetchColumn();
-$stats['nao_conformes'] = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}status_conformidade = 'nao_conforme'")->fetchColumn();
-$stats['pendentes']     = (int)$pdo->query("SELECT COUNT(*) FROM Checklist_Execucoes{$filtroVistAnd}assinado_em IS NULL AND recusado_em IS NULL")->fetchColumn();
 // Solicitações que dependem da assinatura do usuário logado
 $stPend = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Execucoes WHERE recusado_em IS NULL AND
     ((id_motorista = :a AND assinado_motorista_em IS NULL) OR (id_vistoriador = :b AND assinado_vistoriador_em IS NULL))");
 $stPend->execute([':a' => $eu['id'], ':b' => $eu['id']]);
 $minhasPendencias = (int)$stPend->fetchColumn();
 
-$abaAtiva = $_GET['aba'] ?? 'inicio';
+// Menu de acordo com o perfil
+$menu = [
+    'inicio'     => ['bi-speedometer2', 'Painel'],
+    'vistorias'  => ['bi-clipboard2-check', $isMotorista ? 'Minhas vistorias' : 'Vistorias'],
+    'frota'      => ['bi-truck-front', 'Frota'],
+];
+if ($isGestor) {
+    $menu['usuarios']   = ['bi-people', $isSupervisor ? 'Equipe e usuários' : 'Usuários'];
+    $menu['checklists'] = ['bi-ui-checks-grid', 'Modelos de checklist'];
+}
+if ($isAdmin) {
+    $menu['admin'] = ['bi-gear', 'Administração'];
+}
+
+// Compatibilidade com os links antigos (?aba=veiculos / ?aba=checklists)
+$aba = $_GET['aba'] ?? 'inicio';
+$aba = ['veiculos' => 'frota'][$aba] ?? $aba;
+if (!isset($menu[$aba])) $aba = 'inicio';
+
+$subtitulos = [
+    'admin'      => 'Visão geral de todo o sistema: frota, usuários e vistorias.',
+    'supervisor' => 'Acompanhe a sua equipe e aprove as vistorias que chegam para você.',
+    'motorista'  => 'Faça suas vistorias e acompanhe o que ainda falta assinar.',
+    'cliente'    => 'Consulta da frota e do histórico de vistorias.',
+];
+$hora = (int)date('H');
+$saudacao = $hora < 12 ? 'Bom dia' : ($hora < 18 ? 'Boa tarde' : 'Boa noite');
+
 $sucessoMsg = $_GET['sucesso'] ?? '';
 $mapaMensagens = [
     'admin_cadastrado'      => 'Administrador cadastrado.',
@@ -67,586 +84,657 @@ $mapaErros = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Web - Axion Gestão de Frota & Checklists</title>
+    <title>Painel - Axion Gestão de Frota & Checklists</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <style>
+        :root {
+            --st-good: #0ca30c; --st-critical: #d03b3b; --st-warning: #fab219;
+            --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a;
+        }
+        .painel-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.25rem; width: 100%; flex: 1; }
+        .painel-menu { width: 230px; flex-shrink: 0; }
+        .painel-menu .menu-box { position: sticky; top: 1rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .75rem; }
+        .painel-menu .menu-link { display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: 10px; color: var(--axion-text); text-decoration: none; font-weight: 500; }
+        .painel-menu .menu-link:hover { background: #eef3f9; }
+        .painel-menu .menu-link.ativo { background: var(--axion-primary); color: #fff; }
+        .painel-menu .menu-link .badge { margin-left: auto; }
+        .painel-menu .menu-titulo { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--axion-muted); padding: .5rem .75rem .25rem; }
+        .painel-conteudo { flex: 1; min-width: 0; }
+        .secao { display: none; }
+        .secao.ativa { display: block; }
+        .kpi { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1rem 1.1rem; height: 100%; }
+        .kpi .kpi-rotulo { font-size: .8rem; color: var(--axion-muted); display: flex; align-items: center; gap: .4rem; }
+        .kpi .kpi-valor { font-size: 1.9rem; font-weight: 700; line-height: 1.1; margin-top: .25rem; }
+        .kpi .kpi-detalhe { font-size: .78rem; color: var(--axion-muted); }
+        .cartao { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1.1rem 1.2rem; height: 100%; }
+        .cartao h3 { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+        .cartao .cartao-sub { font-size: .78rem; color: var(--axion-muted); margin-bottom: .75rem; }
+        .grafico { position: relative; height: 240px; }
+        .grafico-vazio { height: 240px; display: flex; align-items: center; justify-content: center; color: var(--axion-muted); font-size: .9rem; text-align: center; }
+        .acao-rapida { display: flex; align-items: center; gap: .75rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .9rem 1rem; text-decoration: none; color: var(--axion-text); height: 100%; transition: .15s; }
+        .acao-rapida:hover { border-color: var(--axion-accent); box-shadow: 0 6px 18px rgba(37, 99, 235, .12); transform: translateY(-1px); }
+        .acao-rapida .ic { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+        .acao-rapida .t { font-weight: 600; line-height: 1.2; }
+        .acao-rapida .d { font-size: .78rem; color: var(--axion-muted); }
+        .acao-rapida.destaque { background: var(--axion-primary); color: #fff; border-color: var(--axion-primary); }
+        .acao-rapida.destaque .d { color: rgba(255, 255, 255, .8); }
+        .secao-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+        .secao-topo h1 { font-size: 1.35rem; font-weight: 700; margin: 0; }
+        .secao-topo p { margin: 0; color: var(--axion-muted); font-size: .9rem; }
+        @media (max-width: 991px) {
+            .painel-layout { flex-direction: column; padding-top: 1rem; }
+            .painel-menu { width: 100%; }
+            .painel-menu .menu-box { position: static; display: flex; overflow-x: auto; gap: .25rem; padding: .5rem; }
+            .painel-menu .menu-titulo, .painel-menu .menu-cta { display: none; }
+            .painel-menu .menu-link { white-space: nowrap; }
+        }
+    </style>
 </head>
 
 <body>
-
-    <!-- NAVBAR SUPERIOR WEB -->
     <nav class="axion-navbar text-white">
-        <div class="container-fluid px-3 px-lg-5 d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <a href="oqfazer.php" class="axion-brand">
-                    <i class="bi bi-truck-front-fill fs-4"></i>
-                    <span>AXION</span>
-                    <span class="axion-brand-badge">Frota & Checklists Web</span>
-                </a>
-            </div>
-
-            <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3">
+        <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <a href="oqfazer.php" class="axion-brand">
+                <i class="bi bi-truck-front-fill fs-4"></i>
+                <span>AXION</span>
+                <span class="axion-brand-badge">Frota & Checklists</span>
+            </a>
+            <div class="d-flex align-items-center gap-2 gap-md-3">
                 <?php if ($minhasPendencias > 0): ?>
-                <a href="#solicitacoes" class="btn btn-sm btn-warning fw-semibold">
+                <a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold" title="Vistorias aguardando a sua assinatura">
                     <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?> para assinar
                 </a>
                 <?php endif; ?>
-                <span class="badge bg-light text-dark d-flex align-items-center gap-1 px-3 py-2">
-                    <i class="bi bi-shield-lock-fill text-primary"></i>
-                    Nível: <?php echo strtoupper(htmlspecialchars($perfil_usuario)); ?>
-                </span>
-
-                <div class="d-none d-md-flex align-items-center gap-2 text-white-50 small border-start ps-3 border-light border-opacity-25">
-                    <i class="bi bi-person-circle fs-5 text-white"></i>
+                <div class="d-none d-md-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25">
+                    <i class="bi bi-person-circle fs-4"></i>
                     <div class="lh-sm">
-                        <div class="text-white fw-semibold"><?php echo htmlspecialchars($nome_usuario); ?></div>
-                        <div class="small">Sessão ativa</div>
+                        <div class="fw-semibold"><?php echo htmlspecialchars($nome_usuario); ?></div>
+                        <div class="text-white-50"><?php echo ucfirst(htmlspecialchars($perfil_usuario)); ?></div>
                     </div>
                 </div>
-
-                <a href="logout.php" class="btn btn-sm btn-outline-light">
-                    <i class="bi bi-box-arrow-right me-1"></i>Sair
-                </a>
+                <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
             </div>
         </div>
     </nav>
 
-    <!-- CONTEÚDO PRINCIPAL WEB -->
-    <main class="axion-web-container">
-
-        <?php if ($erroMsg && isset($mapaErros[$erroMsg])): ?>
-            <div class="alert alert-danger shadow-sm mb-4" role="alert">
-                <i class="bi bi-exclamation-octagon-fill me-2"></i><?php echo htmlspecialchars($mapaErros[$erroMsg]); ?>
+    <div class="painel-layout">
+        <!-- MENU LATERAL -->
+        <aside class="painel-menu">
+            <div class="menu-box">
+                <?php if ($podeVistoriar): ?>
+                <a href="cadcheck.html" class="btn btn-warning fw-semibold w-100 mb-2 menu-cta"><i class="bi bi-plus-circle me-1"></i>Nova vistoria</a>
+                <?php endif; ?>
+                <div class="menu-titulo">Menu</div>
+                <?php foreach ($menu as $chave => [$icone, $rotulo]): ?>
+                <a href="#<?php echo $chave; ?>" class="menu-link <?php echo $aba === $chave ? 'ativo' : ''; ?>" data-secao="<?php echo $chave; ?>">
+                    <i class="bi <?php echo $icone; ?>"></i><span><?php echo htmlspecialchars($rotulo); ?></span>
+                    <?php if ($chave === 'vistorias' && $minhasPendencias > 0): ?>
+                    <span class="badge rounded-pill bg-warning text-dark"><?php echo $minhasPendencias; ?></span>
+                    <?php endif; ?>
+                </a>
+                <?php endforeach; ?>
             </div>
-        <?php endif; ?>
+        </aside>
 
-        <?php if ($sucessoMsg && isset($mapaMensagens[$sucessoMsg])): ?>
-            <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex align-items-center mb-4" role="alert">
+        <main class="painel-conteudo">
+            <?php if ($erroMsg && isset($mapaErros[$erroMsg])): ?>
+            <div class="alert alert-danger shadow-sm" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i><?php echo htmlspecialchars($mapaErros[$erroMsg]); ?></div>
+            <?php endif; ?>
+            <?php if ($sucessoMsg && isset($mapaMensagens[$sucessoMsg])): ?>
+            <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex align-items-center" role="alert">
                 <i class="bi bi-check-circle-fill fs-5 me-2"></i>
                 <div><?php echo htmlspecialchars($mapaMensagens[$sucessoMsg]); ?></div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
             </div>
-        <?php endif; ?>
-
-        <!-- SOLICITAÇÕES DE ASSINATURA DO USUÁRIO LOGADO -->
-        <?php if ($minhasPendencias > 0): ?>
-        <div class="card border-warning shadow-sm mb-4" id="solicitacoes">
-            <div class="card-header bg-warning-subtle fw-semibold">
-                <i class="bi bi-bell-fill text-warning-emphasis me-1"></i>
-                Solicitações de assinatura para você (<?php echo $minhasPendencias; ?>)
-            </div>
-            <div class="list-group list-group-flush" id="lista-solicitacoes">
-                <div class="list-group-item text-muted small">Carregando...</div>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- INDICADORES DO SISTEMA (KPIs) -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-primary-subtle text-primary"><i class="bi bi-car-front-fill"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['veiculos']; ?></div>
-                        <div class="text-muted small">Carros na Frota</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-success-subtle text-success"><i class="bi bi-person-vcard-fill"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['motoristas']; ?></div>
-                        <div class="text-muted small">Motoristas</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-info-subtle text-info-emphasis"><i class="bi bi-people-fill"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['clientes']; ?></div>
-                        <div class="text-muted small">Clientes</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-warning-subtle text-warning-emphasis"><i class="bi bi-person-badge-fill"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['supervisores']; ?> <span class="fs-6 text-muted fw-normal">(+<?php echo $stats['admins']; ?> Adm)</span></div>
-                        <div class="text-muted small">Supervisores</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-ui-checks-grid"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['checklists']; ?></div>
-                        <div class="text-muted small">Modelos Checklist</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6 col-md-4 col-xl-2">
-                <div class="axion-stat-card d-flex align-items-center gap-3">
-                    <div class="axion-stat-icon bg-danger-subtle text-danger"><i class="bi bi-clipboard2-check-fill"></i></div>
-                    <div>
-                        <div class="h4 fw-bold mb-0"><?php echo $stats['vistorias']; ?></div>
-                        <div class="text-muted small"><?php echo $perfil_usuario === 'motorista' ? 'Minhas Vistorias' : 'Vistorias Realizadas'; ?></div>
-                        <div class="small"><span class="text-danger"><?php echo $stats['nao_conformes']; ?> não conformes</span> · <span class="text-warning-emphasis"><?php echo $stats['pendentes']; ?> aguardando assinatura</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <p class="small text-muted mt-n2 mb-4"><i class="bi bi-info-circle me-1"></i>Indicadores calculados na hora, contando os registros do banco: carros cadastrados, usuários por perfil, modelos de checklist e vistorias (com quantas deram não conforme e quantas ainda aguardam assinatura).</p>
-
-        <!-- NAVEGAÇÃO EM ABAS (Adaptada ao Nível de Acesso: Admin, Supervisor, Motorista, Cliente) -->
-        <ul class="nav nav-tabs axion-nav-tabs mb-4" id="axionMainTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link <?php echo $abaAtiva === 'inicio' ? 'active' : ''; ?>" id="tab-inicio" data-bs-toggle="tab" data-bs-target="#pane-inicio" type="button" role="tab">
-                    <i class="bi bi-grid-1x2-fill"></i> Ações Diretas (Início)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link <?php echo $abaAtiva === 'veiculos' ? 'active' : ''; ?>" id="tab-veiculos" data-bs-toggle="tab" data-bs-target="#pane-veiculos" type="button" role="tab" onclick="carregarBusca('veiculos')">
-                    <i class="bi bi-car-front"></i> Busca de Carros (<?php echo $stats['veiculos']; ?>)
-                </button>
-            </li>
-            <?php if ($isGestor): ?>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link <?php echo $abaAtiva === 'usuarios' ? 'active' : ''; ?>" id="tab-usuarios" data-bs-toggle="tab" data-bs-target="#pane-usuarios" type="button" role="tab" onclick="carregarBusca('usuarios')">
-                    <i class="bi bi-people"></i> Busca de Usuários (<?php echo $stats['motoristas'] + $stats['clientes'] + $stats['supervisores'] + $stats['admins']; ?>)
-                </button>
-            </li>
             <?php endif; ?>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link <?php echo $abaAtiva === 'checklists' ? 'active' : ''; ?>" id="tab-checklists" data-bs-toggle="tab" data-bs-target="#pane-checklists" type="button" role="tab" onclick="carregarBusca('checklists'); carregarBusca('vistorias');">
-                    <i class="bi bi-card-checklist"></i> Busca de Checklists & Vistorias
-                </button>
-            </li>
-            <?php if ($isAdmin): ?>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link <?php echo $abaAtiva === 'admin' ? 'active' : ''; ?>" id="tab-admin" data-bs-toggle="tab" data-bs-target="#pane-admin" type="button" role="tab">
-                    <i class="bi bi-Database-fill-gear bi-sliders"></i> Administração (Admin)
-                </button>
-            </li>
-            <?php endif; ?>
-        </ul>
 
-        <!-- CONTEÚDO DAS ABAS -->
-        <div class="tab-content" id="axionMainTabsContent">
-
-            <!-- ABA 1: AÇÕES DIRETAS (Substitui os antigos radio buttons por botões de abertura direta em 1 clique) -->
-            <div class="tab-pane fade <?php echo $abaAtiva === 'inicio' ? 'show active' : ''; ?>" id="pane-inicio" role="tabpanel">
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <!-- ===================== PAINEL INICIAL ===================== -->
+            <section class="secao" id="secao-inicio">
+                <div class="secao-topo">
                     <div>
-                        <h2 class="h5 fw-bold mb-1">Acesso Rápido por Botões Diretos</h2>
-                        <p class="text-muted small mb-0">Clique diretamente na operação desejada (opções exibidas conforme seu nível de acesso: <strong><?php echo strtoupper($perfil_usuario); ?></strong>).</p>
+                        <h1><?php echo $saudacao . ', ' . htmlspecialchars($primeiro_nome); ?></h1>
+                        <p><?php echo $subtitulos[$perfil_usuario]; ?></p>
                     </div>
                 </div>
 
-                <div class="row g-3 mb-4">
-                    <?php if ($isGestor): ?>
-                    <!-- GESTÃO DE USUÁRIOS -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="caduser.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-primary-subtle text-primary"><i class="bi bi-person-plus-fill"></i></div>
-                                <div class="action-title">Cadastrar Usuário</div>
-                                <div class="action-desc">Cadastre Motoristas, Clientes, Supervisores ou Admins com validação de CPF e busca de CEP.</div>
-                            </div>
-                            <span class="btn btn-sm btn-primary w-100"><i class="bi bi-arrow-right-circle me-1"></i>Abrir Cadastro</span>
-                        </a>
+                <?php if ($minhasPendencias > 0): ?>
+                <div class="card border-warning shadow-sm mb-3">
+                    <div class="card-header bg-warning-subtle fw-semibold">
+                        <i class="bi bi-bell-fill text-warning-emphasis me-1"></i>
+                        <?php echo $isSupervisor || $isAdmin ? 'Vistorias aguardando a sua aprovação' : 'Vistorias aguardando a sua assinatura'; ?> (<?php echo $minhasPendencias; ?>)
                     </div>
+                    <div class="list-group list-group-flush" id="lista-solicitacoes">
+                        <div class="list-group-item text-muted small">Carregando...</div>
+                    </div>
+                </div>
+                <?php endif; ?>
 
-                    <!-- GESTÃO DE VEÍCULOS -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="cadcar.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-success-subtle text-success"><i class="bi bi-car-front-fill"></i></div>
-                                <div class="action-title">Cadastrar Veículo</div>
-                                <div class="action-desc">Inclua novos carros, utilitários ou caminhões com máscara de placa Mercosul, Renavam e Chassi.</div>
-                            </div>
-                            <span class="btn btn-sm btn-success w-100"><i class="bi bi-arrow-right-circle me-1"></i>Abrir Cadastro</span>
+                <!-- Atalhos do perfil -->
+                <div class="row g-3 mb-3">
+                    <?php
+                    $atalhos = [];
+                    if ($podeVistoriar) $atalhos[] = ['cadcheck.html', 'bi-clipboard2-plus', 'Nova vistoria', 'Preencher o checklist de um veículo', true];
+                    if ($isGestor) {
+                        $atalhos[] = ['caduser.html', 'bi-person-plus', $isSupervisor ? 'Cadastrar motorista' : 'Cadastrar usuário', $isSupervisor ? 'Já vinculado à sua equipe' : 'Motorista, cliente, supervisor ou admin', false];
+                        $atalhos[] = ['cadcar.html', 'bi-truck', 'Cadastrar veículo', 'Incluir um carro na frota', false];
+                        $atalhos[] = ['criarChecklist.html', 'bi-ui-checks', 'Criar modelo de checklist', 'Perguntas e subperguntas', false];
+                    }
+                    if ($isMotorista) $atalhos[] = ['#vistorias', 'bi-clock-history', 'Minhas vistorias', 'Histórico e situação de cada uma', false];
+                    if ($isCliente) {
+                        $atalhos[] = ['#frota', 'bi-truck-front', 'Consultar frota', 'Veículos e situação atual', true];
+                        $atalhos[] = ['#vistorias', 'bi-clipboard2-check', 'Consultar vistorias', 'Histórico de inspeções', false];
+                    }
+                    foreach ($atalhos as [$href, $ic, $t, $d, $destaque]): ?>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <a href="<?php echo $href; ?>" class="acao-rapida <?php echo $destaque ? 'destaque' : ''; ?>" <?php echo $href[0] === '#' ? 'data-secao="' . substr($href, 1) . '"' : ''; ?>>
+                            <span class="ic <?php echo $destaque ? 'bg-white text-primary' : 'bg-primary-subtle text-primary'; ?>"><i class="bi <?php echo $ic; ?>"></i></span>
+                            <span><span class="t d-block"><?php echo $t; ?></span><span class="d"><?php echo $d; ?></span></span>
                         </a>
                     </div>
+                    <?php endforeach; ?>
+                </div>
 
-                    <!-- CRIAR MODELO DE CHECKLIST -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="criarChecklist.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-info-subtle text-info-emphasis"><i class="bi bi-file-earmark-plus-fill"></i></div>
-                                <div class="action-title">Criar Modelo Checklist</div>
-                                <div class="action-desc">Monte formulários inteligentes com perguntas principais e subperguntas condicionais.</div>
-                            </div>
-                            <span class="btn btn-sm btn-info text-white w-100"><i class="bi bi-arrow-right-circle me-1"></i>Criar Checklist</span>
-                        </a>
-                    </div>
+                <!-- Indicadores (preenchidos pelo JS conforme o perfil) -->
+                <div class="row g-3 mb-3" id="kpis"></div>
+
+                <!-- Gráficos e quadros do perfil -->
+                <div class="row g-3" id="graficos">
+                    <?php if ($isAdmin): ?>
+                    <div class="col-xl-8"><div class="cartao"><h3>Vistorias nos últimos 14 dias</h3><div class="cartao-sub">Quantidade por dia, separando conformes e não conformes</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Frota por situação</h3><div class="cartao-sub">Veículos cadastrados</div><div class="grafico"><canvas id="g-frota"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Usuários ativos por perfil</h3><div class="cartao-sub" id="sub-usuarios">Contas que podem entrar no sistema</div><div class="grafico"><canvas id="g-usuarios"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Vistorias por motorista</h3><div class="cartao-sub">Últimos 30 dias</div><div class="grafico"><canvas id="g-motoristas"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Vistorias não conformes nos últimos 90 dias</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
+                    <?php elseif ($isSupervisor): ?>
+                    <div class="col-xl-7"><div class="cartao"><h3>Vistorias da sua equipe (14 dias)</h3><div class="cartao-sub">Quantidade por dia, separando conformes e não conformes</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
+                    <div class="col-xl-5"><div class="cartao"><h3>Vistorias por motorista</h3><div class="cartao-sub">Sua equipe nos últimos 30 dias</div><div class="grafico"><canvas id="g-motoristas"></canvas></div></div></div>
+                    <div class="col-xl-7"><div class="cartao">
+                        <h3>Sua equipe</h3><div class="cartao-sub">Motoristas vinculados a você: você aprova as vistorias deles</div>
+                        <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+                            <thead><tr><th>Motorista</th><th>CNH</th><th>Última vistoria</th></tr></thead>
+                            <tbody id="tbody-equipe"><tr><td colspan="3" class="text-muted small">Carregando...</td></tr></tbody>
+                        </table></div>
+                    </div></div>
+                    <div class="col-xl-5"><div class="cartao"><h3>Veículos com mais avarias</h3><div class="cartao-sub">Vistorias não conformes da equipe (90 dias)</div><div class="grafico"><canvas id="g-avarias"></canvas></div></div></div>
+                    <?php elseif ($isMotorista): ?>
+                    <div class="col-xl-7"><div class="cartao"><h3>Suas vistorias nos últimos 14 dias</h3><div class="cartao-sub">Conformes e não conformes por dia</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
+                    <div class="col-xl-5"><div class="cartao">
+                        <h3>Últimas vistorias</h3><div class="cartao-sub">Clique para ver os detalhes</div>
+                        <div class="list-group list-group-flush" id="ultimas-vistorias"><div class="text-muted small">Carregando...</div></div>
+                    </div></div>
+                    <?php else: ?>
+                    <div class="col-xl-8"><div class="cartao"><h3>Vistorias nos últimos 14 dias</h3><div class="cartao-sub">Quantidade por dia, separando conformes e não conformes</div><div class="grafico"><canvas id="g-dias"></canvas></div></div></div>
+                    <div class="col-xl-4"><div class="cartao"><h3>Frota por situação</h3><div class="cartao-sub">Veículos cadastrados</div><div class="grafico"><canvas id="g-frota"></canvas></div></div></div>
                     <?php endif; ?>
+                </div>
+            </section>
 
-                    <?php if ($isGestor || $isMotorista): ?>
-                    <!-- PREENCHER CHECKLIST / VISTORIA -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="cadcheck.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-warning-subtle text-warning-emphasis"><i class="bi bi-clipboard2-check-fill"></i></div>
-                                <div class="action-title">Preencher Checklist</div>
-                                <div class="action-desc">Realize a vistoria de um veículo da frota, informe quilometragem e colha as assinaturas.</div>
-                            </div>
-                            <span class="btn btn-sm btn-warning text-dark fw-semibold w-100"><i class="bi bi-arrow-right-circle me-1"></i>Iniciar Vistoria</span>
-                        </a>
+            <!-- ===================== VISTORIAS ===================== -->
+            <section class="secao" id="secao-vistorias">
+                <div class="secao-topo">
+                    <div>
+                        <h1><?php echo $isMotorista ? 'Minhas vistorias' : 'Vistorias'; ?></h1>
+                        <p>Checklists preenchidos, resultado e situação das assinaturas.</p>
                     </div>
+                    <?php if ($podeVistoriar): ?>
+                    <a href="cadcheck.html" class="btn btn-warning fw-semibold"><i class="bi bi-plus-circle me-1"></i>Nova vistoria</a>
                     <?php endif; ?>
-
-                    <?php if ($isGestor): ?>
-                    <!-- EDITAR USUÁRIO -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="editarUsuario.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-person-gear"></i></div>
-                                <div class="action-title">Editar Usuário</div>
-                                <div class="action-desc">Pesquise e atualize dados cadastrais, categoria de CNH, endereço por CEP ou nível de acesso.</div>
-                            </div>
-                            <span class="btn btn-sm btn-outline-primary w-100">Editar Usuário</span>
-                        </a>
-                    </div>
-
-                    <!-- EDITAR VEÍCULO -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="editarVeiculo.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-wrench-adjustable-circle"></i></div>
-                                <div class="action-title">Editar Veículo</div>
-                                <div class="action-desc">Altere quilometragem, cor, status operacional (Ativo, Em Rota, Manutenção) ou dados do carro.</div>
-                            </div>
-                            <span class="btn btn-sm btn-outline-primary w-100">Editar Veículo</span>
-                        </a>
-                    </div>
-
-                    <!-- EDITAR CHECKLIST -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="editarChecklist.html" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-pencil-square"></i></div>
-                                <div class="action-title">Editar Checklist</div>
-                                <div class="action-desc">Modifique perguntas, respostas esperadas e orientações de não conformidade dos checklists.</div>
-                            </div>
-                            <span class="btn btn-sm btn-outline-primary w-100">Editar Checklist</span>
-                        </a>
-                    </div>
-
-                    <?php endif; ?>
-
-                    <!-- ATALHOS DE BUSCA PARA TODOS OS PERFIS -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="#pane-veiculos" onclick="document.getElementById('tab-veiculos').click(); return false;" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-primary-subtle text-primary"><i class="bi bi-search"></i></div>
-                                <div class="action-title">Buscar Carros (<?php echo $stats['veiculos']; ?>)</div>
-                                <div class="action-desc">Pesquise veículos por placa, modelo, marca, cor, Renavam ou status operacional.</div>
-                            </div>
-                            <span class="btn btn-sm btn-outline-dark w-100"><i class="bi bi-search me-1"></i>Pesquisar Frota</span>
-                        </a>
-                    </div>
-
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <a href="#pane-checklists" onclick="document.getElementById('tab-checklists').click(); return false;" class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-info-subtle text-info-emphasis"><i class="bi bi-journal-check"></i></div>
-                                <div class="action-title">Buscar Checklists</div>
-                                <div class="action-desc">Consulte os <?php echo $stats['checklists']; ?> modelos cadastrados e as <?php echo $stats['vistorias']; ?> vistorias preenchidas.</div>
-                            </div>
-                            <span class="btn btn-sm btn-outline-dark w-100"><i class="bi bi-search me-1"></i>Pesquisar Checklists</span>
-                        </a>
-                    </div>
                 </div>
-            </div>
-
-            <!-- ABA 2: BUSCA DE CARROS / VEÍCULOS -->
-            <div class="tab-pane fade <?php echo $abaAtiva === 'veiculos' ? 'show active' : ''; ?>" id="pane-veiculos" role="tabpanel">
-                <div class="card border-0 shadow-sm p-3 mb-3">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-6">
-                            <label for="busca-veiculos-q" class="form-label small fw-bold mb-1"><i class="bi bi-search me-1"></i>Pesquisar Veículo (Placa, Marca, Modelo, Cor, Renavam ou Chassi)</label>
-                            <input type="text" id="busca-veiculos-q" class="form-control" placeholder="Ex: ABC1D23, Hilux, Gol, Sprinter, Branco..." oninput="carregarBusca('veiculos')">
+                <div class="cartao mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-7">
+                            <input type="search" id="busca-vistorias-q" class="form-control" placeholder="Buscar por placa, motorista, vistoriador ou checklist..." oninput="buscarComAtraso('vistorias')">
                         </div>
-                        <div class="col-md-3">
-                            <label for="busca-veiculos-status" class="form-label small fw-bold mb-1">Filtrar por Status</label>
-                            <select id="busca-veiculos-status" class="form-select" onchange="carregarBusca('veiculos')">
-                                <option value="">Todos os Status (<?php echo $stats['veiculos']; ?>)</option>
-                                <option value="ativo">Ativo</option>
-                                <option value="em_rota">Em Rota</option>
-                                <option value="manutencao">Em Manutenção</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex gap-2">
-                            <button type="button" class="btn btn-primary flex-fill" onclick="carregarBusca('veiculos')"><i class="bi bi-funnel-fill me-1"></i>Filtrar</button>
-                            <?php if ($isGestor): ?>
-                            <a href="cadcar.html" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Novo Carro</a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="axion-table-wrapper">
-                    <div class="table-responsive">
-                        <table class="table table-hover axion-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Placa</th>
-                                    <th>Marca / Modelo</th>
-                                    <th>Ano</th>
-                                    <th>Cor</th>
-                                    <th>Km Rodado</th>
-                                    <th>Renavam / Chassi</th>
-                                    <th>Status</th>
-                                    <th class="text-end">Ações Diretas</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-veiculos">
-                                <tr><td colspan="9" class="text-center py-4 text-muted">Carregando frota de veículos...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ABA 3: BUSCA DE USUÁRIOS (Admin e Supervisor) -->
-            <?php if ($isGestor): ?>
-            <div class="tab-pane fade <?php echo $abaAtiva === 'usuarios' ? 'show active' : ''; ?>" id="pane-usuarios" role="tabpanel">
-                <div class="card border-0 shadow-sm p-3 mb-3">
-                    <div class="row g-2 align-items-end">
                         <div class="col-md-5">
-                            <label for="busca-usuarios-q" class="form-label small fw-bold mb-1"><i class="bi bi-search me-1"></i>Pesquisar Usuário (Nome, CPF, E-mail, CNH ou Cidade)</label>
-                            <input type="text" id="busca-usuarios-q" class="form-control" placeholder="Digite nome, CPF, e-mail ou cidade..." oninput="carregarBusca('usuarios')">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="busca-usuarios-perfil" class="form-label small fw-bold mb-1">Filtrar por Perfil / Nível de Acesso</label>
-                            <select id="busca-usuarios-perfil" class="form-select" onchange="carregarBusca('usuarios')">
-                                <option value="">Todos os Perfis (<?php echo $stats['motoristas'] + $stats['clientes'] + $stats['supervisores'] + $stats['admins']; ?>)</option>
-                                <option value="motorista">Motoristas (<?php echo $stats['motoristas']; ?>)</option>
-                                <option value="cliente">Clientes (<?php echo $stats['clientes']; ?>)</option>
-                                <option value="supervisor">Supervisores (<?php echo $stats['supervisores']; ?>)</option>
-                                <option value="admin">Administradores (<?php echo $stats['admins']; ?>)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex gap-2">
-                            <button type="button" class="btn btn-primary flex-fill" onclick="carregarBusca('usuarios')"><i class="bi bi-funnel-fill me-1"></i>Filtrar</button>
-                            <a href="caduser.html" class="btn btn-success"><i class="bi bi-person-plus-fill me-1"></i>Novo</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="axion-table-wrapper">
-                    <div class="table-responsive">
-                        <table class="table table-hover axion-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Nome Completo</th>
-                                    <th>CPF</th>
-                                    <th>Perfil</th>
-                                    <th>CNH / Cat.</th>
-                                    <th>Cidade/UF (CEP)</th>
-                                    <th>Contato</th>
-                                    <th class="text-end">Ações Diretas</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-usuarios">
-                                <tr><td colspan="8" class="text-center py-4 text-muted">Carregando usuários cadastrados...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <!-- ABA 4: BUSCA DE CHECKLISTS E VISTORIAS -->
-            <div class="tab-pane fade <?php echo $abaAtiva === 'checklists' ? 'show active' : ''; ?>" id="pane-checklists" role="tabpanel">
-                <!-- Sub-bloco 1: Modelos de Checklists -->
-                <div class="card border-0 shadow-sm p-3 mb-3">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                        <h3 class="h6 fw-bold mb-0 text-primary"><i class="bi bi-ui-checks-grid me-1"></i>1. Modelos de Checklists Cadastrados (<?php echo $stats['checklists']; ?>)</h3>
-                        <div class="d-flex gap-2">
-                            <?php if ($isGestor || $isMotorista): ?>
-                            <a href="cadcheck.html" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-clipboard2-check me-1"></i>Preencher Vistoria</a>
-                            <?php endif; ?>
-                            <?php if ($isGestor): ?>
-                            <a href="criarChecklist.html" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg me-1"></i>Criar Novo Modelo</a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-8">
-                            <input type="text" id="busca-checklists-q" class="form-control form-control-sm" placeholder="Buscar modelo de checklist por título ou descrição..." oninput="carregarBusca('checklists')">
-                        </div>
-                        <div class="col-md-4">
-                            <select id="busca-checklists-cat" class="form-select form-select-sm" onchange="carregarBusca('checklists')">
-                                <option value="">Todas as Categorias</option>
-                                <option value="eletrico">Elétrico</option>
-                                <option value="mecanico">Mecânico</option>
-                                <option value="estetico">Estético</option>
-                                <option value="seguranca">Segurança</option>
-                                <option value="pre_viagem">Pré-Viagem / Rota</option>
-                                <option value="outros">Outros</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="axion-table-wrapper mb-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover axion-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Título do Modelo de Checklist</th>
-                                    <th>Categoria</th>
-                                    <th>Perguntas</th>
-                                    <th>Vistorias Realizadas</th>
-                                    <th>Criado por</th>
-                                    <th class="text-end">Ações Diretas</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-checklists">
-                                <tr><td colspan="7" class="text-center py-4 text-muted">Carregando modelos de checklists...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Sub-bloco 2: Histórico de Checklists Preenchidos / Vistorias -->
-                <div class="card border-0 shadow-sm p-3 mb-3">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
-                        <h3 class="h6 fw-bold mb-0 text-success"><i class="bi bi-clipboard2-pulse-fill me-1"></i>2. Busca de Vistorias / Checklists Preenchidos (<?php echo $stats['vistorias']; ?>)</h3>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-8">
-                            <input type="text" id="busca-vistorias-q" class="form-control form-control-sm" placeholder="Buscar por placa do carro, nome do motorista, vistoriador ou checklist..." oninput="carregarBusca('vistorias')">
-                        </div>
-                        <div class="col-md-4">
-                            <select id="busca-vistorias-status" class="form-select form-select-sm" onchange="carregarBusca('vistorias')">
-                                <option value="">Todos os Resultados</option>
-                                <option value="conforme">Conforme (Liberado)</option>
-                                <option value="nao_conforme">Não Conforme (Com Avaria)</option>
+                            <select id="busca-vistorias-status" class="form-select" onchange="carregarBusca('vistorias')">
+                                <option value="">Todas</option>
+                                <?php if (!$isCliente): ?><option value="minhas_pendencias">Aguardando a minha assinatura</option><?php endif; ?>
                                 <option value="pendente">Aguardando assinatura</option>
-                                <option value="minhas_pendencias">Aguardando a MINHA assinatura</option>
+                                <option value="conforme">Conformes</option>
+                                <option value="nao_conforme">Não conformes</option>
                                 <option value="recusada">Recusadas</option>
                             </select>
                         </div>
                     </div>
                 </div>
-
                 <div class="axion-table-wrapper">
                     <div class="table-responsive">
                         <table class="table table-hover axion-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Data / Hora</th>
-                                    <th>Placa</th>
-                                    <th>Checklist Utilizado</th>
-                                    <th>Motorista</th>
-                                    <th>Vistoriador</th>
-                                    <th>Km</th>
-                                    <th>Resultado</th>
-                                    <th class="text-end">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-vistorias">
-                                <tr><td colspan="9" class="text-center py-4 text-muted">Carregando vistorias realizadas...</td></tr>
-                            </tbody>
+                            <thead><tr><th>#</th><th>Data</th><th>Placa</th><th>Checklist</th><th>Motorista</th><th>Vistoriador</th><th>Resultado</th><th class="text-end">Ações</th></tr></thead>
+                            <tbody id="tbody-vistorias"><tr><td colspan="8" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- ABA 5: ADMINISTRAÇÃO DO BANCO (Exclusiva Admin) -->
-            <?php if ($isAdmin): ?>
-            <div class="tab-pane fade <?php echo $abaAtiva === 'admin' ? 'show active' : ''; ?>" id="pane-admin" role="tabpanel">
-                <div class="card border-0 shadow-sm p-4">
-                    <h3 class="h5 fw-bold text-primary mb-2"><i class="bi bi-database-fill-check me-2"></i>Gerenciamento do Banco de Dados (Exclusivo Admin)</h3>
-                    <div class="row g-3 mb-2">
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded border h-100">
-                                <h4 class="h6 fw-bold mb-2">Resumo Atual da Base <code>axion_db</code>:</h4>
-                                <ul class="small mb-0">
-                                    <li><strong>Veículos:</strong> <?php echo $stats['veiculos']; ?></li>
-                                    <li><strong>Motoristas:</strong> <?php echo $stats['motoristas']; ?></li>
-                                    <li><strong>Clientes:</strong> <?php echo $stats['clientes']; ?></li>
-                                    <li><strong>Supervisores:</strong> <?php echo $stats['supervisores']; ?></li>
-                                    <li><strong>Administradores:</strong> <?php echo $stats['admins']; ?></li>
-                                    <li><strong>Modelos de Checklists:</strong> <?php echo $stats['checklists']; ?></li>
-                                    <li><strong>Vistorias:</strong> <?php echo $stats['vistorias']; ?></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded border h-100 d-flex flex-column justify-content-between">
-                                <div>
-                                    <h4 class="h6 fw-bold mb-2 text-danger">Zerar banco de dados</h4>
-                                    <p class="small text-muted">
-                                        Apaga todos os carros, usuários, checklists e vistorias. Ficam só as 4 contas de acesso
-                                        (admin, supervisor, motorista e cliente @axion.com, senha <code>mudar123</code>). Não dá para desfazer.
-                                    </p>
-                                </div>
-                                <form action="database/seed.php" method="post" onsubmit="return confirm('Apagar TODOS os dados do sistema? Esta ação não pode ser desfeita.');">
-                                    <input type="hidden" name="acao" value="zerar">
-                                    <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($csrf); ?>">
-                                    <button type="submit" class="btn btn-danger w-100"><i class="bi bi-trash3 me-1"></i>Zerar banco agora</button>
-                                </form>
-                            </div>
+            <!-- ===================== FROTA ===================== -->
+            <section class="secao" id="secao-frota">
+                <div class="secao-topo">
+                    <div><h1>Frota</h1><p>Veículos cadastrados e situação atual.</p></div>
+                    <?php if ($isGestor): ?>
+                    <a href="cadcar.html" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i>Cadastrar veículo</a>
+                    <?php endif; ?>
+                </div>
+                <div class="cartao mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-8"><input type="search" id="busca-veiculos-q" class="form-control" placeholder="Buscar por placa, marca, modelo, cor, Renavam ou chassi..." oninput="buscarComAtraso('veiculos')"></div>
+                        <div class="col-md-4">
+                            <select id="busca-veiculos-status" class="form-select" onchange="carregarBusca('veiculos')">
+                                <option value="">Todas as situações</option>
+                                <option value="ativo">Ativo</option>
+                                <option value="em_rota">Em rota</option>
+                                <option value="manutencao">Em manutenção</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-            </div>
-            <?php endif; ?>
-        </div>
-    </main>
+                <div class="axion-table-wrapper">
+                    <div class="table-responsive">
+                        <table class="table table-hover axion-table mb-0">
+                            <thead><tr><th>Placa</th><th>Veículo</th><th>Ano</th><th>Cor</th><th>Km</th><th>Situação</th><th class="text-end">Ações</th></tr></thead>
+                            <tbody id="tbody-veiculos"><tr><td colspan="7" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
-    <!-- SCRIPT DE BUSCA DINÂMICA -->
+            <?php if ($isGestor): ?>
+            <!-- ===================== USUÁRIOS ===================== -->
+            <section class="secao" id="secao-usuarios">
+                <div class="secao-topo">
+                    <div>
+                        <h1><?php echo $isSupervisor ? 'Equipe e usuários' : 'Usuários'; ?></h1>
+                        <p><?php echo $isSupervisor ? 'Você gerencia motoristas e clientes. Filtre por "Minha equipe" para ver só os seus motoristas.' : 'Todas as contas do sistema.'; ?></p>
+                    </div>
+                    <a href="caduser.html" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Cadastrar usuário</a>
+                </div>
+                <div class="cartao mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-7"><input type="search" id="busca-usuarios-q" class="form-control" placeholder="Buscar por nome, CPF (com ou sem pontos), e-mail ou cidade..." oninput="buscarComAtraso('usuarios')"></div>
+                        <div class="col-md-5">
+                            <select id="busca-usuarios-perfil" class="form-select" onchange="carregarBusca('usuarios')">
+                                <option value="">Todos os perfis</option>
+                                <?php if ($isSupervisor): ?><option value="minha_equipe" selected>Minha equipe</option><?php endif; ?>
+                                <option value="motorista">Motoristas</option>
+                                <option value="cliente">Clientes</option>
+                                <option value="supervisor">Supervisores</option>
+                                <option value="admin">Administradores</option>
+                                <option value="inativo">Contas desativadas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="axion-table-wrapper">
+                    <div class="table-responsive">
+                        <table class="table table-hover axion-table mb-0">
+                            <thead><tr><th>Nome</th><th>CPF</th><th>Perfil</th><th>CNH</th><th>Contato</th><th class="text-end">Ações</th></tr></thead>
+                            <tbody id="tbody-usuarios"><tr><td colspan="6" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===================== MODELOS DE CHECKLIST ===================== -->
+            <section class="secao" id="secao-checklists">
+                <div class="secao-topo">
+                    <div><h1>Modelos de checklist</h1><p>Os formulários usados nas vistorias.</p></div>
+                    <a href="criarChecklist.html" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Criar modelo</a>
+                </div>
+                <div class="cartao mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-8"><input type="search" id="busca-checklists-q" class="form-control" placeholder="Buscar por título ou descrição..." oninput="buscarComAtraso('checklists')"></div>
+                        <div class="col-md-4">
+                            <select id="busca-checklists-cat" class="form-select" onchange="carregarBusca('checklists')">
+                                <option value="">Todas as categorias</option>
+                                <option value="pre_viagem">Pré-viagem</option>
+                                <option value="mecanico">Mecânico</option>
+                                <option value="eletrico">Elétrico</option>
+                                <option value="seguranca">Segurança</option>
+                                <option value="estetico">Estético</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="axion-table-wrapper">
+                    <div class="table-responsive">
+                        <table class="table table-hover axion-table mb-0">
+                            <thead><tr><th>Modelo</th><th>Categoria</th><th>Perguntas</th><th>Vistorias</th><th>Criado por</th><th class="text-end">Ações</th></tr></thead>
+                            <tbody id="tbody-checklists"><tr><td colspan="6" class="text-center py-4 text-muted">Carregando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <?php endif; ?>
+
+            <?php if ($isAdmin): ?>
+            <!-- ===================== ADMINISTRAÇÃO ===================== -->
+            <section class="secao" id="secao-admin">
+                <div class="secao-topo"><div><h1>Administração</h1><p>Manutenção da base de dados.</p></div></div>
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="cartao">
+                            <h3 class="text-danger"><i class="bi bi-trash3 me-1"></i>Zerar banco de dados</h3>
+                            <p class="small text-muted">Apaga todos os carros, usuários, checklists e vistorias. Ficam só as 4 contas de acesso
+                                (admin, supervisor, motorista e cliente @axion.com, senha <code>mudar123</code>). Não dá para desfazer.</p>
+                            <form action="database/seed.php" method="post" onsubmit="return confirm('Apagar TODOS os dados do sistema? Esta ação não pode ser desfeita.');">
+                                <input type="hidden" name="acao" value="zerar">
+                                <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($csrf); ?>">
+                                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Zerar banco agora</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <?php endif; ?>
+        </main>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
+        const PERFIL = <?php echo json_encode($perfil_usuario); ?>;
         const IS_GESTOR = <?php echo $isGestor ? 'true' : 'false'; ?>;
         const IS_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>;
+        const PODE_VISTORIAR = <?php echo $podeVistoriar ? 'true' : 'false'; ?>;
         const MEU_ID = <?php echo (int)$eu['id']; ?>;
+        const ABA_INICIAL = <?php echo json_encode($aba); ?>;
+        const FILTRO_INICIAL = new URLSearchParams(location.search).get('filtro') || '';
+
         // Escapa textos do banco antes de colocar no HTML
         const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const IS_MOTORISTA = <?php echo $isMotorista ? 'true' : 'false'; ?>;
+        const dataBR = (d) => d ? d.slice(0, 10).split('-').reverse().join('/') : '-';
+        const getJson = async (url) => (await fetch(url, { headers: { Accept: 'application/json' } })).json();
 
+        // ---------- Navegação entre as áreas do menu ----------
+        const carregadas = {};
+        function abrirSecao(nome) {
+            if (!document.getElementById('secao-' + nome)) nome = 'inicio';
+            document.querySelectorAll('.secao').forEach(s => s.classList.toggle('ativa', s.id === 'secao-' + nome));
+            document.querySelectorAll('.menu-link').forEach(a => a.classList.toggle('ativo', a.dataset.secao === nome));
+            const url = new URL(location.href);
+            url.searchParams.set('aba', nome);
+            ['sucesso', 'erro'].forEach(p => url.searchParams.delete(p));
+            history.replaceState(null, '', url);
+            if (!carregadas[nome]) {
+                carregadas[nome] = true;
+                const tipo = { vistorias: 'vistorias', frota: 'veiculos', usuarios: 'usuarios', checklists: 'checklists' }[nome];
+                if (tipo) carregarBusca(tipo);
+            }
+            window.scrollTo({ top: 0 });
+        }
+        document.querySelectorAll('[data-secao]').forEach(a => a.addEventListener('click', (ev) => { ev.preventDefault(); abrirSecao(a.dataset.secao); }));
+
+        // ---------- Etiquetas ----------
         function badgeStatusVeiculo(st) {
-            if (st === 'ativo') return '<span class="badge bg-success-subtle text-success border border-success-subtle">Ativo</span>';
-            if (st === 'em_rota') return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle">Em Rota</span>';
-            if (st === 'manutencao') return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Manutenção</span>';
-            return `<span class="badge bg-secondary">${st}</span>`;
+            if (st === 'ativo') return '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Ativo</span>';
+            if (st === 'em_rota') return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-signpost-2 me-1"></i>Em rota</span>';
+            if (st === 'manutencao') return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-tools me-1"></i>Manutenção</span>';
+            return `<span class="badge bg-secondary">${esc(st)}</span>`;
         }
-
-        function badgePerfilUsuario(p) {
-            if (p === 'admin') return '<span class="badge bg-dark">ADMIN</span>';
-            if (p === 'supervisor') return '<span class="badge bg-warning text-dark">Supervisor</span>';
-            if (p === 'motorista') return '<span class="badge bg-primary">Motorista</span>';
-            return '<span class="badge bg-info text-dark">Cliente</span>';
+        function badgePerfil(p) {
+            return { admin: '<span class="badge bg-dark">Admin</span>', supervisor: '<span class="badge bg-warning text-dark">Supervisor</span>', motorista: '<span class="badge bg-primary">Motorista</span>' }[p] || '<span class="badge bg-info text-dark">Cliente</span>';
         }
-
+        function badgeConformidade(st) {
+            return st === 'nao_conforme' ? '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Não conforme</span>' : '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Conforme</span>';
+        }
         function badgeSituacao(sit) {
-            const m = {
-                concluida: '<span class="badge bg-success-subtle text-success mt-1">Concluída</span>',
-                aguardando_vistoriador: '<span class="badge bg-warning text-dark mt-1">Aguardando supervisor</span>',
-                aguardando_motorista: '<span class="badge bg-warning text-dark mt-1">Aguardando motorista</span>',
-                aguardando_assinaturas: '<span class="badge bg-secondary mt-1">Não assinada</span>',
-                recusada: '<span class="badge bg-dark mt-1">Recusada</span>'
-            };
-            return m[sit] || '';
+            return {
+                concluida: '<span class="badge bg-success-subtle text-success">Concluída</span>',
+                aguardando_vistoriador: '<span class="badge bg-warning text-dark">Aguardando supervisor</span>',
+                aguardando_motorista: '<span class="badge bg-warning text-dark">Aguardando motorista</span>',
+                aguardando_assinaturas: '<span class="badge bg-secondary">Não assinada</span>',
+                recusada: '<span class="badge bg-dark">Recusada</span>'
+            }[sit] || '';
+        }
+
+        // ---------- Tabelas de busca ----------
+        const timers = {};
+        function buscarComAtraso(tipo) { clearTimeout(timers[tipo]); timers[tipo] = setTimeout(() => carregarBusca(tipo), 250); }
+
+        async function carregarBusca(tipo) {
+            const val = (id) => document.getElementById(id)?.value || '';
+            const cfg = {
+                vistorias: ['tbody-vistorias', 8, val('busca-vistorias-q'), val('busca-vistorias-status')],
+                veiculos: ['tbody-veiculos', 7, val('busca-veiculos-q'), val('busca-veiculos-status')],
+                usuarios: ['tbody-usuarios', 6, val('busca-usuarios-q'), val('busca-usuarios-perfil')],
+                checklists: ['tbody-checklists', 6, val('busca-checklists-q'), val('busca-checklists-cat')],
+            }[tipo];
+            const tbody = document.getElementById(cfg[0]);
+            if (!tbody) return;
+            try {
+                const json = await getJson(`backend/api.php?acao=buscar&tipo=${tipo}&q=${encodeURIComponent(cfg[2])}&filtro=${encodeURIComponent(cfg[3])}&limite=250`);
+                const dados = json.dados || [];
+                if (!dados.length) {
+                    tbody.innerHTML = `<tr><td colspan="${cfg[1]}" class="text-center py-4 text-muted">Nada encontrado.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = dados.map(linhas[tipo]).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="${cfg[1]}" class="text-center py-4 text-danger">Não foi possível carregar.</td></tr>`;
+            }
+        }
+
+        const linhas = {
+            vistorias: (v) => `
+                <tr>
+                    <td class="text-muted small">#${v.id_execucao}</td>
+                    <td class="small">${dataBR(v.data_vistoria)} <span class="text-muted">${esc((v.hora_vistoria || '').slice(0, 5))}</span></td>
+                    <td><span class="badge bg-dark font-monospace">${esc(v.placa_veiculo)}</span></td>
+                    <td class="small fw-semibold">${esc(v.checklist_titulo)}</td>
+                    <td class="small">${esc(v.nome_motorista)}</td>
+                    <td class="small text-muted">${esc(v.nome_vistoriador)}</td>
+                    <td>${badgeConformidade(v.status_conformidade)}<div class="mt-1">${badgeSituacao(v.situacao)}</div></td>
+                    <td class="text-end text-nowrap">
+                        ${v.minha_vez ? `<a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-pen"></i> ${Number(v.id_vistoriador) === MEU_ID ? 'Aprovar' : 'Assinar'}</a>` : ''}
+                        <a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-outline-secondary" title="Ver vistoria"><i class="bi bi-eye"></i> Ver</a>
+                    </td>
+                </tr>`,
+            veiculos: (v) => `
+                <tr>
+                    <td><span class="badge bg-dark font-monospace fs-6">${esc(v.placa)}</span></td>
+                    <td class="fw-semibold">${esc(v.marca_modelo)}</td>
+                    <td>${esc(v.ano)}</td>
+                    <td>${esc(v.cor || '-')}</td>
+                    <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
+                    <td>${badgeStatusVeiculo(v.status)}</td>
+                    <td class="text-end text-nowrap">
+                        ${PODE_VISTORIAR ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}" class="btn btn-sm btn-warning" title="Fazer vistoria deste veículo"><i class="bi bi-clipboard2-plus"></i></a>` : ''}
+                        ${IS_GESTOR ? `<a href="editarVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="excluirVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}
+                    </td>
+                </tr>`,
+            usuarios: (u) => `
+                <tr class="${u.status === 'inativo' ? 'text-muted' : ''}">
+                    <td>
+                        <div class="fw-semibold">${esc(u.nome)} ${u.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}</div>
+                        ${u.perfil === 'motorista' ? `<div class="small text-muted">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}
+                    </td>
+                    <td class="font-monospace small">${esc(u.cpf_matricula)}</td>
+                    <td>${badgePerfil(u.perfil)}</td>
+                    <td class="small">${u.cnh ? `${esc(u.categoria_cnh || '-')} · vence ${dataBR(u.validade_cnh)}` : '-'}</td>
+                    <td class="small"><div>${esc(u.email)}</div><div class="text-muted">${esc(u.telefone || '')}</div></td>
+                    <td class="text-end text-nowrap">
+                        ${(IS_ADMIN || !['admin', 'supervisor'].includes(u.perfil)) ? `
+                        <a href="editarUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        ${Number(u.id_usuario) !== MEU_ID ? `<a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}` : ''}
+                    </td>
+                </tr>`,
+            checklists: (c) => `
+                <tr>
+                    <td>
+                        <div class="fw-semibold">${esc(c.titulo)} ${Number(c.ativo) === 1 ? '' : '<span class="badge bg-secondary">Arquivado</span>'}</div>
+                        <div class="small text-muted">${esc(c.descricao || '')}</div>
+                    </td>
+                    <td><span class="badge bg-primary-subtle text-primary">${esc(c.categoria)}</span></td>
+                    <td>${c.total_perguntas}</td>
+                    <td>${c.total_execucoes}</td>
+                    <td class="small">${esc(c.criador_nome)}</td>
+                    <td class="text-end text-nowrap">
+                        ${Number(c.ativo) === 1 ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Usar em uma vistoria"><i class="bi bi-clipboard2-plus"></i></a>` : ''}
+                        <a href="editarChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="excluirChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>`
+        };
+
+        // ---------- Painel inicial: indicadores e gráficos ----------
+        const COR = { conforme: '#0ca30c', nao: '#d03b3b', aviso: '#fab219', s1: '#2a78d6', s2: '#eb6834', s3: '#1baf7a', s4: '#6250d6', texto: '#52514e', grade: '#e8ebef' };
+        if (window.Chart) {
+            Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+            Chart.defaults.color = COR.texto;
+            Chart.defaults.plugins.legend.labels.boxWidth = 12;
+            Chart.defaults.plugins.legend.labels.boxHeight = 12;
+        }
+        const eixos = (empilhado, horizontal) => ({
+            x: { stacked: empilhado, grid: { display: !!horizontal, color: COR.grade }, ticks: { precision: 0 }, beginAtZero: true },
+            y: { stacked: empilhado, grid: { display: !horizontal, color: COR.grade }, ticks: { precision: 0 }, beginAtZero: true }
+        });
+        const barra = (cor) => ({ backgroundColor: cor, borderRadius: 4, borderSkipped: 'start', maxBarThickness: 34 });
+
+        function grafico(id, config, vazio) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (vazio || !window.Chart) {
+                el.parentElement.outerHTML = `<div class="grafico-vazio">${window.Chart ? 'Ainda não há dados para este gráfico.' : 'Gráfico indisponível sem internet.'}</div>`;
+                return;
+            }
+            new Chart(el, { ...config, options: { responsive: true, maintainAspectRatio: false, ...config.options } });
+        }
+
+        function kpi(icone, rotulo, valor, detalhe, cor) {
+            return `<div class="col-6 col-xl-3"><div class="kpi">
+                <div class="kpi-rotulo"><i class="bi ${icone}" style="color:${cor || 'var(--axion-primary)'}"></i>${rotulo}</div>
+                <div class="kpi-valor">${valor}</div>
+                <div class="kpi-detalhe">${detalhe || '&nbsp;'}</div>
+            </div></div>`;
+        }
+
+        async function carregarPainel() {
+            const json = await getJson('backend/api.php?acao=dashboard');
+            if (!json.sucesso) return;
+            const d = json.dados;
+            const v = d.vistorias;
+            const taxa = v.total ? Math.round((v.conformes / v.total) * 100) + '%' : '-';
+            const frotaTotal = d.frota.ativo + d.frota.em_rota + d.frota.manutencao;
+            let cards = [];
+            if (PERFIL === 'admin') {
+                const u = d.usuarios || {};
+                const totalUsu = Object.values(u).reduce((a, b) => a + Number(b), 0);
+                cards = [
+                    kpi('bi-truck-front', 'Veículos na frota', frotaTotal, `${d.frota.manutencao} em manutenção`),
+                    kpi('bi-people', 'Usuários ativos', totalUsu, `${u.motorista || 0} motoristas · ${u.supervisor || 0} supervisores`),
+                    kpi('bi-clipboard2-check', 'Vistorias (30 dias)', v.ultimos30, `${v.total} no total`),
+                    kpi('bi-shield-check', 'Taxa de conformidade', taxa, `${v.nao_conformes} não conformes no total`, COR.conforme),
+                ];
+            } else if (PERFIL === 'supervisor') {
+                cards = [
+                    kpi('bi-bell', 'Aguardando sua aprovação', d.minhas_pendencias, d.minhas_pendencias ? 'Veja a lista acima' : 'Nada pendente', '#b07c00'),
+                    kpi('bi-people', 'Motoristas na equipe', (d.equipe || []).length, 'Vinculados a você'),
+                    kpi('bi-clipboard2-check', 'Vistorias da equipe (30 dias)', v.ultimos30, `${v.recusadas} recusadas no total`),
+                    kpi('bi-shield-check', 'Conformidade da equipe', taxa, `${v.nao_conformes} não conformes`, COR.conforme),
+                ];
+            } else if (PERFIL === 'motorista') {
+                const cnh = d.cnh || {};
+                const venc = cnh.validade_cnh;
+                const diasCnh = venc ? Math.ceil((new Date(venc) - new Date()) / 86400000) : null;
+                cards = [
+                    kpi('bi-clipboard2-check', 'Minhas vistorias', v.total, v.ultima ? `Última em ${dataBR(v.ultima)}` : 'Nenhuma ainda'),
+                    kpi('bi-hourglass-split', 'Aguardando supervisor', v.aguardando, 'Já assinadas por você ou pendentes', '#b07c00'),
+                    kpi('bi-x-octagon', 'Recusadas', v.recusadas, v.recusadas ? 'Veja o motivo e refaça' : 'Nenhuma', COR.nao),
+                    kpi('bi-person-vcard', 'Minha CNH', venc ? dataBR(venc) : '-', diasCnh === null ? 'Validade não informada' : diasCnh < 0 ? '<span class="text-danger fw-semibold">Vencida</span>' : diasCnh <= 30 ? `<span class="text-warning-emphasis fw-semibold">Vence em ${diasCnh} dias</span>` : `Categoria ${esc(cnh.categoria_cnh || '-')}`),
+                ];
+            } else {
+                cards = [
+                    kpi('bi-truck-front', 'Veículos na frota', frotaTotal, `${d.frota.ativo} ativos`),
+                    kpi('bi-tools', 'Em manutenção', d.frota.manutencao, 'Fora de operação', '#b07c00'),
+                    kpi('bi-clipboard2-check', 'Vistorias (30 dias)', v.ultimos30, `${v.total} no total`),
+                    kpi('bi-shield-check', 'Taxa de conformidade', taxa, `${v.nao_conformes} não conformes`, COR.conforme),
+                ];
+            }
+            document.getElementById('kpis').innerHTML = cards.join('');
+
+            // Vistorias por dia (conforme x não conforme)
+            const dias = d.por_dia;
+            grafico('g-dias', {
+                type: 'bar',
+                data: {
+                    labels: dias.map(x => x.dia.slice(8, 10) + '/' + x.dia.slice(5, 7)),
+                    datasets: [
+                        { label: 'Conformes', data: dias.map(x => x.conforme), ...barra(COR.conforme) },
+                        { label: 'Não conformes', data: dias.map(x => x.nao_conforme), ...barra(COR.nao) }
+                    ]
+                },
+                options: { scales: eixos(true), plugins: { legend: { position: 'top', align: 'end' } } }
+            }, !dias.some(x => x.conforme + x.nao_conforme > 0));
+
+            // Frota por situação
+            grafico('g-frota', {
+                type: 'bar',
+                data: {
+                    labels: ['Ativo', 'Em rota', 'Manutenção'],
+                    datasets: [{ label: 'Veículos', data: [d.frota.ativo, d.frota.em_rota, d.frota.manutencao], ...barra([COR.s1, COR.s3, COR.aviso]) }]
+                },
+                options: { indexAxis: 'y', scales: eixos(false, true), plugins: { legend: { display: false } } }
+            }, frotaTotal === 0);
+
+            // Usuários por perfil (admin)
+            if (d.usuarios) {
+                const ordem = [['admin', 'Admin'], ['supervisor', 'Supervisores'], ['motorista', 'Motoristas'], ['cliente', 'Clientes']];
+                if (d.usuarios_inativos) document.getElementById('sub-usuarios').textContent = `Contas ativas (${d.usuarios_inativos} desativadas não entram na conta)`;
+                grafico('g-usuarios', {
+                    type: 'bar',
+                    data: { labels: ordem.map(o => o[1]), datasets: [{ label: 'Usuários', data: ordem.map(o => Number(d.usuarios[o[0]] || 0)), ...barra(COR.s1) }] },
+                    options: { indexAxis: 'y', scales: eixos(false, true), plugins: { legend: { display: false } } }
+                });
+            }
+
+            // Vistorias por motorista (gestores)
+            if (d.por_motorista) {
+                const pm = d.por_motorista;
+                grafico('g-motoristas', {
+                    type: 'bar',
+                    data: {
+                        labels: pm.map(x => x.nome),
+                        datasets: [
+                            { label: 'Conformes', data: pm.map(x => Number(x.conforme)), ...barra(COR.conforme) },
+                            { label: 'Não conformes', data: pm.map(x => Number(x.nao_conforme)), ...barra(COR.nao) }
+                        ]
+                    },
+                    options: { indexAxis: 'y', scales: eixos(true, true), plugins: { legend: { position: 'top', align: 'end' } } }
+                }, pm.length === 0);
+            }
+
+            // Veículos com mais avarias
+            if (d.top_avarias) {
+                const ta = d.top_avarias;
+                grafico('g-avarias', {
+                    type: 'bar',
+                    data: { labels: ta.map(x => x.placa), datasets: [{ label: 'Não conformes', data: ta.map(x => Number(x.qtd)), ...barra(COR.nao) }] },
+                    options: { indexAxis: 'y', scales: eixos(false, true), plugins: { legend: { display: false } } }
+                }, ta.length === 0);
+            }
+
+            // Equipe do supervisor
+            if (d.equipe) {
+                const hoje = new Date().toISOString().slice(0, 10);
+                document.getElementById('tbody-equipe').innerHTML = d.equipe.length ? d.equipe.map(m => {
+                    const vencida = m.validade_cnh && m.validade_cnh < hoje;
+                    return `<tr>
+                        <td class="fw-semibold">${esc(m.nome)}</td>
+                        <td class="small">${m.validade_cnh ? (vencida ? `<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Vencida ${dataBR(m.validade_cnh)}</span>` : `${esc(m.categoria_cnh || '')} · ${dataBR(m.validade_cnh)}`) : '-'}</td>
+                        <td class="small">${m.ultima_vistoria ? dataBR(m.ultima_vistoria) : '<span class="text-muted">Nenhuma</span>'}</td>
+                    </tr>`;
+                }).join('') : '<tr><td colspan="3" class="text-muted small">Nenhum motorista vinculado a você ainda.</td></tr>';
+            }
         }
 
         async function carregarSolicitacoes() {
             const box = document.getElementById('lista-solicitacoes');
             if (!box) return;
-            const json = await (await fetch('backend/api.php?acao=buscar&tipo=vistorias&filtro=minhas_pendencias&limite=50')).json();
+            const json = await getJson('backend/api.php?acao=buscar&tipo=vistorias&filtro=minhas_pendencias&limite=50');
             const dados = json.dados || [];
             box.innerHTML = dados.length ? dados.map(v => {
                 const souVist = Number(v.id_vistoriador) === MEU_ID;
@@ -654,155 +742,37 @@ $mapaErros = [
                 const outroAssinou = souVist ? v.assinado_motorista_em : v.assinado_vistoriador_em;
                 return `<a href="verVistoria.html?id=${v.id_execucao}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
-                        <div class="fw-semibold">#${v.id_execucao} · ${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)} ${badgeConformidade(v.status_conformidade)}</div>
-                        <div class="small text-muted">${esc(v.data_vistoria)} · ${outroAssinou ? `${esc(outro)} já assinou e pediu a sua assinatura` : 'Falta a sua assinatura para enviar a solicitação'}</div>
+                        <div class="fw-semibold">${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)} ${badgeConformidade(v.status_conformidade)}</div>
+                        <div class="small text-muted">${dataBR(v.data_vistoria)} · ${outroAssinou ? `${esc(outro)} assinou e enviou para você` : 'Falta a sua assinatura para enviar'}</div>
                     </div>
                     <span class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-pen me-1"></i>${souVist && outroAssinou ? 'Revisar e aprovar' : 'Assinar'}</span>
                 </a>`;
-            }).join('') : '<div class="list-group-item text-muted small">Nenhuma solicitação pendente.</div>';
+            }).join('') : '<div class="list-group-item text-muted small">Nenhuma pendência.</div>';
         }
 
-        function badgeConformidade(st) {
-            if (st === 'conforme') return '<span class="badge bg-success">Conforme</span>';
-            if (st === 'nao_conforme') return '<span class="badge bg-danger">Não Conforme</span>';
-            return '<span class="badge bg-warning text-dark">Pendente</span>';
-        }
-
-        async function carregarBusca(tipo) {
-            try {
-                if (tipo === 'veiculos') {
-                    const q = document.getElementById('busca-veiculos-q')?.value || '';
-                    const filtro = document.getElementById('busca-veiculos-status')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=veiculos&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=200`);
-                    const json = await resp.json();
-                    const tbody = document.getElementById('tbody-veiculos');
-                    if (!tbody) return;
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhum veículo encontrado para o filtro informado.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(v => `
-                        <tr>
-                            <td class="text-muted small">#${v.id_veiculo}</td>
-                            <td><span class="badge bg-dark font-monospace fs-6">${esc(v.placa)}</span></td>
-                            <td class="fw-semibold">${esc(v.marca_modelo)}</td>
-                            <td>${esc(v.ano)}</td>
-                            <td>${esc(v.cor || '-')}</td>
-                            <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td class="small text-muted"><div>Ren: ${esc(v.renavam || '-')}</div><div>Chassi: ${esc(v.chassi || '-')}</div></td>
-                            <td>${badgeStatusVeiculo(v.status)}</td>
-                            <td class="text-end text-nowrap">
-                                ${(IS_GESTOR || IS_MOTORISTA) ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}" class="btn btn-sm btn-warning" title="Preencher Checklist"><i class="bi bi-clipboard2-check"></i></a>` : ''}
-                                ${IS_GESTOR ? `
-                                    <a href="editarVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-primary" title="Editar Veículo"><i class="bi bi-pencil"></i></a>
-                                    <a href="excluirVeiculo.html?id=${v.id_veiculo}" class="btn btn-sm btn-outline-danger" title="Excluir Veículo"><i class="bi bi-trash"></i></a>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                if (tipo === 'usuarios') {
-                    const tbody = document.getElementById('tbody-usuarios');
-                    if (!tbody) return;
-                    const q = document.getElementById('busca-usuarios-q')?.value || '';
-                    const filtro = document.getElementById('busca-usuarios-perfil')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}&limite=250`);
-                    const json = await resp.json();
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum usuário encontrado.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(u => `
-                        <tr>
-                            <td class="text-muted small">#${u.id_usuario}</td>
-                            <td class="fw-semibold">${esc(u.nome)}${u.status === 'inativo' ? ' <span class="badge bg-secondary">Desativado</span>' : ''}${u.perfil === 'motorista' ? `<div class="small text-muted fw-normal">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}</td>
-                            <td class="font-monospace small">${esc(u.cpf_matricula)}</td>
-                            <td>${badgePerfilUsuario(u.perfil)}</td>
-                            <td class="small">${u.cnh ? `${esc(u.cnh)} <span class="badge bg-secondary">${esc(u.categoria_cnh || '-')}</span>` : '-'}</td>
-                            <td class="small">${u.cidade ? `${esc(u.cidade)}/${esc(u.estado)} <div class="text-muted">${esc(u.cep || '')}</div>` : '-'}</td>
-                            <td class="small"><div>${esc(u.email)}</div><div class="text-muted">${esc(u.telefone || '')}</div></td>
-                            <td class="text-end text-nowrap">
-                                ${(IS_ADMIN || !['admin', 'supervisor'].includes(u.perfil)) ? `
-                                <a href="editarUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                ${Number(u.id_usuario) !== MEU_ID ? `<a href="excluirUsuario.html?id=${u.id_usuario}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>` : ''}` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                if (tipo === 'checklists') {
-                    const tbody = document.getElementById('tbody-checklists');
-                    if (!tbody) return;
-                    const q = document.getElementById('busca-checklists-q')?.value || '';
-                    const filtro = document.getElementById('busca-checklists-cat')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=checklists&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}`);
-                    const json = await resp.json();
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Nenhum modelo de checklist encontrado.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(c => `
-                        <tr>
-                            <td class="text-muted small">#${c.id_checklist}</td>
-                            <td>
-                                <div class="fw-semibold">${esc(c.titulo)} ${Number(c.ativo) === 1 ? '' : '<span class="badge bg-secondary">Arquivado</span>'}</div>
-                                <div class="small text-muted">${esc(c.descricao || '')}</div>
-                            </td>
-                            <td><span class="badge bg-primary-subtle text-primary text-uppercase">${esc(c.categoria)}</span></td>
-                            <td><span class="badge bg-secondary">${c.total_perguntas} perguntas</span></td>
-                            <td><span class="badge bg-success-subtle text-success">${c.total_execucoes} vistorias</span></td>
-                            <td class="small">${esc(c.criador_nome)}</td>
-                            <td class="text-end text-nowrap">
-                                ${(IS_GESTOR || IS_MOTORISTA) && Number(c.ativo) === 1 ? `<a href="cadcheck.html?id_checklist=${c.id_checklist}" class="btn btn-sm btn-warning" title="Preencher este Checklist"><i class="bi bi-clipboard2-check"></i> Usar</a>` : ''}
-                                ${IS_GESTOR ? `
-                                    <a href="editarChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                    <a href="excluirChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-
-                if (tipo === 'vistorias') {
-                    const tbody = document.getElementById('tbody-vistorias');
-                    if (!tbody) return;
-                    const q = document.getElementById('busca-vistorias-q')?.value || '';
-                    const filtro = document.getElementById('busca-vistorias-status')?.value || '';
-                    const resp = await fetch(`backend/api.php?acao=buscar&tipo=vistorias&q=${encodeURIComponent(q)}&filtro=${encodeURIComponent(filtro)}`);
-                    const json = await resp.json();
-                    if (!json.dados || json.dados.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhuma vistoria encontrada.</td></tr>';
-                        return;
-                    }
-                    tbody.innerHTML = json.dados.map(v => `
-                        <tr>
-                            <td class="text-muted small">#${v.id_execucao}</td>
-                            <td class="small">${esc(v.data_vistoria)} <span class="text-muted">${(v.hora_vistoria || '').slice(0,5)}</span></td>
-                            <td><span class="badge bg-dark font-monospace">${esc(v.placa_veiculo)}</span></td>
-                            <td class="fw-semibold small">${esc(v.checklist_titulo)}</td>
-                            <td class="small">${esc(v.nome_motorista)}</td>
-                            <td class="small text-muted">${esc(v.nome_vistoriador)}</td>
-                            <td class="small">${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
-                            <td>${badgeConformidade(v.status_conformidade)}<div>${badgeSituacao(v.situacao)}</div></td>
-                            <td class="text-end text-nowrap">
-                                ${v.minha_vez ? `<a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-warning fw-semibold" title="Revisar e assinar"><i class="bi bi-pen"></i> Assinar</a>` : ''}
-                                <a href="verVistoria.html?id=${v.id_execucao}" class="btn btn-sm btn-outline-success" title="Ver checklist preenchido"><i class="bi bi-eye"></i> Ver</a>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
-            } catch (e) {
-                console.error('Erro ao carregar busca:', e);
-            }
+        async function carregarUltimasVistorias() {
+            const box = document.getElementById('ultimas-vistorias');
+            if (!box) return;
+            const json = await getJson('backend/api.php?acao=buscar&tipo=vistorias&limite=10');
+            const dados = (json.dados || []).slice(0, 5);
+            box.innerHTML = dados.length ? dados.map(v => `
+                <a href="verVistoria.html?id=${v.id_execucao}" class="list-group-item list-group-item-action px-0">
+                    <div class="d-flex justify-content-between gap-2">
+                        <span class="fw-semibold">${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)}</span>
+                        <span class="small text-muted text-nowrap">${dataBR(v.data_vistoria)}</span>
+                    </div>
+                    <div class="mt-1">${badgeConformidade(v.status_conformidade)} ${badgeSituacao(v.situacao)}</div>
+                </a>`).join('') : '<div class="text-muted small">Você ainda não fez nenhuma vistoria.</div>';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            carregarBusca('veiculos');
-            if (IS_GESTOR) carregarBusca('usuarios');
-            carregarBusca('checklists');
-            carregarBusca('vistorias');
+            if (FILTRO_INICIAL && document.getElementById('busca-vistorias-status')) {
+                document.getElementById('busca-vistorias-status').value = FILTRO_INICIAL;
+            }
+            abrirSecao(ABA_INICIAL);
+            carregarPainel();
             carregarSolicitacoes();
+            carregarUltimasVistorias();
         });
     </script>
 </body>
