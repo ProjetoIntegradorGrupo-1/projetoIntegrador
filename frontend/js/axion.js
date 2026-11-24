@@ -443,17 +443,17 @@ const AxionLayout = {
         const nav = document.createElement('nav');
         nav.className = 'axion-navbar text-white';
         nav.innerHTML = `
-            <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <a href="oqfazer.php" class="axion-brand"><img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion"><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : 'Frota & Checklists'}</span></a>
+            <div class="container-fluid px-3 px-lg-4 d-flex flex-nowrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 min-w-0"><button type="button" class="btn btn-sm btn-outline-light d-lg-none btn-menu-mobile" data-abrir-menu aria-label="Abrir menu"><i class="bi bi-list fs-5"></i></button><a href="oqfazer.php" class="axion-brand"><img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion"><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : 'Frota & Checklists'}</span></a></div>
                 <div class="d-flex align-items-center gap-2 gap-md-3">
                     ${pend > 0 ? (ehAdmin
-                        ? `<a href="oqfazer.php?aba=aprovacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} para aprovar</a>`
-                        : `<a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} ${u.perfil === 'motorista' ? 'para assinar' : 'para aprovar'}</a>`) : ''}
+                        ? `<a href="oqfazer.php?aba=aprovacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend}<span class="d-none d-sm-inline"> para aprovar</span></a>`
+                        : `<a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend}<span class="d-none d-sm-inline"> ${u.perfil === 'motorista' ? 'para assinar' : 'para aprovar'}</span></a>`) : ''}
                     <a href="meuPerfil.html" class="d-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25 text-white text-decoration-none" title="Meu perfil">
                         ${axionAvatar(u.foto_url, u.nome, 34)}
                         <div class="lh-sm d-none d-md-block"><div class="fw-semibold">${axionEsc(u.nome)}</div><div class="text-white-50">${axionEsc(u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1))} · Meu perfil</div></div>
                     </a>
-                    <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
+                    <a href="logout.php" class="btn btn-sm btn-outline-light" title="Sair"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline ms-1">Sair</span></a>
                 </div>
             </div>`;
 
@@ -493,6 +493,13 @@ const AxionLayout = {
         body.classList.remove('bg-light');
     }
 };
+
+// Menu no celular: abre como gaveta pelo botão ☰ e fecha ao tocar fora (ou Esc)
+document.addEventListener('click', (ev) => {
+    if (ev.target.closest('[data-abrir-menu]')) { document.body.classList.toggle('menu-aberto'); return; }
+    if (document.body.classList.contains('menu-aberto') && !ev.target.closest('.painel-menu')) document.body.classList.remove('menu-aberto');
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') document.body.classList.remove('menu-aberto'); });
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (document.body.dataset.secao === undefined) return;

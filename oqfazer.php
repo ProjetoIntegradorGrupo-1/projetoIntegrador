@@ -116,16 +116,19 @@ $mapaErros = [
 
 <body class="<?php echo $isAdmin ? 'tema-admin' : ''; ?>">
     <nav class="axion-navbar text-white">
-        <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="container-fluid px-3 px-lg-4 d-flex flex-nowrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 min-w-0">
+            <button type="button" class="btn btn-sm btn-outline-light d-lg-none btn-menu-mobile" data-abrir-menu aria-label="Abrir menu"><i class="bi bi-list fs-5"></i></button>
             <a href="oqfazer.php" class="axion-brand">
                 <img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion">
                 <span>AXION</span>
                 <span class="axion-brand-badge"><?php echo $isAdmin ? 'Administração' : 'Frota & Checklists'; ?></span>
             </a>
+            </div>
             <div class="d-flex align-items-center gap-2 gap-md-3">
                 <?php if ($minhasPendencias > 0): ?>
                 <a href="<?php echo $isAdmin ? 'oqfazer.php?aba=aprovacoes' : 'oqfazer.php?aba=vistorias&filtro=minhas_pendencias'; ?>" class="btn btn-sm btn-warning fw-semibold">
-                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias . ($isMotorista ? ' para assinar' : ' para aprovar'); ?>
+                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?><span class="d-none d-sm-inline"><?php echo $isMotorista ? ' para assinar' : ' para aprovar'; ?></span>
                 </a>
                 <?php endif; ?>
                 <a href="meuPerfil.html" class="d-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25 text-white text-decoration-none" title="Meu perfil">
@@ -142,7 +145,7 @@ $mapaErros = [
                         <div class="text-white-50"><?php echo ucfirst(htmlspecialchars($perfil_usuario)); ?> · Meu perfil</div>
                     </div>
                 </a>
-                <a href="logout.php" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>Sair</a>
+                <a href="logout.php" class="btn btn-sm btn-outline-light" title="Sair"><i class="bi bi-box-arrow-right"></i><span class="d-none d-sm-inline ms-1">Sair</span></a>
             </div>
         </div>
     </nav>
@@ -487,7 +490,25 @@ $mapaErros = [
             }
             window.scrollTo({ top: 0 });
         }
-        document.querySelectorAll('[data-secao]').forEach(a => a.addEventListener('click', (ev) => { ev.preventDefault(); abrirSecao(a.dataset.secao); }));
+        document.querySelectorAll('[data-secao]').forEach(a => a.addEventListener('click', (ev) => { ev.preventDefault(); abrirSecao(a.dataset.secao); document.body.classList.remove('menu-aberto'); }));
+        // Celular: cada linha das listas vira um cartão; cada célula recebe o nome da coluna como rótulo
+        function rotularTabelas() {
+            document.querySelectorAll('table.axion-table').forEach(t => {
+                const nomes = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+                t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => {
+                    if (!td.hasAttribute('colspan') && nomes[i] !== undefined) td.dataset.label = nomes[i];
+                }));
+            });
+        }
+        new MutationObserver(rotularTabelas).observe(document.body, { childList: true, subtree: true });
+        rotularTabelas();
+
+        // Menu no celular: abre como gaveta pelo botão ☰ e fecha ao tocar fora
+        document.addEventListener('click', (ev) => {
+            if (ev.target.closest('[data-abrir-menu]')) { document.body.classList.toggle('menu-aberto'); return; }
+            if (document.body.classList.contains('menu-aberto') && !ev.target.closest('.painel-menu')) document.body.classList.remove('menu-aberto');
+        });
+        document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') document.body.classList.remove('menu-aberto'); });
 
         // ---------- Etiquetas ----------
         function badgeStatusVeiculo(st) {

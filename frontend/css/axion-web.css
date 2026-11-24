@@ -270,12 +270,14 @@ body {
 .secao-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
 .secao-topo h1 { font-size: 1.35rem; font-weight: 700; margin: 0; }
 .secao-topo p { margin: 0; color: var(--axion-muted); font-size: .9rem; }
-@media (max-width: 991px) {
-    .painel-layout { flex-direction: column; padding-top: 1rem; }
-    .painel-menu { width: 100%; }
-    .painel-menu .menu-box { position: static; display: flex; overflow-x: auto; gap: .25rem; padding: .5rem; }
-    .painel-menu .menu-titulo, .painel-menu .menu-cta { display: none; }
-    .painel-menu .menu-link { white-space: nowrap; }
+@media (max-width: 991.98px) {
+    .painel-layout { flex-direction: column; padding: 1rem .85rem; gap: 1rem; }
+    /* Menu vira gaveta lateral, aberta pelo botão ☰ do topo */
+    .painel-menu { position: fixed; top: 0; left: 0; bottom: 0; width: min(280px, 84vw); z-index: 1050; transform: translateX(-105%); transition: transform .25s ease; }
+    .painel-menu .menu-box { position: static; height: 100%; overflow-y: auto; border-radius: 0 16px 16px 0; padding: 1rem .75rem; border-top: 0 !important; border-left: 0; }
+    .painel-menu .menu-link { padding: .75rem .85rem; }
+    body.menu-aberto .painel-menu { transform: none; box-shadow: 0 0 0 100vmax rgba(5, 2, 26, .55); }
+    body.menu-aberto { overflow: hidden; }
 }
 
 /* ===== Layout padrão de todas as telas internas (menu lateral + conteúdo) ===== */
@@ -332,3 +334,49 @@ body:not(.tema-admin) .painel-menu .menu-box { border-top: 3px solid #1f8ef1; }
 .axion-login-hero { background: radial-gradient(circle at 30% 20%, #2a0b78 0%, #0b0630 55%, #05021a 100%); border-radius: 16px; position: relative; overflow: hidden; }
 .axion-login-hero::after { content: ''; position: absolute; inset: auto -30% -40% auto; width: 70%; aspect-ratio: 1; background: radial-gradient(circle, rgba(31, 142, 241, .35), transparent 65%); pointer-events: none; }
 .axion-login-logo { width: 130px; height: 130px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(124, 29, 245, .6), 0 0 40px rgba(124, 29, 245, .55); }
+
+/* ===== Ajustes para celular e tablet ===== */
+.min-w-0 { min-width: 0; }
+.btn-menu-mobile { padding: .2rem .45rem; line-height: 1; }
+@media (max-width: 575.98px) {
+    .axion-navbar { padding: .55rem 0; }
+    .axion-brand { font-size: 1.15rem; gap: .4rem; }
+    .axion-logo { width: 32px; height: 32px; }
+    .axion-brand-badge { display: none; }
+    .axion-navbar .border-start { border-left: 0 !important; padding-left: 0 !important; }
+    .secao-topo h1 { font-size: 1.15rem; }
+    .secao-topo > div:last-child { width: 100%; }
+    .kpi { padding: .8rem .85rem; }
+    .kpi .kpi-valor { font-size: 1.5rem; }
+    .cartao { padding: .9rem; }
+    .grafico, .grafico-vazio { height: 210px; }
+    .axion-form-card { padding: 1rem; }
+    .axion-table thead th, .axion-table tbody td { padding: .6rem .65rem; font-size: .85rem; }
+    .trilha { font-size: .78rem; }
+    /* Botões de rodapé de formulário ocupam a largura toda e ficam fáceis de tocar */
+    form .d-flex.justify-content-end > .btn, form .d-flex.justify-content-end > a.btn { flex: 1 1 100%; }
+    .modal-dialog { margin: .5rem; }
+}
+/* Campos com altura confortável para o toque */
+@media (pointer: coarse) {
+    .form-control, .form-select { min-height: 44px; font-size: 16px; }
+    .btn { min-height: 40px; }
+    .btn-sm { min-height: 34px; }
+}
+
+/* Listas no celular: cada linha vira um cartão com rótulo à esquerda e valor à direita */
+@media (max-width: 575.98px) {
+    .axion-table-wrapper .table-responsive { overflow-x: visible; }
+    .axion-table thead { display: none; }
+    .axion-table, .axion-table tbody { display: block; width: 100%; }
+    .axion-table tbody tr { display: block; padding: .7rem .85rem; border-bottom: 1px solid var(--axion-border); }
+    .axion-table tbody tr:last-child { border-bottom: 0; }
+    .axion-table tbody td { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: .25rem .4rem; padding: .22rem 0 !important; border: 0; text-align: right; }
+    .axion-table tbody td[data-label]::before { content: attr(data-label); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--axion-muted); text-align: left; flex-shrink: 0; margin-right: auto; }
+    .axion-table tbody td:first-child { justify-content: flex-start; text-align: left; font-size: .95rem; padding-bottom: .4rem !important; }
+    .axion-table tbody td:first-child::before { display: none; }
+    .axion-table tbody td[colspan] { display: block; text-align: center; }
+    .axion-table tbody td:empty, .axion-table tbody td[data-label=""]::before { display: none; }
+    .axion-table tbody td:last-child { padding-top: .5rem !important; justify-content: flex-end; flex-wrap: wrap; }
+    .axion-table tbody td:last-child::before { display: none; }
+}
