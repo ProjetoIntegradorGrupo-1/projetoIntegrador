@@ -338,21 +338,6 @@ $mapaErros = [
                         </a>
                     </div>
 
-                    <!-- EXCLUIR REGISTROS -->
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                        <div class="axion-action-card">
-                            <div>
-                                <div class="action-icon bg-danger-subtle text-danger"><i class="bi bi-trash3-fill"></i></div>
-                                <div class="action-title">Exclusão Controlada</div>
-                                <div class="action-desc">Acesse diretamente a remoção com confirmação de segurança para Usuários, Veículos ou Checklists.</div>
-                            </div>
-                            <div class="d-flex gap-1">
-                                <a href="excluirUsuario.html" class="btn btn-sm btn-outline-danger flex-fill" title="Excluir Usuário"><i class="bi bi-person-x"></i> Usuário</a>
-                                <a href="excluirVeiculo.html" class="btn btn-sm btn-outline-danger flex-fill" title="Excluir Veículo"><i class="bi bi-car-front"></i> Carro</a>
-                                <a href="excluirChecklist.html" class="btn btn-sm btn-outline-danger flex-fill" title="Excluir Checklist"><i class="bi bi-card-checklist"></i> Check</a>
-                            </div>
-                        </div>
-                    </div>
                     <?php endif; ?>
 
                     <!-- ATALHOS DE BUSCA PARA TODOS OS PERFIS -->
