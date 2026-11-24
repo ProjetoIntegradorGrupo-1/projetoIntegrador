@@ -21,25 +21,25 @@
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
         .rel { font-family: "Segoe UI", Arial, sans-serif; color: #1f2933; font-size: 10.5pt; }
-        .rel-topo { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #0d3b66; padding-bottom: 8px; margin-bottom: 12px; }
+        .rel-topo { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #5b21d6; padding-bottom: 8px; margin-bottom: 12px; }
         .rel-marca { display: flex; align-items: center; gap: 10px; }
-        .rel-logo { width: 42px; height: 42px; border-radius: 8px; background: #0d3b66; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        .rel-marca-nome { font-size: 18pt; font-weight: 800; letter-spacing: 2px; color: #0d3b66; line-height: 1; }
+        .rel-logo { width: 52px; height: 52px; border-radius: 50%; display: block; }
+        .rel-marca-nome { font-size: 18pt; font-weight: 800; letter-spacing: 2px; color: #3b1290; line-height: 1; }
         .rel-marca-sub { font-size: 8.5pt; color: #6b7785; }
         .rel-doc { text-align: right; }
-        .rel-doc-titulo { font-size: 13pt; font-weight: 700; color: #0d3b66; text-transform: uppercase; letter-spacing: .5px; }
+        .rel-doc-titulo { font-size: 13pt; font-weight: 700; color: #3b1290; text-transform: uppercase; letter-spacing: .5px; }
         .rel-doc-num { font-size: 9pt; color: #6b7785; }
         .rel-faixa { display: flex; justify-content: space-between; align-items: center; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; color: #fff; font-weight: 700; }
         .rel-faixa.ok { background: #1e8e5a; }
         .rel-faixa.nok { background: #c0392b; }
         .rel-faixa .rel-sit { font-weight: 600; font-size: 9pt; background: rgba(255,255,255,.2); padding: 3px 8px; border-radius: 4px; }
-        .rel-secao { font-size: 9pt; font-weight: 700; text-transform: uppercase; color: #0d3b66; letter-spacing: .6px; border-bottom: 1px solid #c9d3dd; padding-bottom: 3px; margin: 14px 0 6px; }
+        .rel-secao { font-size: 9pt; font-weight: 700; text-transform: uppercase; color: #3b1290; letter-spacing: .6px; border-bottom: 1px solid #c9d3dd; padding-bottom: 3px; margin: 14px 0 6px; }
         .rel-grid { width: 100%; border-collapse: collapse; }
         .rel-grid td { border: 1px solid #dde3ea; padding: 5px 8px; vertical-align: top; width: 25%; }
         .rel-grid .rot { display: block; font-size: 7.5pt; color: #6b7785; text-transform: uppercase; letter-spacing: .4px; }
         .rel-grid .val { font-weight: 600; }
         .rel-tab { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-        .rel-tab th { background: #0d3b66; color: #fff; text-align: left; padding: 5px 7px; font-weight: 600; font-size: 8.5pt; }
+        .rel-tab th { background: #3b1290; color: #fff; text-align: left; padding: 5px 7px; font-weight: 600; font-size: 8.5pt; }
         .rel-tab td { padding: 5px 7px; border-bottom: 1px solid #e3e8ee; }
         .rel-tab tr:nth-child(even) td { background: #f6f8fa; }
         .rel-tab tr.fora td { background: #fdecea !important; }
@@ -49,7 +49,7 @@
         .rel-tag.nok { background: #c0392b; color: #fff; }
         .rel-resumo { display: flex; gap: 8px; margin-top: 8px; }
         .rel-resumo div { flex: 1; border: 1px solid #dde3ea; border-radius: 6px; padding: 6px; text-align: center; }
-        .rel-resumo b { display: block; font-size: 14pt; color: #0d3b66; }
+        .rel-resumo b { display: block; font-size: 14pt; color: #3b1290; }
         .rel-resumo span { font-size: 8pt; color: #6b7785; }
         .rel-caixa { border: 1px solid #f0b4ad; background: #fff6f5; border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; }
         .rel-caixa.cinza { border-color: #c9d3dd; background: #f6f8fa; }
@@ -63,13 +63,14 @@
         .rel-rodape { position: fixed; bottom: 0; left: 0; right: 0; font-size: 7.5pt; color: #8a96a3; border-top: 1px solid #dde3ea; padding-top: 4px; display: flex; justify-content: space-between; }
         .rel-evitar-quebra { page-break-inside: avoid; }
     </style>
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
 </head>
 
 <body data-secao="vistorias" data-titulo="Detalhes da vistoria">
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
             <a href="oqfazer.php" class="axion-brand">
-                <i class="bi bi-truck-front-fill fs-4"></i>
+                <img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion">
                 <span>AXION</span>
                 <span class="axion-brand-badge">Vistoria Preenchida</span>
             </a>
@@ -286,7 +287,7 @@
             document.getElementById('relatorio').innerHTML = `
                 <div class="rel-topo">
                     <div class="rel-marca">
-                        <div class="rel-logo"><i class="bi bi-truck-front-fill"></i></div>
+                        <img src="frontend/img/logo.png" class="rel-logo" alt="Logo Axion">
                         <div>
                             <div class="rel-marca-nome">AXION</div>
                             <div class="rel-marca-sub">Gestão de Frota &amp; Checklists</div>

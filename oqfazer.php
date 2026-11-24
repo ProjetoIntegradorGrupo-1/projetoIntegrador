@@ -111,13 +111,14 @@ $mapaErros = [
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
 </head>
 
 <body class="<?php echo $isAdmin ? 'tema-admin' : ''; ?>">
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <a href="oqfazer.php" class="axion-brand">
-                <i class="bi bi-truck-front-fill fs-4"></i>
+                <img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion">
                 <span>AXION</span>
                 <span class="axion-brand-badge"><?php echo $isAdmin ? 'Administração' : 'Frota & Checklists'; ?></span>
             </a>

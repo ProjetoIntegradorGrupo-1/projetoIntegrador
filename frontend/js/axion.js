@@ -444,7 +444,7 @@ const AxionLayout = {
         nav.className = 'axion-navbar text-white';
         nav.innerHTML = `
             <div class="container-fluid px-3 px-lg-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <a href="oqfazer.php" class="axion-brand"><i class="bi bi-truck-front-fill fs-4"></i><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : 'Frota & Checklists'}</span></a>
+                <a href="oqfazer.php" class="axion-brand"><img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion"><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : 'Frota & Checklists'}</span></a>
                 <div class="d-flex align-items-center gap-2 gap-md-3">
                     ${pend > 0 ? (ehAdmin
                         ? `<a href="oqfazer.php?aba=aprovacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend} para aprovar</a>`
