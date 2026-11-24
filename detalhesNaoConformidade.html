@@ -39,16 +39,22 @@
                 <div class="d-flex justify-content-end gap-3 mb-2 pe-1">
                     <label for="capturaCamera" class="btn btn-outline-primary btn-sm" title="Tirar Foto">
                         <i class="bi bi-camera-fill fs-5"></i>
-                        <input type="file" id="capturaCamera" name="foto_evidencia" accept="image/*" capture="environment" class="d-none" onchange="mostrarNomeArquivo(this, 'statusCamera')">
+                        <input type="file" id="capturaCamera" name="foto_evidencia" accept="image/*" capture="environment" class="d-none" onchange="mostrarNomeArquivo(this)">
                     </label>
                     <label for="anexoArquivo" class="btn btn-outline-secondary btn-sm" title="Anexar Imagem">
                         <i class="bi bi-image fs-5"></i>
-                        <input type="file" id="anexoArquivo" name="documento_evidencia" accept="image/*" class="d-none" onchange="mostrarNomeArquivo(this, 'statusArquivo')">
+                        <input type="file" id="anexoArquivo" name="documento_evidencia" accept="image/*" class="d-none" onchange="mostrarNomeArquivo(this)">
                     </label>
                 </div>
-                <div class="mb-2">
-                    <span id="statusCamera" class="badge bg-success d-none mb-1"><i class="bi bi-check-lg me-1"></i> Foto capturada</span>
-                    <span id="statusArquivo" class="badge bg-info text-dark d-none mb-1"><i class="bi bi-paperclip me-1"></i> Imagem anexada</span>
+                <!-- Pré-visualização da imagem escolhida -->
+                <div id="preview-box" class="mb-3 d-none">
+                    <div class="position-relative d-inline-block">
+                        <img id="preview-img" alt="Imagem da avaria" class="img-thumbnail" style="max-height: 260px; max-width: 100%;">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removerImagem()" title="Remover imagem">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="small text-muted mt-1" id="preview-nome"></div>
                 </div>
 
                 <div class="mb-4">
@@ -90,6 +96,11 @@
             document.getElementById('resumo-vistoria').textContent =
                 `Vistoria #${v.id_execucao} - ${v.placa_veiculo} - ${v.checklist_titulo}`;
             if (v.detalhes_nao_conformidade) document.getElementById('descricao_detalhada').value = v.detalhes_nao_conformidade;
+            if (v.foto_url) {
+                document.getElementById('preview-img').src = v.foto_url;
+                document.getElementById('preview-nome').textContent = 'Imagem já salva nesta vistoria. Escolha outra para substituir.';
+                document.getElementById('preview-box').classList.remove('d-none');
+            }
             const fora = (v.respostas || []).filter(r => r.conforme !== null && Number(r.conforme) === 0);
             if (fora.length) {
                 document.getElementById('itens-fora-padrao').innerHTML =
@@ -98,8 +109,31 @@
             }
         });
 
-        function mostrarNomeArquivo(input, idBadge) {
-            if (input.files && input.files[0]) document.getElementById(idBadge).classList.remove('d-none');
+        // Mostra a imagem escolhida (câmera ou galeria). Só uma imagem é enviada: escolher outra substitui a anterior.
+        let urlPreview = null;
+        function mostrarNomeArquivo(input) {
+            const arq = input.files && input.files[0];
+            if (!arq) return;
+            const outro = input.id === 'capturaCamera' ? 'anexoArquivo' : 'capturaCamera';
+            document.getElementById(outro).value = '';
+            if (!arq.type.startsWith('image/')) {
+                alert('Escolha um arquivo de imagem (foto).');
+                input.value = '';
+                return;
+            }
+            if (urlPreview) URL.revokeObjectURL(urlPreview);
+            urlPreview = URL.createObjectURL(arq);
+            document.getElementById('preview-img').src = urlPreview;
+            document.getElementById('preview-nome').textContent = `${arq.name} (${(arq.size / 1024 / 1024).toFixed(1)} MB)`;
+            document.getElementById('preview-box').classList.remove('d-none');
+        }
+
+        function removerImagem() {
+            ['capturaCamera', 'anexoArquivo'].forEach(id => document.getElementById(id).value = '');
+            if (urlPreview) URL.revokeObjectURL(urlPreview);
+            urlPreview = null;
+            document.getElementById('preview-img').removeAttribute('src');
+            document.getElementById('preview-box').classList.add('d-none');
         }
     </script>
 </body>
