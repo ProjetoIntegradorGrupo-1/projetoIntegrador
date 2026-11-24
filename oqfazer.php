@@ -38,27 +38,27 @@ $minhasPendencias = (int)$stPend->fetchColumn();
 $abaAtiva = $_GET['aba'] ?? 'inicio';
 $sucessoMsg = $_GET['sucesso'] ?? '';
 $mapaMensagens = [
-    'admin_cadastrado'      => 'Administrador cadastrado com sucesso!',
-    'supervisor_cadastrado' => 'Supervisor cadastrado com sucesso!',
-    'motorista_cadastrado'  => 'Motorista cadastrado com sucesso!',
-    'cliente_cadastrado'    => 'Cliente cadastrado com sucesso!',
-    'usuario_cadastrado'    => 'Usuário cadastrado com sucesso!',
-    'usuario_editado'       => 'Dados do usuário atualizados com sucesso!',
-    'usuario_excluido'      => 'Usuário removido do sistema com sucesso!',
-    'veiculo_cadastrado'    => 'Veículo cadastrado na frota com sucesso!',
-    'veiculo_editado'       => 'Dados do veículo atualizados com sucesso!',
-    'veiculo_excluido'      => 'Veículo excluído da frota com sucesso!',
-    'checklist_criado'      => 'Novo modelo de checklist criado com sucesso!',
-    'checklist_editado'     => 'Modelo de checklist atualizado com sucesso!',
-    'checklist_excluido'    => 'Modelo de checklist excluído com sucesso!',
-    'checklist_arquivado'   => 'Este modelo já foi usado em vistorias, então foi arquivado (não aparece mais para preencher, mas o histórico continua). Para reativar, edite e salve o modelo.',
-    'usuario_desativado'    => 'Este usuário já participou de vistorias, então a conta foi desativada em vez de apagada (não consegue mais entrar). Para reativar, edite o usuário.',
+    'admin_cadastrado'      => 'Administrador cadastrado.',
+    'supervisor_cadastrado' => 'Supervisor cadastrado.',
+    'motorista_cadastrado'  => 'Motorista cadastrado e vinculado ao supervisor responsável.',
+    'cliente_cadastrado'    => 'Cliente cadastrado.',
+    'usuario_cadastrado'    => 'Usuário cadastrado.',
+    'usuario_editado'       => 'Alterações do usuário salvas.',
+    'usuario_excluido'      => 'Usuário excluído.',
+    'veiculo_cadastrado'    => 'Veículo cadastrado na frota.',
+    'veiculo_editado'       => 'Alterações do veículo salvas.',
+    'veiculo_excluido'      => 'Veículo excluído da frota.',
+    'checklist_criado'      => 'Modelo de checklist criado.',
+    'checklist_editado'     => 'Alterações do modelo de checklist salvas.',
+    'checklist_excluido'    => 'Modelo de checklist excluído.',
+    'checklist_arquivado'   => 'Modelo arquivado: ele já tem vistorias registradas, por isso não foi apagado. Para usar de novo, edite e salve o modelo.',
+    'usuario_desativado'    => 'Conta desativada: este usuário já participou de vistorias, por isso não foi apagado. Para reativar, edite o usuário.',
 ];
 $erroMsg = $_GET['erro'] ?? '';
 $mapaErros = [
     'sem_permissao'        => 'Seu nível de acesso não permite esta operação.',
     'formulario_expirado'  => 'O formulário expirou. Recarregue a página e tente novamente.',
-    'vistoria_invalida'    => 'Vistoria não encontrada ou já assinada.',
+    'vistoria_invalida'    => 'Esta vistoria não pode mais ser alterada.',
 ];
 ?>
 <!DOCTYPE html>
@@ -124,7 +124,7 @@ $mapaErros = [
         <?php if ($sucessoMsg && isset($mapaMensagens[$sucessoMsg])): ?>
             <div class="alert alert-success alert-dismissible fade show shadow-sm d-flex align-items-center mb-4" role="alert">
                 <i class="bi bi-check-circle-fill fs-5 me-2"></i>
-                <div><strong>Sucesso:</strong> <?php echo htmlspecialchars($mapaMensagens[$sucessoMsg]); ?></div>
+                <div><?php echo htmlspecialchars($mapaMensagens[$sucessoMsg]); ?></div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
             </div>
         <?php endif; ?>

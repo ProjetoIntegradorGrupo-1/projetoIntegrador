@@ -159,8 +159,8 @@
             document.getElementById('titulo').textContent = papel === 'motorista' ? 'Assinatura do motorista' : 'Aprovação do vistoriador';
             document.getElementById('label-assinatura').textContent = `Sua assinatura (${papel === 'motorista' ? 'motorista' : 'vistoriador'}: ${ctx.usuario.nome})`;
             document.getElementById('texto-ajuda').textContent = outroAssinou
-                ? `${outro} já assinou. Com a sua assinatura a vistoria fica concluída.`
-                : `Depois que você assinar, ${outro} recebe uma solicitação para revisar e assinar no login dele.`;
+                ? `${outro} já assinou. Sua assinatura conclui a vistoria.`
+                : `Ao assinar, a vistoria será enviada para ${outro} ${papel === 'motorista' ? 'revisar e aprovar' : 'conferir e assinar'}.`;
             const resultado = v.status_conformidade === 'nao_conforme'
                 ? '<span class="badge bg-danger">Não Conforme</span>' : '<span class="badge bg-success">Conforme</span>';
             document.getElementById('box-status').innerHTML = `<div class="p-2 bg-light border rounded small">Resultado: ${resultado}

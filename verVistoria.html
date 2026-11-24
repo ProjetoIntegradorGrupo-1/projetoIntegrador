@@ -54,9 +54,9 @@
         }
 
         async function recusar() {
-            const motivo = prompt('Motivo da recusa (o motorista vai ver este texto):');
+            const motivo = prompt('Informe o motivo da recusa. Este texto ficará visível na vistoria:');
             if (motivo === null) return;
-            if (motivo.trim().length < 5) { alert('Escreva o motivo da recusa.'); return; }
+            if (motivo.trim().length < 5) { alert('Descreva o motivo da recusa com pelo menos 5 caracteres.'); return; }
             const ctx = await AxionSessao.pronta;
             const fd = new FormData();
             fd.append('id_execucao', new URLSearchParams(window.location.search).get('id'));
@@ -111,12 +111,23 @@
             const fmtAss = (img, em) => img === true ? `<div class="small text-success">Assinada ${em ? 'em ' + dataBR(em) : ''}</div>`
                 : img ? `<img class="assinatura-img w-100" src="${e(img)}" alt="Assinatura"><div class="small text-muted">${em ? dataBR(em) + ' ' + e(em.slice(11, 16)) : ''}</div>`
                 : '<div class="text-muted small">Aguardando assinatura</div>';
-            const mensagens = { enviada: 'Assinatura registrada! A solicitação foi enviada para a outra pessoa assinar no login dela.', concluida: 'Vistoria concluída com as duas assinaturas.', recusada: 'Vistoria recusada. O motivo ficou registrado.' };
+            // Mensagem após assinar/recusar, com o nome de quem recebe a solicitação
+            const destinatario = v.meu_papel === 'motorista' ? v.nome_vistoriador : v.nome_motorista;
+            const mensagens = {
+                enviada: ['success', 'bi-send-check-fill', v.meu_papel === 'motorista'
+                    ? `Sua assinatura foi registrada. A vistoria foi enviada para <strong>${e(destinatario)}</strong> revisar e aprovar.`
+                    : `Sua assinatura foi registrada. A vistoria foi enviada para <strong>${e(destinatario)}</strong> conferir e assinar.`],
+                concluida: ['success', 'bi-patch-check-fill', Number(v.enviado_manutencao) === 1
+                    ? 'Vistoria aprovada e concluída. O veículo foi enviado para manutenção.'
+                    : 'Vistoria aprovada e concluída.'],
+                recusada: ['secondary', 'bi-x-octagon-fill', `Vistoria recusada. <strong>${e(v.nome_motorista)}</strong> poderá ver o motivo informado.`]
+            };
+            const msg = mensagens[params.get('sucesso')];
 
             box.innerHTML = `
-                ${mensagens[params.get('sucesso')] ? `<div class="alert alert-success">${mensagens[params.get('sucesso')]}</div>` : ''}
-                ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
-                ${Number(v.enviado_manutencao) === 1 ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>O veículo foi enviado para manutenção na aprovação desta vistoria.</div>' : ''}
+                ${msg ? `<div class="alert alert-${msg[0]} alert-dismissible fade show d-flex align-items-center gap-2"><i class="bi ${msg[1]} fs-5"></i><div>${msg[2]}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div>` : ''}
+                ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><i class="bi bi-x-octagon-fill me-1"></i><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
+                ${Number(v.enviado_manutencao) === 1 && !msg ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>Veículo enviado para manutenção na aprovação desta vistoria.</div>' : ''}
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                     <div>
                         <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-success me-2"></i>Vistoria #${v.id_execucao}</h1>
