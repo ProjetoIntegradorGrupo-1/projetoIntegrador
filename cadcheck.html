@@ -199,7 +199,6 @@
                             <input class="form-check-input" type="radio" name="${nome}" id="r${p.id_pergunta}n" value="nao" ${req} data-pergunta="${p.id_pergunta}">
                             <label class="form-check-label small" for="r${p.id_pergunta}n">Não</label>
                         </div>
-                        ${p.resposta_esperada && !ehSub ? `<span class="small text-muted">Esperado: ${axionEsc(p.resposta_esperada.toUpperCase())}</span>` : ''}
                     </div>`
                     : `<input type="${p.tipo === 'numero' ? 'number' : 'text'}" name="${nome}" class="form-control form-control-sm" maxlength="255" placeholder="Informe a resposta..." ${req}>`;
                 return `<div class="p-3 mb-2 ${ehSub ? 'ms-4 border-start border-3 border-warning bg-white' : 'bg-light'} border rounded pergunta"
