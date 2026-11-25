@@ -239,7 +239,6 @@ function axion_garantir_estrutura(PDO $pdo): void {
     ]);
     // Resposta esperada só faz sentido em pergunta Sim/Não
     $pdo->exec("UPDATE Checklist_Perguntas SET resposta_esperada = NULL WHERE tipo <> 'sim_nao' AND resposta_esperada IS NOT NULL");
-    $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
     // Vistorias assinadas na versão anterior (as duas assinaturas de uma vez)
     $pdo->exec("UPDATE Checklist_Execucoes SET assinado_motorista_em = assinado_em WHERE assinado_em IS NOT NULL AND assinado_motorista_em IS NULL AND assinatura_motorista IS NOT NULL");
     $pdo->exec("UPDATE Checklist_Execucoes SET assinado_vistoriador_em = assinado_em WHERE assinado_em IS NOT NULL AND assinado_vistoriador_em IS NULL AND assinatura_vistoriador IS NOT NULL");
@@ -258,6 +257,8 @@ function axion_garantir_estrutura(PDO $pdo): void {
             INDEX idx_resp_execucao (id_execucao)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    // Só depois de garantir que a tabela existe (num banco novo ela ainda não existia aqui)
+    $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
 }
 
 /** Adiciona colunas que ainda não existem (bancos criados por versões antigas do sistema). */
