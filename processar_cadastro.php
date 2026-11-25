@@ -1,7 +1,9 @@
 <?php
 // processar_cadastro.php
-session_start();
-require_once 'conexao.php';
+require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . '/backend/auth.php';
+require_once __DIR__ . '/backend/fotos.php';
+$eu = axion_exigir_perfil(['admin', 'supervisor']);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nome          = trim($_POST['nome'] ?? '');
@@ -13,7 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $genero        = trim($_POST['genero'] ?? '');
     $cnh           = preg_replace('/\D/', '', $_POST['cnh'] ?? '');
     $validade_cnh  = !empty($_POST['validade-cnh']) ? $_POST['validade-cnh'] : null;
-    $categoria_cnh = strtoupper(trim($_POST['categoria-cnh'] ?? 'B'));
+    $categoria_cnh = strtoupper(trim($_POST['categoria-cnh'] ?? ''));
+    if ($cnh === '') { $categoria_cnh = ''; $validade_cnh = null; } // sem CNH (ex.: cliente)
     $cep           = trim($_POST['cep'] ?? '');
     $logradouro    = trim($_POST['logradouro'] ?? '');
     $numero        = trim($_POST['numero'] ?? '');
@@ -42,16 +45,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!in_array($perfil_solicitado, ['admin', 'supervisor', 'motorista', 'cliente'], true)) {
         $perfil_solicitado = 'motorista';
     }
+    axion_validar_csrf();
+    // Supervisor só cadastra motoristas e clientes; admin/supervisor só podem ser criados por um admin
+    if ($eu['perfil'] !== 'admin' && in_array($perfil_solicitado, ['admin', 'supervisor'], true)) {
+        echo "<script>alert('Somente o Administrador pode cadastrar Supervisores ou Admins.'); window.history.back();</script>";
+        exit;
+    }
+    // Motorista fica vinculado a um supervisor responsável (escolhido no cadastro)
+    $id_supervisor = null;
+    if ($perfil_solicitado === 'motorista' && !empty($_POST['id_supervisor'])) {
+        $stSup = $pdo->prepare("SELECT id_usuario FROM Usuarios WHERE id_usuario = :id AND perfil = 'supervisor'");
+        $stSup->execute([':id' => (int)$_POST['id_supervisor']]);
+        $id_supervisor = $stSup->fetchColumn() ?: null;
+    }
+    if ($perfil_solicitado === 'motorista' && !$id_supervisor && $eu['perfil'] === 'supervisor') {
+        $id_supervisor = $eu['id']; // supervisor que cadastrou vira o responsável
+    }
+    if ($perfil_solicitado === 'motorista' && !$id_supervisor) {
+        echo "<script>alert('Escolha o supervisor responsável pelo motorista.'); window.history.back();</script>";
+        exit;
+    }
+    if (in_array($perfil_solicitado, ['motorista', 'cliente'], true) && (strlen($cnh) !== 11 || $categoria_cnh === '' || !$validade_cnh)) {
+        echo "<script>alert('Motorista e cliente precisam de CNH (11 dígitos), categoria e validade.'); window.history.back();</script>";
+        exit;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>alert('E-mail inválido.'); window.history.back();</script>";
+        exit;
+    }
 
     try {
         $sql = "INSERT INTO Usuarios (
                     nome, sobrenome, email, senha, cpf_matricula, perfil,
                     data_nascimento, genero, cnh, validade_cnh, categoria_cnh,
-                    cep, logradouro, numero, bairro, cidade, estado, telefone, status
+                    cep, logradouro, numero, bairro, cidade, estado, telefone, status, id_supervisor
                 ) VALUES (
                     :nome, :sobrenome, :email, :senha, :cpf_matricula, :perfil,
                     :dt_nasc, :genero, :cnh, :val_cnh, :cat_cnh,
-                    :cep, :logradouro, :numero, :bairro, :cidade, :estado, :telefone, 'ativo'
+                    :cep, :logradouro, :numero, :bairro, :cidade, :estado, :telefone, 'ativo', :id_supervisor
                 )";
 
         $stmt = $pdo->prepare($sql);
@@ -66,24 +97,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':genero'        => $genero,
             ':cnh'           => $cnh,
             ':val_cnh'       => $validade_cnh,
-            ':cat_cnh'       => $categoria_cnh,
+            ':cat_cnh'       => $categoria_cnh ?: null,
             ':cep'           => $cep,
             ':logradouro'    => $logradouro,
             ':numero'        => $numero,
             ':bairro'        => $bairro,
             ':cidade'        => $cidade,
             ':estado'        => $estado,
-            ':telefone'      => $telefone
+            ':telefone'      => $telefone,
+            ':id_supervisor' => $id_supervisor
         ]);
 
+        // Foto enviada junto com o cadastro (opcional)
+        $novoId = (int)$pdo->lastInsertId();
+        try {
+            $foto = axion_receber_foto('foto', 'usuario', $novoId, 3);
+            if ($foto) $pdo->prepare("UPDATE Usuarios SET foto = :f WHERE id_usuario = :id")->execute([':f' => $foto, ':id' => $novoId]);
+        } catch (RuntimeException $e) {
+            // O cadastro foi feito; só a foto não foi aceita
+        }
         header("Location: oqfazer.php?aba=usuarios&sucesso={$perfil_solicitado}_cadastrado");
         exit;
 
     } catch (PDOException $e) {
-        echo "<script>
-                alert('Erro ao cadastrar usuário (CPF ou E-mail já existente?): " . addslashes($e->getMessage()) . "');
-                window.history.back();
-              </script>";
+        $msg = (($e->errorInfo[1] ?? 0) == 1062) ? 'Já existe um usuário com este CPF ou e-mail.' : 'Erro ao cadastrar usuário.';
+        echo "<script>alert(" . json_encode($msg) . "); window.history.back();</script>";
         exit;
     }
 } else {

@@ -8,9 +8,11 @@
     <!-- CSS do Bootstrap e Ícones FontAwesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
 </head>
 
-<body class="bg-light">
+<body class="bg-light" data-secao="vistorias" data-titulo="Registrar avaria">
 
     <!-- TOAST DE RECOMENDAÇÃO (Disparado quando houver não conformidade) -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
@@ -25,70 +27,119 @@
         </div>
     </div>
 
-    <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+    <main class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
         <div class="card p-4 shadow-sm" style="max-width: 600px; width: 100%;">
-            
-            <h1 class="h4 text-center mb-3">Informações adicionais das condições do veículo</h1>
+            <h1 class="h4 text-center mb-1">Informações adicionais das condições do veículo</h1>
+            <p class="text-center text-muted small mb-3" id="resumo-vistoria">Carregando vistoria...</p>
 
-            <!-- Barra de Ações de Mídia (Câmera e Anexo de Arquivo) -->
-            <div class="d-flex justify-content-end gap-3 mb-2 pe-1">
-                <!-- Botão Câmera (Abre a câmera nativa no celular) -->
-                <label for="capturaCamera" class="btn btn-outline-primary btn-sm position-relative" title="Tirar Foto">
-                    <i class="bi bi-camera-fill fs-5"></i>
-                    <input type="file" id="capturaCamera" name="foto_evidencia" accept="image/*" capture="environment" class="d-none" onchange="mostrarNomeArquivo(this, 'statusCamera')">
-                </label>
+            <div id="itens-fora-padrao" class="mb-3"></div>
 
-                <!-- Botão Anexo de Arquivo/Documento -->
-                <label for="anexoArquivo" class="btn btn-outline-secondary btn-sm position-relative" title="Anexar Arquivo">
-                    <i class="bi bi-file-earmark-text-fill fs-5"></i>
-                    <input type="file" id="anexoArquivo" name="documento_evidencia" accept="image/*,application/pdf" class="d-none" onchange="mostrarNomeArquivo(this, 'statusArquivo')">
-                </label>
-            </div>
+            <form action="backend/api.php?acao=salvar_nao_conformidade" method="post" enctype="multipart/form-data" id="formNaoConformidade">
+                <input type="hidden" name="id_execucao" id="id_execucao">
 
-            <!-- Indicadores Visuais de Arquivos Anexados -->
-            <div class="mb-2">
-                <span id="statusCamera" class="badge bg-success d-none mb-1"><i class="bi bi-check-lg me-1"></i> Foto capturada</span>
-                <span id="statusArquivo" class="badge bg-info text-dark d-none mb-1"><i class="bi bi-paperclip me-1"></i> Arquivo anexado</span>
-            </div>
-
-            <!-- Formulário com Caixa de Texto Ampla -->
-            <form action="assinaturaChecklist.html" method="get" enctype="multipart/form-data">
-                
-                <div class="mb-4">
-                    <textarea name="descricao_detalhada" id="descricao_detalhada" class="form-control" rows="8" placeholder="Descreva detalhadamente a situação de não conformidade ou observações do veículo..." required></textarea>
+                <!-- Câmera (abre a câmera no celular) e anexo de imagem -->
+                <div class="d-flex justify-content-end gap-3 mb-2 pe-1">
+                    <label for="capturaCamera" class="btn btn-outline-primary btn-sm" title="Tirar Foto">
+                        <i class="bi bi-camera-fill fs-5"></i>
+                        <input type="file" id="capturaCamera" name="foto_evidencia" accept="image/*" capture="environment" class="d-none" onchange="mostrarNomeArquivo(this)">
+                    </label>
+                    <label for="anexoArquivo" class="btn btn-outline-secondary btn-sm" title="Anexar Imagem">
+                        <i class="bi bi-image fs-5"></i>
+                        <input type="file" id="anexoArquivo" name="documento_evidencia" accept="image/*" class="d-none" onchange="mostrarNomeArquivo(this)">
+                    </label>
+                </div>
+                <!-- Pré-visualização da imagem escolhida -->
+                <div id="preview-box" class="mb-3 d-none">
+                    <div class="position-relative d-inline-block">
+                        <img id="preview-img" alt="Imagem da avaria" class="img-thumbnail" style="max-height: 260px; max-width: 100%;">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removerImagem()" title="Remover imagem">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="small text-muted mt-1" id="preview-nome"></div>
                 </div>
 
-                <!-- Navegação no estilo "Página Anterior" e "Próxima Página" -->
-                <div class="d-flex justify-content-between align-items-center pt-2">
-                    <a href="cadcheck.html" class="btn btn-link text-decoration-none text-dark fw-bold ps-0">
-                        <i class="bi bi-chevron-left me-1"></i> Página Anterior
-                    </a>
+                <div class="mb-4">
+                    <label for="descricao_detalhada" class="form-label fw-semibold">Descrição da não conformidade</label>
+                    <textarea name="descricao_detalhada" id="descricao_detalhada" class="form-control" rows="8" maxlength="5000" required
+                        placeholder="Descreva detalhadamente a avaria ou o problema encontrado..."></textarea>
+                </div>
 
-                    <button type="submit" class="btn btn-link text-decoration-none text-dark fw-bold pe-0">
-                        Próxima Página <i class="bi bi-chevron-right ms-1"></i>
+                <div class="d-flex justify-content-between align-items-center pt-2">
+                    <a href="oqfazer.php?aba=vistorias" class="btn btn-link text-decoration-none text-dark fw-bold ps-0">
+                        <i class="bi bi-chevron-left me-1"></i> Voltar ao painel
+                    </a>
+                    <button type="submit" class="btn btn-primary fw-bold">
+                        Salvar e ir para assinaturas <i class="bi bi-chevron-right ms-1"></i>
                     </button>
                 </div>
             </form>
-
         </div>
-    </div>
+    </main>
 
-    <!-- JS do Bootstrap e Script de Interatividade -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
     <script>
-        // Exibe o Toast automaticamente ao carregar a página (Simulação de redirecionamento por Não Conformidade)
-        document.addEventListener("DOMContentLoaded", function () {
-            const toastEl = document.getElementById('toastNaoConformidade');
-            const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+        document.addEventListener("DOMContentLoaded", async function () {
+            const toast = new bootstrap.Toast(document.getElementById('toastNaoConformidade'), { delay: 5000 });
             toast.show();
+
+            const id = new URLSearchParams(window.location.search).get('id');
+            document.getElementById('id_execucao').value = id || '';
+            const resp = await fetch(`backend/api.php?acao=obter_vistoria&id=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' } });
+            const json = await resp.json();
+            if (!json.sucesso) {
+                document.getElementById('resumo-vistoria').textContent = json.erro || 'Vistoria não encontrada.';
+                document.querySelector('#formNaoConformidade button[type=submit]').disabled = true;
+                return;
+            }
+            const v = json.dados;
+            // Depois da primeira assinatura a descrição não muda mais (quem assina depois vê o mesmo conteúdo)
+            if (!v.pode_editar_avaria) {
+                window.location.href = (v.pode_assinar ? 'assinaturaChecklist.html' : 'verVistoria.html') + `?id=${v.id_execucao}`;
+                return;
+            }
+            document.getElementById('resumo-vistoria').textContent =
+                `Vistoria #${v.id_execucao} - ${v.placa_veiculo} - ${v.checklist_titulo}`;
+            if (v.detalhes_nao_conformidade) document.getElementById('descricao_detalhada').value = v.detalhes_nao_conformidade;
+            if (v.foto_url) {
+                document.getElementById('preview-img').src = v.foto_url;
+                document.getElementById('preview-nome').textContent = 'Imagem já salva nesta vistoria. Escolha outra para substituir.';
+                document.getElementById('preview-box').classList.remove('d-none');
+            }
+            const fora = (v.respostas || []).filter(r => r.conforme !== null && Number(r.conforme) === 0);
+            if (fora.length) {
+                document.getElementById('itens-fora-padrao').innerHTML =
+                    '<div class="alert alert-warning small mb-0"><strong>Itens fora do padrão:</strong><ul class="mb-0">' +
+                    fora.map(r => `<li>${axionEsc(r.pergunta_texto)} (resposta: ${axionEsc(r.resposta)})</li>`).join('') + '</ul></div>';
+            }
         });
 
-        // Função para mostrar feedback visual quando o motorista tira foto ou anexa arquivo
-        function mostrarNomeArquivo(input, idBadge) {
-            const badge = document.getElementById(idBadge);
-            if (input.files && input.files[0]) {
-                badge.classList.remove('d-none');
+        // Mostra a imagem escolhida (câmera ou galeria). Só uma imagem é enviada: escolher outra substitui a anterior.
+        let urlPreview = null;
+        function mostrarNomeArquivo(input) {
+            const arq = input.files && input.files[0];
+            if (!arq) return;
+            const outro = input.id === 'capturaCamera' ? 'anexoArquivo' : 'capturaCamera';
+            document.getElementById(outro).value = '';
+            if (!arq.type.startsWith('image/')) {
+                alert('Escolha um arquivo de imagem (foto).');
+                input.value = '';
+                return;
             }
+            if (urlPreview) URL.revokeObjectURL(urlPreview);
+            urlPreview = URL.createObjectURL(arq);
+            document.getElementById('preview-img').src = urlPreview;
+            document.getElementById('preview-nome').textContent = `${arq.name} (${(arq.size / 1024 / 1024).toFixed(1)} MB)`;
+            document.getElementById('preview-box').classList.remove('d-none');
+        }
+
+        function removerImagem() {
+            ['capturaCamera', 'anexoArquivo'].forEach(id => document.getElementById(id).value = '');
+            if (urlPreview) URL.revokeObjectURL(urlPreview);
+            urlPreview = null;
+            document.getElementById('preview-img').removeAttribute('src');
+            document.getElementById('preview-box').classList.add('d-none');
         }
     </script>
 </body>

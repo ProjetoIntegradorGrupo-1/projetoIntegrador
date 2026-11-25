@@ -1,14 +1,13 @@
 <?php
 // criar_checklist_dinamico.php
-session_start();
-require_once 'conexao.php';
-
-if (!isset($_SESSION['id_usuario'])) {
-    header("Location: index.html");
-    exit;
-}
+require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . '/backend/auth.php';
+$eu = axion_exigir_perfil(['admin', 'supervisor']);
+// Checklist criado pelo supervisor vai para o admin aprovar antes de poder ser usado
+$statusAprovacao = $eu['perfil'] === 'admin' ? 'aprovado' : 'pendente';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    axion_validar_csrf();
     $id_criador = (int)$_SESSION['id_usuario'];
     $titulo     = trim($_POST['titulo'] ?? '');
     $categoria  = trim($_POST['categoria'] ?? 'outros');
@@ -17,14 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $pdo->beginTransaction();
 
-        $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo)
-                VALUES (:id_criador, :titulo, :categoria, :descricao, 1)";
+        $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo, status_aprovacao)
+                VALUES (:id_criador, :titulo, :categoria, :descricao, 1, :status_aprovacao)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':id_criador' => $id_criador,
             ':titulo'     => $titulo,
             ':categoria'  => $categoria,
-            ':descricao'  => $descricao
+            ':descricao'  => $descricao,
+            ':status_aprovacao' => $statusAprovacao
         ]);
         $idChecklist = (int)$pdo->lastInsertId();
 
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ':texto'  => $textoP,
                     ':tipo'   => $p['tipo'] ?? 'sim_nao',
                     ':obrig'  => isset($p['obrigatorio']) ? 1 : 0,
-                    ':esp'    => $p['resposta_esperada'] ?? 'sim',
+                    ':esp'    => ($p['tipo'] ?? 'sim_nao') === 'sim_nao' ? ($p['resposta_esperada'] ?? 'sim') : null,
                     ':ori'    => trim($p['orientacao'] ?? '')
                 ]);
                 $idPai = (int)$pdo->lastInsertId();
@@ -76,14 +76,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
 
+        // Um modelo sem nenhuma pergunta não serve para vistoria
+        if (empty($ordem) || $ordem === 1 || $titulo === '') {
+            $pdo->rollBack();
+            echo "<script>alert('Informe o título e pelo menos uma pergunta.'); window.history.back();</script>";
+            exit;
+        }
         $pdo->commit();
-        header("Location: oqfazer.php?aba=checklists&sucesso=checklist_criado");
+        header("Location: oqfazer.php?aba=checklists&sucesso=" . ($statusAprovacao === 'pendente' ? 'checklist_enviado_aprovacao' : 'checklist_criado'));
         exit;
 
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) $pdo->rollBack();
         echo "<script>
-                alert('Erro ao salvar checklist: " . addslashes($e->getMessage()) . "');
+                alert('Erro ao salvar checklist.');
                 window.location.href = 'criarChecklist.html';
               </script>";
         exit;

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vistoria Preenchida - Axion Web</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <style>
+        .assinatura-img { max-width: 100%; height: 120px; object-fit: contain; border: 1px solid #dee2e6; border-radius: 6px; background: #fff; }
+        .foto-evidencia { max-width: 100%; max-height: 420px; border-radius: 6px; }
+        /* ===== RELATÓRIO PARA IMPRESSÃO / PDF ===== */
+        #relatorio { display: none; }
+        @page { size: A4; margin: 14mm 12mm 18mm 12mm; }
+        @media print {
+            body { background: #fff !important; }
+            .axion-navbar, main.axion-web-container { display: none !important; }
+            #relatorio { display: block; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+        .rel { font-family: "Segoe UI", Arial, sans-serif; color: #1f2933; font-size: 10.5pt; }
+        .rel-topo { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #5b21d6; padding-bottom: 8px; margin-bottom: 12px; }
+        .rel-marca { display: flex; align-items: center; gap: 10px; }
+        .rel-logo { width: 52px; height: 52px; border-radius: 50%; display: block; }
+        .rel-marca-nome { font-size: 18pt; font-weight: 800; letter-spacing: 2px; color: #3b1290; line-height: 1; }
+        .rel-marca-sub { font-size: 8.5pt; color: #6b7785; }
+        .rel-doc { text-align: right; }
+        .rel-doc-titulo { font-size: 13pt; font-weight: 700; color: #3b1290; text-transform: uppercase; letter-spacing: .5px; }
+        .rel-doc-num { font-size: 9pt; color: #6b7785; }
+        .rel-faixa { display: flex; justify-content: space-between; align-items: center; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; color: #fff; font-weight: 700; }
+        .rel-faixa.ok { background: #1e8e5a; }
+        .rel-faixa.nok { background: #c0392b; }
+        .rel-faixa .rel-sit { font-weight: 600; font-size: 9pt; background: rgba(255,255,255,.2); padding: 3px 8px; border-radius: 4px; }
+        .rel-secao { font-size: 9pt; font-weight: 700; text-transform: uppercase; color: #3b1290; letter-spacing: .6px; border-bottom: 1px solid #c9d3dd; padding-bottom: 3px; margin: 14px 0 6px; }
+        .rel-grid { width: 100%; border-collapse: collapse; }
+        .rel-grid td { border: 1px solid #dde3ea; padding: 5px 8px; vertical-align: top; width: 25%; }
+        .rel-grid .rot { display: block; font-size: 7.5pt; color: #6b7785; text-transform: uppercase; letter-spacing: .4px; }
+        .rel-grid .val { font-weight: 600; }
+        .rel-tab { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        .rel-tab th { background: #3b1290; color: #fff; text-align: left; padding: 5px 7px; font-weight: 600; font-size: 8.5pt; }
+        .rel-tab td { padding: 5px 7px; border-bottom: 1px solid #e3e8ee; }
+        .rel-tab tr:nth-child(even) td { background: #f6f8fa; }
+        .rel-tab tr.fora td { background: #fdecea !important; }
+        .rel-tab td.sub { padding-left: 22px; color: #4a5560; font-style: italic; }
+        .rel-tag { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+        .rel-tag.ok { background: #d8f0e3; color: #1e6b45; }
+        .rel-tag.nok { background: #c0392b; color: #fff; }
+        .rel-resumo { display: flex; gap: 8px; margin-top: 8px; }
+        .rel-resumo div { flex: 1; border: 1px solid #dde3ea; border-radius: 6px; padding: 6px; text-align: center; }
+        .rel-resumo b { display: block; font-size: 14pt; color: #3b1290; }
+        .rel-resumo span { font-size: 8pt; color: #6b7785; }
+        .rel-caixa { border: 1px solid #f0b4ad; background: #fff6f5; border-radius: 6px; padding: 8px 10px; white-space: pre-wrap; }
+        .rel-caixa.cinza { border-color: #c9d3dd; background: #f6f8fa; }
+        .rel-foto { max-width: 100%; max-height: 80mm; border: 1px solid #dde3ea; border-radius: 6px; margin-top: 8px; }
+        .rel-assinaturas { display: flex; gap: 24px; margin-top: 10px; page-break-inside: avoid; }
+        .rel-ass { flex: 1; text-align: center; }
+        .rel-ass-img { height: 70px; display: flex; align-items: flex-end; justify-content: center; }
+        .rel-ass-img img { max-height: 70px; max-width: 100%; }
+        .rel-ass-linha { border-top: 1px solid #1f2933; margin-top: 4px; padding-top: 4px; font-weight: 700; }
+        .rel-ass-info { font-size: 8pt; color: #6b7785; }
+        .rel-rodape { position: fixed; bottom: 0; left: 0; right: 0; font-size: 7.5pt; color: #8a96a3; border-top: 1px solid #dde3ea; padding-top: 4px; display: flex; justify-content: space-between; }
+        .rel-evitar-quebra { page-break-inside: avoid; }
+    </style>
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
+</head>
+
+<body data-secao="vistorias" data-titulo="Detalhes da vistoria">
+    <nav class="axion-navbar text-white">
+        <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
+            <a href="oqfazer.php" class="axion-brand">
+                <img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion">
+                <span>AXION</span>
+                <span class="axion-brand-badge">Vistoria Preenchida</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="oqfazer.php?aba=vistorias" class="btn btn-sm btn-light fw-semibold"><i class="bi bi-search me-1"></i>Histórico de Vistorias</a>
+                <a href="oqfazer.php" class="btn btn-sm btn-outline-light"><i class="bi bi-grid-1x2 me-1"></i>Painel Principal</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="axion-web-container">
+        <div class="axion-form-card" style="max-width: 980px;" id="conteudo">
+            <div class="text-muted">Carregando vistoria...</div>
+        </div>
+    </main>
+
+    <!-- Relatório formatado (só aparece na impressão / PDF) -->
+    <div id="relatorio" class="rel"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
+    <script>
+        const e = axionEsc;
+        // "sim"/"nao" gravados no banco aparecem como "Sim"/"Não"
+        const fmtResp = (r) => ({ sim: 'Sim', nao: 'Não' }[String(r ?? '').toLowerCase()] ?? (r || '-'));
+
+        function badgeResultado(st) {
+            if (st === 'conforme') return '<span class="badge bg-success fs-6">Conforme</span>';
+            if (st === 'nao_conforme') return '<span class="badge bg-danger fs-6">Não Conforme</span>';
+            return `<span class="badge bg-secondary fs-6">${e(st)}</span>`;
+        }
+
+        function dataBR(d) {
+            if (!d) return '-';
+            const [a, m, dia] = d.slice(0, 10).split('-');
+            return `${dia}/${m}/${a}`;
+        }
+
+        async function recusar() {
+            const motivo = prompt('Informe o motivo da recusa. Este texto ficará visível na vistoria:');
+            if (motivo === null) return;
+            if (motivo.trim().length < 5) { alert('Descreva o motivo da recusa com pelo menos 5 caracteres.'); return; }
+            const ctx = await AxionSessao.pronta;
+            const fd = new FormData();
+            fd.append('id_execucao', new URLSearchParams(window.location.search).get('id'));
+            fd.append('csrf', ctx.csrf);
+            fd.append('motivo', motivo.trim());
+            const resp = await fetch('backend/api.php?acao=recusar_vistoria', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+            const json = await resp.json();
+            if (!json.sucesso) { alert(json.erro || 'Não foi possível recusar.'); return; }
+            window.location.href = json.redirecionar;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const box = document.getElementById('conteudo');
+            const resp = await fetch(`backend/api.php?acao=obter_vistoria&id=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' } });
+            if (resp.status === 401) { window.location.href = 'index.html'; return; }
+            const json = await resp.json();
+            if (!json.sucesso) { box.innerHTML = `<div class="alert alert-danger mb-0">${e(json.erro || 'Vistoria não encontrada.')}</div>`; return; }
+            const v = json.dados;
+
+            let n = 0;
+            const linhas = (v.respostas || []).map(r => {
+                const ehSub = r.id_pergunta_pai !== null;
+                const conf = r.conforme === null ? '<span class="text-muted">-</span>'
+                    : Number(r.conforme) === 1 ? '<span class="badge bg-success-subtle text-success">OK</span>'
+                    : '<span class="badge bg-danger">Fora do padrão</span>';
+                return `<tr class="${r.conforme !== null && Number(r.conforme) === 0 ? 'table-danger' : ''}">
+                    <td class="small text-muted">${ehSub ? '↳' : ++n}</td>
+                    <td class="${ehSub ? 'ps-4 small' : ''}">${e(r.pergunta_texto)}</td>
+                    <td class="fw-semibold">${e(fmtResp(r.resposta))}</td>
+                    <td class="small text-muted">${r.resposta_esperada ? e(fmtResp(r.resposta_esperada)) : '-'}</td>
+                    <td>${conf}</td>
+                </tr>`;
+            }).join('');
+
+            const precisaDetalhes = v.status_conformidade === 'nao_conforme' && !v.detalhes_nao_conformidade && v.pode_editar_avaria;
+            const outroAssinou = v.meu_papel === 'motorista' ? v.assinado_vistoriador_em : v.assinado_motorista_em;
+            let acaoPendente = '';
+            if (v.pode_assinar) {
+                acaoPendente = `<a class="btn btn-warning fw-semibold" href="${precisaDetalhes ? 'detalhesNaoConformidade.html' : 'assinaturaChecklist.html'}?id=${v.id_execucao}">
+                    <i class="bi bi-pen me-1"></i>${precisaDetalhes ? 'Descrever avaria e assinar' : (v.meu_papel === 'vistoriador' && outroAssinou ? 'Aprovar e assinar' : 'Assinar')}</a>`;
+                if (outroAssinou) acaoPendente += ` <button class="btn btn-outline-danger" onclick="recusar()"><i class="bi bi-x-circle me-1"></i>Recusar</button>`;
+            }
+            const situacoes = {
+                concluida: `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Concluída em ${v.assinado_em ? dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
+                aguardando_vistoriador: `<span class="badge bg-warning text-dark">Aguardando assinatura do supervisor</span>`,
+                aguardando_motorista: `<span class="badge bg-warning text-dark">Aguardando assinatura do motorista</span>`,
+                aguardando_assinaturas: `<span class="badge bg-secondary">Ainda não assinada</span>`,
+                recusada: `<span class="badge bg-dark">Recusada</span>`
+            };
+            const fmtAss = (img, em) => img === true ? `<div class="small text-success">Assinada ${em ? 'em ' + dataBR(em) : ''}</div>`
+                : img ? `<img class="assinatura-img w-100" src="${e(img)}" alt="Assinatura"><div class="small text-muted">${em ? dataBR(em) + ' ' + e(em.slice(11, 16)) : ''}</div>`
+                : '<div class="text-muted small">Aguardando assinatura</div>';
+            // Mensagem após assinar/recusar, com o nome de quem recebe a solicitação
+            const destinatario = v.meu_papel === 'motorista' ? v.nome_vistoriador : v.nome_motorista;
+            const mensagens = {
+                enviada: ['success', 'bi-send-check-fill', v.meu_papel === 'motorista'
+                    ? `Sua assinatura foi registrada. A vistoria foi enviada para <strong>${e(destinatario)}</strong> revisar e aprovar.`
+                    : `Sua assinatura foi registrada. A vistoria foi enviada para <strong>${e(destinatario)}</strong> conferir e assinar.`],
+                concluida: ['success', 'bi-patch-check-fill', Number(v.enviado_manutencao) === 1
+                    ? 'Vistoria aprovada e concluída. O veículo foi enviado para manutenção.'
+                    : 'Vistoria aprovada e concluída.'],
+                recusada: ['secondary', 'bi-x-octagon-fill', `Vistoria recusada. <strong>${e(v.nome_motorista)}</strong> poderá ver o motivo informado.`]
+            };
+            const msg = mensagens[params.get('sucesso')];
+
+            box.innerHTML = `
+                ${msg ? `<div class="alert alert-${msg[0]} alert-dismissible fade show d-flex align-items-center gap-2"><i class="bi ${msg[1]} fs-5"></i><div>${msg[2]}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div>` : ''}
+                ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><i class="bi bi-x-octagon-fill me-1"></i><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
+                ${Number(v.enviado_manutencao) === 1 && !msg ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>Veículo enviado para manutenção na aprovação desta vistoria.</div>' : ''}
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-success me-2"></i>Vistoria #${v.id_execucao}</h1>
+                        <div class="text-muted">${e(v.checklist_titulo)}</div>
+                    </div>
+                    <div class="text-end">
+                        ${badgeResultado(v.status_conformidade)}
+                        <div class="small mt-1">${situacoes[v.situacao] || ''}</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
+                        ${v.veiculo_foto_url ? `<img src="${e(v.veiculo_foto_url)}" alt="" class="w-100 mb-2" style="height:120px;object-fit:cover;border-radius:8px">` : ''}
+                        <div class="small text-muted">Veículo</div>
+                        <div class="fw-bold font-monospace">${e(v.placa_veiculo)}</div>
+                        <div class="small">${e(v.marca_modelo || '')} ${e(v.ano || '')} ${e(v.cor || '')}</div>
+                        <div class="small">Km: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')}</div>
+                    </div></div>
+                    <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
+                        <div class="small text-muted">Motorista</div>
+                        <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.motorista_foto_url, v.nome_motorista, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_motorista)}</div>
+                        <div class="small text-muted mt-2">Vistoriador</div>
+                        <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.vistoriador_foto_url, v.nome_vistoriador, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_vistoriador)}</div>
+                    </div></div>
+                    <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
+                        <div class="small text-muted">Data / Hora</div>
+                        <div class="fw-semibold">${dataBR(v.data_vistoria)} ${e((v.hora_vistoria || '').slice(0, 5))}</div>
+                        <div class="small text-muted mt-2">Observações</div><div class="small">${e(v.observacoes || '-')}</div>
+                    </div></div>
+                </div>
+
+                <div class="axion-section-title"><i class="bi bi-list-check"></i> Respostas</div>
+                ${linhas ? `<div class="table-responsive mb-3"><table class="table table-sm align-middle">
+                    <thead><tr><th>#</th><th>Pergunta</th><th>Resposta</th><th>Esperado</th><th>Situação</th></tr></thead>
+                    <tbody>${linhas}</tbody></table></div>`
+                    : '<p class="text-muted small">Esta vistoria não tem respostas registradas (registrada antes desta versão do sistema).</p>'}
+
+                ${v.status_conformidade === 'nao_conforme' ? `
+                <div class="axion-section-title"><i class="bi bi-exclamation-triangle"></i> Não conformidade</div>
+                <p class="mb-2" style="white-space: pre-wrap">${e(v.detalhes_nao_conformidade || 'Sem descrição registrada.')}</p>
+                ${v.foto_url ? `<img class="foto-evidencia mb-3" src="${e(v.foto_url)}" alt="Foto da avaria">` : ''}` : ''}
+
+                <div class="axion-section-title"><i class="bi bi-pen"></i> Assinaturas</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="small text-muted mb-1">Motorista: ${e(v.nome_motorista)}</div>
+                        ${fmtAss(v.assinatura_motorista, v.assinado_motorista_em)}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="small text-muted mb-1">Vistoriador: ${e(v.nome_vistoriador)}</div>
+                        ${fmtAss(v.assinatura_vistoriador, v.assinado_vistoriador_em)}
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 justify-content-end nao-imprimir">
+                    ${acaoPendente}
+                    <button class="btn btn-outline-secondary" onclick="imprimirRelatorio()"><i class="bi bi-file-earmark-pdf me-1"></i>Gerar relatório (PDF)</button>
+                    <a href="oqfazer.php?aba=vistorias" class="btn btn-primary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+                </div>`;
+            montarRelatorio(v);
+        });
+
+        // Relatório de vistoria em formato de documento (A4), usado ao imprimir ou salvar em PDF
+        let tituloArquivo = document.title;
+        function montarRelatorio(v) {
+            const agora = new Date();
+            const emitido = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toTimeString().slice(0, 5);
+            const numero = String(v.id_execucao).padStart(5, '0');
+            const ok = v.status_conformidade !== 'nao_conforme';
+            const nomesSituacao = {
+                concluida: 'Concluída', aguardando_vistoriador: 'Aguardando supervisor',
+                aguardando_motorista: 'Aguardando motorista', aguardando_assinaturas: 'Não assinada', recusada: 'Recusada'
+            };
+            const categorias = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', outros: 'Outros' };
+            const dataHora = (d) => d ? `${dataBR(d)} ${e(d.slice(11, 16))}` : '-';
+
+            let n = 0, totalAvaliados = 0, foraPadrao = 0;
+            const linhas = (v.respostas || []).map(r => {
+                const ehSub = r.id_pergunta_pai !== null;
+                const avaliada = r.conforme !== null;
+                const fora = avaliada && Number(r.conforme) === 0;
+                if (avaliada) { totalAvaliados++; if (fora) foraPadrao++; }
+                const sit = !avaliada ? '<span style="color:#8a96a3">—</span>'
+                    : fora ? '<span class="rel-tag nok">FORA DO PADRÃO</span>' : '<span class="rel-tag ok">OK</span>';
+                return `<tr class="${fora ? 'fora' : ''}">
+                    <td style="width:26px">${ehSub ? '' : ++n}</td>
+                    <td class="${ehSub ? 'sub' : ''}">${ehSub ? '↳ ' : ''}${e(r.pergunta_texto)}</td>
+                    <td style="width:28%"><b>${e(fmtResp(r.resposta))}</b></td>
+                    <td style="width:120px">${sit}</td>
+                </tr>`;
+            }).join('');
+
+            const assinatura = (img, nome, papel, em) => `
+                <div class="rel-ass">
+                    <div class="rel-ass-img">${img && img !== true ? `<img src="${e(img)}" alt="">` : img === true ? '<i style="color:#1e8e5a">Assinado digitalmente</i>' : '<i style="color:#8a96a3">Pendente</i>'}</div>
+                    <div class="rel-ass-linha">${e(nome)}</div>
+                    <div class="rel-ass-info">${papel}${em ? ' · assinado em ' + dataHora(em) : ''}</div>
+                </div>`;
+
+            document.getElementById('relatorio').innerHTML = `
+                <div class="rel-topo">
+                    <div class="rel-marca">
+                        <img src="frontend/img/logo.png" class="rel-logo" alt="Logo Axion">
+                        <div>
+                            <div class="rel-marca-nome">AXION</div>
+                            <div class="rel-marca-sub">Gestão de Frota &amp; Checklists</div>
+                        </div>
+                    </div>
+                    <div class="rel-doc">
+                        <div class="rel-doc-titulo">Relatório de Vistoria</div>
+                        <div class="rel-doc-num">Nº ${numero} · Emitido em ${emitido}</div>
+                    </div>
+                </div>
+
+                <div class="rel-faixa ${ok ? 'ok' : 'nok'}">
+                    <span>RESULTADO: ${ok ? 'CONFORME — VEÍCULO LIBERADO' : 'NÃO CONFORME — AVARIA REGISTRADA'}</span>
+                    <span class="rel-sit">${nomesSituacao[v.situacao] || ''}</span>
+                </div>
+
+                <div class="rel-secao">Identificação</div>
+                ${v.veiculo_foto_url ? `<img src="${e(v.veiculo_foto_url)}" alt="" style="float:right;width:46mm;height:34mm;object-fit:cover;border-radius:6px;margin:0 0 6px 8px;border:1px solid #dde3ea">` : ''}
+                <table class="rel-grid" style="${v.veiculo_foto_url ? 'width:calc(100% - 50mm)' : ''}">
+                    <tr>
+                        <td><span class="rot">Placa</span><span class="val" style="font-family:monospace;font-size:12pt">${e(v.placa_veiculo)}</span></td>
+                        <td colspan="2"><span class="rot">Veículo</span><span class="val">${e(v.marca_modelo || '-')}</span> ${e(v.ano || '')} ${v.cor ? '· ' + e(v.cor) : ''}</td>
+                        <td><span class="rot">Quilometragem</span><span class="val">${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="rot">Checklist aplicado</span><span class="val">${e(v.checklist_titulo)}</span></td>
+                        <td><span class="rot">Categoria</span><span class="val">${e(categorias[v.checklist_categoria] || v.checklist_categoria || '-')}</span></td>
+                        <td><span class="rot">Data da vistoria</span><span class="val">${dataBR(v.data_vistoria)} ${e((v.hora_vistoria || '').slice(0, 5))}</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="rot">Motorista</span><span class="val">${e(v.nome_motorista)}</span></td>
+                        <td colspan="2"><span class="rot">Vistoriador / Supervisor</span><span class="val">${e(v.nome_vistoriador)}</span></td>
+                    </tr>
+                    ${v.observacoes ? `<tr><td colspan="4"><span class="rot">Observações</span>${e(v.observacoes)}</td></tr>` : ''}
+                </table>
+
+                <div class="rel-secao">Itens inspecionados</div>
+                ${linhas ? `<table class="rel-tab">
+                    <thead><tr><th>#</th><th>Item</th><th>Resposta</th><th>Situação</th></tr></thead>
+                    <tbody>${linhas}</tbody>
+                </table>
+                <div class="rel-resumo">
+                    <div><b>${n}</b><span>itens no checklist</span></div>
+                    <div><b>${totalAvaliados - foraPadrao}</b><span>dentro do padrão</span></div>
+                    <div><b style="color:${foraPadrao ? '#c0392b' : '#1e8e5a'}">${foraPadrao}</b><span>fora do padrão</span></div>
+                </div>` : '<p style="color:#8a96a3">Sem respostas registradas.</p>'}
+
+                ${!ok ? `
+                <div class="rel-evitar-quebra">
+                    <div class="rel-secao">Descrição da não conformidade</div>
+                    <div class="rel-caixa">${e(v.detalhes_nao_conformidade || 'Sem descrição registrada.')}</div>
+                    ${v.foto_url ? `<img class="rel-foto" src="${e(v.foto_url)}" alt="Foto da avaria">` : ''}
+                    ${Number(v.enviado_manutencao) === 1 ? '<p style="margin:6px 0 0"><b>Encaminhamento:</b> veículo enviado para manutenção na aprovação.</p>' : ''}
+                </div>` : ''}
+
+                ${v.situacao === 'recusada' ? `
+                <div class="rel-evitar-quebra">
+                    <div class="rel-secao">Recusa</div>
+                    <div class="rel-caixa cinza"><b>Recusada por ${e(v.recusado_por_nome || '')} em ${dataHora(v.recusado_em)}.</b>\n${e(v.motivo_recusa || '')}</div>
+                </div>` : ''}
+
+                <div class="rel-evitar-quebra">
+                    <div class="rel-secao">Assinaturas</div>
+                    <div class="rel-assinaturas">
+                        ${assinatura(v.assinatura_motorista, v.nome_motorista, 'Motorista', v.assinado_motorista_em)}
+                        ${assinatura(v.assinatura_vistoriador, v.nome_vistoriador, 'Vistoriador / Supervisor', v.assinado_vistoriador_em)}
+                    </div>
+                </div>
+
+                <div class="rel-rodape">
+                    <span>Sistema Axion · Relatório de Vistoria Nº ${numero} · ${e(v.placa_veiculo)}</span>
+                    <span>Emitido em ${emitido}</span>
+                </div>`;
+            tituloArquivo = `Vistoria_${numero}_${v.placa_veiculo}`;
+        }
+
+        function imprimirRelatorio() {
+            // O título vira o nome sugerido do arquivo PDF
+            const original = document.title;
+            document.title = tituloArquivo;
+            window.print();
+            setTimeout(() => { document.title = original; }, 1000);
+        }
+    </script>
+</body>
+
+</html>

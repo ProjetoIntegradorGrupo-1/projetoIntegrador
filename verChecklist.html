@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Checklist - Axion Web</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
+</head>
+
+<body data-secao="checklists" data-titulo="Revisar modelo">
+    <main class="axion-web-container">
+        <div class="axion-form-card" id="conteudo">
+            <div class="text-muted">Carregando modelo...</div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="frontend/js/axion.js"></script>
+    <script>
+        const e = axionEsc;
+        const id = new URLSearchParams(location.search).get('id');
+        const categorias = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', outros: 'Outros' };
+        const tipos = { sim_nao: 'Sim / Não', texto: 'Texto', numero: 'Número' };
+        const dataBR = (d) => d ? d.slice(0, 10).split('-').reverse().join('/') : '';
+
+        function badgeStatus(st) {
+            return {
+                pendente: '<span class="badge bg-warning text-dark fs-6"><i class="bi bi-hourglass-split me-1"></i>Aguardando aprovação</span>',
+                aprovado: '<span class="badge bg-success fs-6"><i class="bi bi-check-circle me-1"></i>Aprovado</span>',
+                rejeitado: '<span class="badge bg-danger fs-6"><i class="bi bi-x-circle me-1"></i>Rejeitado</span>'
+            }[st] || '';
+        }
+
+        async function decidir(acao) {
+            const ctx = await AxionSessao.pronta;
+            const fd = new FormData();
+            fd.append('csrf', ctx.csrf);
+            fd.append('id_checklist', id);
+            if (acao === 'rejeitar_checklist') {
+                const motivo = prompt('Motivo da rejeição (o supervisor vai ver este texto para corrigir o modelo):');
+                if (motivo === null) return;
+                if (motivo.trim().length < 5) { alert('Descreva o motivo com pelo menos 5 caracteres.'); return; }
+                fd.append('motivo', motivo.trim());
+            }
+            const r = await fetch(`backend/api.php?acao=${acao}`, { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+            const j = await r.json();
+            if (!j.sucesso) { alert(j.erro || 'Não foi possível concluir.'); return; }
+            location.href = j.redirecionar;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ctx = await AxionSessao.pronta;
+            if (!ctx) return;
+            const eu = ctx.usuario;
+            const box = document.getElementById('conteudo');
+            const json = await (await fetch(`backend/api.php?acao=obter_checklist&id=${encodeURIComponent(id)}`, { headers: { Accept: 'application/json' } })).json();
+            if (!json.sucesso) { box.innerHTML = '<div class="alert alert-danger mb-0">Modelo não encontrado.</div>'; return; }
+            const c = json.dados;
+            const souDono = Number(c.id_criador) === eu.id;
+            const podeGerir = eu.perfil === 'admin' || souDono;
+            const sucesso = new URLSearchParams(location.search).get('sucesso');
+            const msg = {
+                aprovado: 'Modelo aprovado. Ele já pode ser usado nas vistorias.',
+                rejeitado: 'Modelo rejeitado. O supervisor vai ver o motivo e pode corrigir e reenviar.'
+            }[sucesso];
+
+            let n = 0;
+            const perguntas = (c.perguntas || []).map(p => {
+                const ehSub = p.id_pergunta_pai !== null;
+                return `<div class="p-3 mb-2 border rounded ${ehSub ? 'ms-4 border-start border-3 border-warning bg-white' : 'bg-light'}">
+                    <div class="d-flex justify-content-between gap-2">
+                        <div class="fw-semibold">${ehSub ? `<span class="text-muted small">Se a resposta for "${e(p.condicao_pai === 'nao' ? 'Não' : 'Sim')}":</span> ` : `${++n}. `}${e(p.texto)}</div>
+                        <div class="text-nowrap small">
+                            <span class="badge bg-secondary-subtle text-secondary">${tipos[p.tipo] || e(p.tipo)}</span>
+                            ${Number(p.obrigatorio) === 1 ? '<span class="badge bg-primary-subtle text-primary">Obrigatória</span>' : ''}
+                        </div>
+                    </div>
+                    ${p.tipo === 'sim_nao' && p.resposta_esperada && !ehSub ? `<div class="small text-muted mt-1">Resposta esperada: <strong>${p.resposta_esperada === 'nao' ? 'Não' : 'Sim'}</strong></div>` : ''}
+                    ${p.orientacao ? `<div class="small text-muted">Orientação: ${e(p.orientacao)}</div>` : ''}
+                </div>`;
+            }).join('');
+
+            let acoes = '';
+            if (eu.perfil === 'admin' && c.status_aprovacao === 'pendente') {
+                acoes += `<button class="btn btn-success fw-semibold" onclick="decidir('aprovar_checklist')"><i class="bi bi-check2-circle me-1"></i>Aprovar modelo</button>
+                          <button class="btn btn-outline-danger" onclick="decidir('rejeitar_checklist')"><i class="bi bi-x-circle me-1"></i>Rejeitar</button>`;
+            }
+            if (podeGerir) acoes += `<a class="btn btn-outline-primary" href="editarChecklist.html?id=${c.id_checklist}"><i class="bi bi-pencil me-1"></i>${c.status_aprovacao === 'rejeitado' ? 'Corrigir e reenviar' : 'Editar'}</a>`;
+            if (c.status_aprovacao === 'aprovado' && Number(c.ativo) === 1 && ['supervisor', 'motorista'].includes(eu.perfil)) {
+                acoes += `<a class="btn btn-warning fw-semibold" href="cadcheck.html?id_checklist=${c.id_checklist}"><i class="bi bi-clipboard2-plus me-1"></i>Usar em uma vistoria</a>`;
+            }
+
+            box.innerHTML = `
+                ${msg ? `<div class="alert alert-success">${msg}</div>` : ''}
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                    <div>
+                        <h1 class="h4 fw-bold mb-1"><i class="bi bi-ui-checks-grid text-primary me-2"></i>${e(c.titulo)}</h1>
+                        <div class="text-muted small">${e(categorias[c.categoria] || c.categoria)} · criado por ${e(c.criador_nome)} ${c.criado_em ? 'em ' + dataBR(c.criado_em) : ''}</div>
+                        ${c.descricao ? `<div class="mt-1">${e(c.descricao)}</div>` : ''}
+                    </div>
+                    <div class="text-end">
+                        ${badgeStatus(c.status_aprovacao)}
+                        ${Number(c.ativo) === 1 ? '' : '<div class="mt-1"><span class="badge bg-secondary">Arquivado</span></div>'}
+                    </div>
+                </div>
+                ${c.status_aprovacao === 'pendente' ? `<div class="alert alert-warning py-2 small"><i class="bi bi-info-circle me-1"></i>${eu.perfil === 'admin' ? 'Revise as perguntas abaixo e aprove ou rejeite o modelo.' : 'Enviado para o administrador. Enquanto não for aprovado, ele não aparece para as vistorias.'}</div>` : ''}
+                ${c.status_aprovacao === 'rejeitado' ? `<div class="alert alert-danger py-2"><strong>Rejeitado por ${e(c.avaliador_nome || 'administrador')} em ${dataBR(c.avaliado_em)}:</strong> ${e(c.motivo_rejeicao || '')}</div>` : ''}
+                ${c.status_aprovacao === 'aprovado' && c.avaliador_nome ? `<div class="small text-success mb-3"><i class="bi bi-patch-check-fill me-1"></i>Aprovado por ${e(c.avaliador_nome)} em ${dataBR(c.avaliado_em)}</div>` : ''}
+                <div class="axion-section-title"><i class="bi bi-list-check"></i> Perguntas (${n || (c.perguntas || []).filter(p => p.id_pergunta_pai === null).length})</div>
+                ${perguntas || '<p class="text-muted">Este modelo não tem perguntas.</p>'}
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-3 pt-3 border-top">
+                    <a href="oqfazer.php?aba=${eu.perfil === 'admin' && c.status_aprovacao === 'pendente' ? 'aprovacoes' : 'checklists'}" class="btn btn-outline-secondary">Voltar</a>
+                    ${acoes}
+                </div>`;
+        });
+    </script>
+</body>
+
+</html>

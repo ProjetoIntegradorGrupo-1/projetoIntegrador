@@ -1,1 +1,4 @@
-
+# Configuração local de cada máquina (ex.: porta do MySQL)
+config.local.php
+# Fotos das vistorias enviadas pelo sistema
+uploads/

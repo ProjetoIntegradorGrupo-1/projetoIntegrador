@@ -8,14 +8,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="frontend/css/axion-web.css">
+    <link rel="icon" type="image/png" href="frontend/img/favicon.png">
 </head>
 
-<body>
+<body data-secao="usuarios" data-titulo="Editar usuário">
 
     <nav class="axion-navbar text-white">
         <div class="container-fluid px-3 px-lg-5 d-flex justify-content-between align-items-center">
             <a href="oqfazer.php" class="axion-brand">
-                <i class="bi bi-truck-front-fill fs-4"></i>
+                <img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion">
                 <span>AXION</span>
                 <span class="axion-brand-badge">Editar Usuário</span>
             </a>
@@ -28,19 +29,20 @@
 
     <main class="axion-web-container">
         <div class="axion-form-card">
-            <h1 class="h4 fw-bold mb-3"><i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário</h1>
+            <h1 class="h4 fw-bold mb-1"><i class="bi bi-person-gear text-primary me-2"></i>Editar usuário</h1>
+            <p class="text-muted small mb-3" id="titulo-editando">Nenhum usuário carregado. Filtre, escolha na lista e clique em "Carregar".</p>
 
             <!-- 1. BLOCO DE BUSCA E SELEÇÃO DO USUÁRIO DO BANCO -->
             <div class="mb-4 p-3 bg-light border rounded">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-5">
-                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome ou CPF</label>
-                        <input type="text" id="filtro-rapido-usuario" class="form-control" placeholder="Digite para filtrar a lista..." oninput="carregarListaUsuarios(this.value)">
+                        <label for="filtro-rapido-usuario" class="form-label small fw-bold mb-1">Filtrar por Nome, CPF ou E-mail</label>
+                        <input type="text" id="filtro-rapido-usuario" class="form-control" placeholder="Ex: Maria, 123.456 ou 12345678909" oninput="filtrarComAtraso(this.value)">
                     </div>
                     <div class="col-md-7">
                         <label for="select-usuario" class="form-label small fw-bold mb-1">Selecione o Usuário Cadastrado</label>
                         <div class="input-group">
-                            <select id="select-usuario" class="form-select" onchange="carregarUsuarioPorId(this.value)">
+                            <select id="select-usuario" class="form-select">
                                 <option value="">Carregando usuários do banco...</option>
                             </select>
                             <button class="btn btn-primary" type="button" onclick="carregarUsuarioPorId(document.getElementById('select-usuario').value)">
@@ -53,9 +55,11 @@
 
             <!-- 2. FORMULÁRIO DE EDIÇÃO -->
             <form action="backend/api.php?acao=salvar_edicao_usuario" method="post" id="formEditarUsuario">
-                <input type="hidden" name="id_usuario" id="id_usuario" value="1">
+                <input type="hidden" name="id_usuario" id="id_usuario" value="">
 
-                <div class="axion-section-title"><i class="bi bi-person-vcard"></i> 1. Dados Pessoais e Nível de Acesso</div>
+                <div class="mb-4" id="campo-foto"></div>
+
+                <div class="axion-section-title"><i class="bi bi-person-vcard"></i> Dados pessoais e perfil</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="nome" class="form-label fw-semibold">Nome Completo</label>
@@ -66,7 +70,7 @@
                         <input type="text" id="sobrenome" name="sobrenome" class="form-control">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="cpf" class="form-label fw-semibold">CPF (Com Validação)</label>
+                        <label for="cpf" class="form-label fw-semibold">CPF</label>
                         <input type="text" id="cpf" name="cpf" data-mask="cpf" class="form-control font-monospace" maxlength="14" required>
                     </div>
                 </div>
@@ -87,6 +91,7 @@
                     <div class="col-md-3 mb-3">
                         <label for="perfil" class="form-label fw-semibold">Perfil / Nível de Acesso</label>
                         <select name="perfil" id="perfil" class="form-select" required>
+                            <option value="" selected disabled>Carregue um usuário</option>
                             <option value="admin">Admin (Privilégio Total)</option>
                             <option value="supervisor">Supervisor</option>
                             <option value="motorista">Motorista</option>
@@ -99,14 +104,33 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-2"><i class="bi bi-card-heading"></i> 2. CNH e Contato</div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="status" class="form-label fw-semibold">Situação da conta</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="ativo">Ativa (pode entrar)</option>
+                            <option value="inativo">Desativada (não entra)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row" id="linha-supervisor" style="display:none">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável pelo motorista</label>
+                        <select id="id_supervisor" name="id_supervisor" class="form-select">
+                            <option value="">Sem supervisor definido</option>
+                        </select>
+                        <div class="form-text">É este supervisor que assina as vistorias feitas por este motorista.</div>
+                    </div>
+                </div>
+
+                <div class="axion-section-title mt-2"><i class="bi bi-card-heading"></i> Habilitação</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="cnh" class="form-label fw-semibold">N° da CNH</label>
                         <input type="text" name="cnh" id="cnh" data-mask="cnh" class="form-control font-monospace" maxlength="11">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria CNH (Dropdown)</label>
+                        <label for="categoria-cnh" class="form-label fw-semibold">Categoria da CNH</label>
                         <select id="categoria-cnh" name="categoria-cnh" class="form-select">
                             <option value="A">Categoria A</option>
                             <option value="B">Categoria B</option>
@@ -125,7 +149,7 @@
                     </div>
                 </div>
 
-                <div class="axion-section-title mt-2"><i class="bi bi-geo-alt-fill"></i> 3. Endereço (Busca por CEP Gratuita) e E-mail</div>
+                <div class="axion-section-title mt-2"><i class="bi bi-geo-alt-fill"></i> Endereço e e-mail</div>
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="cep" class="form-label fw-semibold">CEP</label>
@@ -165,8 +189,9 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
+                    <button type="button" id="btn-redefinir" class="btn btn-outline-warning me-auto" disabled title="Volta a senha para mudar123"><i class="bi bi-key me-1"></i>Redefinir senha</button>
                     <a href="oqfazer.php?aba=usuarios" class="btn btn-outline-secondary">Cancelar e Voltar</a>
-                    <button type="submit" class="btn btn-primary px-4 fw-semibold"><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
+                    <button type="submit" id="btn-salvar" class="btn btn-primary px-4 fw-semibold" disabled><i class="bi bi-check2-circle me-1"></i>Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -175,30 +200,55 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="frontend/js/axion.js"></script>
     <script>
+        let usuariosCarregados = [];
+        let timerFiltro = null;
+
+        function filtrarComAtraso(termo) {
+            clearTimeout(timerFiltro);
+            timerFiltro = setTimeout(() => carregarListaUsuarios(termo), 250);
+        }
+
+        // Só preenche a lista. O formulário NÃO troca de usuário sozinho: é preciso escolher e clicar em "Carregar".
         async function carregarListaUsuarios(termo = '') {
-            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=150`);
+            const resp = await fetch(`backend/api.php?acao=buscar&tipo=usuarios&q=${encodeURIComponent(termo)}&limite=250`);
             const json = await resp.json();
             const sel = document.getElementById('select-usuario');
-            if (!json.dados || json.dados.length === 0) {
+            usuariosCarregados = json.dados || [];
+            if (usuariosCarregados.length === 0) {
                 sel.innerHTML = '<option value="">Nenhum usuário encontrado</option>';
                 return;
             }
-            sel.innerHTML = json.dados.map(u =>
-                `<option value="${u.id_usuario}">#${u.id_usuario} - ${u.nome} (CPF: ${u.cpf_matricula}) [${u.perfil.toUpperCase()}]</option>`
+            const atual = document.getElementById('id_usuario').value;
+            sel.innerHTML = '<option value="">Selecione um usuário...</option>' + usuariosCarregados.map(u =>
+                `<option value="${u.id_usuario}">${axionEsc(u.nome)} - CPF ${axionEsc(u.cpf_matricula)} [${axionEsc(u.perfil.toUpperCase())}]</option>`
             ).join('');
+            if (atual && usuariosCarregados.some(u => String(u.id_usuario) === atual)) sel.value = atual;
+            else if (usuariosCarregados.length === 1) sel.value = usuariosCarregados[0].id_usuario;
+        }
 
-            const urlId = new URLSearchParams(window.location.search).get('id');
-            if (urlId && !termo) {
-                sel.value = urlId;
-                carregarUsuarioPorId(urlId);
-            } else if (json.dados[0]) {
-                carregarUsuarioPorId(json.dados[0].id_usuario);
-            }
+        async function carregarSupervisores() {
+            const resp = await fetch('backend/api.php?acao=listar_pessoas');
+            const json = await resp.json();
+            const sel = document.getElementById('id_supervisor');
+            sel.innerHTML = '<option value="">Selecione o supervisor...</option>' + (json.supervisores || []).map(s =>
+                `<option value="${s.id_usuario}">${axionEsc(s.nome)}</option>`).join('');
+        }
+
+        function atualizarLinhaSupervisor() {
+            const perfil = document.getElementById('perfil').value;
+            const ehMotorista = perfil === 'motorista';
+            document.getElementById('linha-supervisor').style.display = ehMotorista ? '' : 'none';
+            document.getElementById('id_supervisor').required = ehMotorista;
+            // Motorista e cliente precisam de CNH completa
+            ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista || perfil === 'cliente');
         }
 
         async function carregarUsuarioPorId(id) {
-            if (!id) return;
-            const resp = await fetch(`backend/api.php?acao=obter_usuario&id=${id}`);
+            if (!id) {
+                alert('Selecione um usuário na lista.');
+                return;
+            }
+            const resp = await fetch(`backend/api.php?acao=obter_usuario&id=${encodeURIComponent(id)}`);
             const json = await resp.json();
             if (!json.sucesso || !json.dados) return;
             const u = json.dados;
@@ -220,10 +270,42 @@
             document.getElementById('cidade').value = u.cidade || '';
             document.getElementById('estado').value = u.estado || '';
             document.getElementById('email').value = u.email || '';
-            AxionUtils.inicializarMascarasEValidacoes();
+            document.getElementById('id_supervisor').value = u.id_supervisor || '';
+            document.getElementById('status').value = u.status || 'ativo';
+            AxionFoto.montar(document.getElementById('campo-foto'), { redondo: true, titulo: 'Foto do usuário', urlAtual: u.foto_url });
+            atualizarLinhaSupervisor();
+            // Reaplica máscaras/validação nos valores carregados
+            ['cpf', 'telefone', 'cnh'].forEach(campo => { const el = document.getElementById(campo); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('blur')); });
+            document.getElementById('btn-salvar').disabled = false;
+            document.getElementById('btn-redefinir').disabled = false;
+            document.getElementById('select-usuario').value = u.id_usuario;
+            document.getElementById('titulo-editando').textContent = `Editando: ${u.nome} (${u.perfil.toUpperCase()})`;
         }
 
-        document.addEventListener('DOMContentLoaded', () => carregarListaUsuarios());
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ctx = await AxionSessao.pronta;
+            // Supervisor não pode promover ninguém a Admin/Supervisor
+            if (ctx && ctx.usuario.perfil !== 'admin') {
+                document.querySelectorAll('#perfil option[value="admin"], #perfil option[value="supervisor"]').forEach(o => o.disabled = true);
+            }
+            document.getElementById('perfil').addEventListener('change', atualizarLinhaSupervisor);
+            // Quem esqueceu a senha pede ao gestor: a senha volta para mudar123
+            document.getElementById('btn-redefinir').addEventListener('click', async () => {
+                const id = document.getElementById('id_usuario').value;
+                const nome = document.getElementById('nome').value;
+                if (!id || !confirm(`Redefinir a senha de ${nome} para "mudar123"?`)) return;
+                const dados = new FormData();
+                dados.append('id_usuario', id);
+                dados.append('csrf', ctx.csrf);
+                const r = await fetch('backend/api.php?acao=redefinir_senha', { method: 'POST', body: dados });
+                const j = await r.json().catch(() => ({}));
+                alert(j.sucesso ? j.mensagem : (j.erro || 'Não foi possível redefinir a senha.'));
+            });
+            await carregarSupervisores();
+            await carregarListaUsuarios();
+            const urlId = new URLSearchParams(window.location.search).get('id');
+            if (urlId) carregarUsuarioPorId(urlId);
+        });
     </script>
 </body>
 

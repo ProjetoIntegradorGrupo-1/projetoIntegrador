@@ -1,10 +1,15 @@
 /* frontend/css/axion-web.css — Estilo Web Desktop & Mobile Responsivo do Sistema Axion */
 
 :root {
-    --axion-primary: #0f4c81;
-    --axion-primary-dark: #0a355c;
+    /* Cores da logo Axion: roxo neon + azul elétrico sobre azul-noite */
+    --axion-primary: #5b21d6;
+    --axion-primary-dark: #0b0630;
     --axion-accent: #2563eb;
-    --axion-bg: #f1f5f9;
+    --axion-roxo: #7c1df5;
+    --axion-azul: #1f8ef1;
+    --axion-noite: #05021a;
+    --axion-gradiente: linear-gradient(135deg, #7c1df5 0%, #4f46e5 50%, #1f8ef1 100%);
+    --axion-bg: #f4f3fb;
     --axion-surface: #ffffff;
     --axion-border: #e2e8f0;
     --axion-text: #0f172a;
@@ -22,8 +27,10 @@ body {
 
 /* Top Navbar Web */
 .axion-navbar {
-    background: linear-gradient(135deg, var(--axion-primary-dark) 0%, var(--axion-primary) 55%, var(--axion-accent) 100%);
-    box-shadow: 0 4px 16px rgba(15, 76, 129, 0.18);
+    background: linear-gradient(120deg, #05021a 0%, #0b0a3d 55%, #12307a 100%);
+    border-bottom: 2px solid transparent;
+    border-image: linear-gradient(90deg, #7c1df5, #1f8ef1) 1;
+    box-shadow: 0 4px 18px rgba(91, 33, 214, 0.22);
     padding: 0.75rem 0;
 }
 
@@ -120,7 +127,7 @@ body {
 
 .axion-nav-tabs .nav-link:hover {
     color: var(--axion-primary);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(91, 33, 214, 0.06);
 }
 
 .axion-nav-tabs .nav-link.active {
@@ -150,7 +157,7 @@ body {
 .axion-action-card:hover {
     transform: translateY(-4px);
     border-color: var(--axion-accent);
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 12px 24px rgba(91, 33, 214, 0.14);
     color: var(--axion-text);
 }
 
@@ -226,4 +233,150 @@ body {
     .axion-web-container {
         padding: 1rem 0.75rem;
     }
+}
+
+/* ===== Painel principal (oqfazer.php) ===== */
+:root {
+    --st-good: #0ca30c; --st-critical: #d03b3b; --st-warning: #fab219;
+    --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a;
+}
+.painel-layout { display: flex; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.25rem; width: 100%; flex: 1; }
+.painel-menu { width: 230px; flex-shrink: 0; }
+.painel-menu .menu-box { position: sticky; top: 1rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .75rem; }
+.painel-menu .menu-link { display: flex; align-items: center; gap: .6rem; padding: .6rem .75rem; border-radius: 10px; color: var(--axion-text); text-decoration: none; font-weight: 500; }
+.painel-menu .menu-link:hover { background: #efeafd; }
+.painel-menu .menu-link.ativo { background: var(--axion-gradiente); color: #fff; box-shadow: 0 4px 12px rgba(91, 33, 214, .25); }
+.painel-menu .menu-link .badge { margin-left: auto; }
+.painel-menu .menu-titulo { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--axion-muted); padding: .5rem .75rem .25rem; }
+.painel-conteudo { flex: 1; min-width: 0; }
+.secao { display: none; }
+.secao.ativa { display: block; }
+.kpi { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1rem 1.1rem; height: 100%; }
+.kpi .kpi-rotulo { font-size: .8rem; color: var(--axion-muted); display: flex; align-items: center; gap: .4rem; }
+.kpi .kpi-valor { font-size: 1.9rem; font-weight: 700; line-height: 1.1; margin-top: .25rem; }
+.kpi .kpi-detalhe { font-size: .78rem; color: var(--axion-muted); }
+.cartao { background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: 1.1rem 1.2rem; height: 100%; }
+.cartao h3 { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+.cartao .cartao-sub { font-size: .78rem; color: var(--axion-muted); margin-bottom: .75rem; }
+.grafico { position: relative; height: 240px; }
+.grafico-vazio { height: 240px; display: flex; align-items: center; justify-content: center; color: var(--axion-muted); font-size: .9rem; text-align: center; }
+.acao-rapida { display: flex; align-items: center; gap: .75rem; background: #fff; border: 1px solid var(--axion-border); border-radius: 14px; padding: .9rem 1rem; text-decoration: none; color: var(--axion-text); height: 100%; transition: .15s; }
+.acao-rapida:hover { border-color: var(--axion-accent); box-shadow: 0 6px 18px rgba(91, 33, 214, .14); transform: translateY(-1px); }
+.acao-rapida .ic { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+.acao-rapida .t { font-weight: 600; line-height: 1.2; }
+.acao-rapida .d { font-size: .78rem; color: var(--axion-muted); }
+.acao-rapida.destaque { background: var(--axion-gradiente); color: #fff; border-color: transparent; }
+.acao-rapida.destaque .d { color: rgba(255, 255, 255, .8); }
+.secao-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+.secao-topo h1 { font-size: 1.35rem; font-weight: 700; margin: 0; }
+.secao-topo p { margin: 0; color: var(--axion-muted); font-size: .9rem; }
+@media (max-width: 991.98px) {
+    .painel-layout { flex-direction: column; padding: 1rem .85rem; gap: 1rem; }
+    /* Menu vira gaveta lateral, aberta pelo botão ☰ do topo */
+    .painel-menu { position: fixed; top: 0; left: 0; bottom: 0; width: min(280px, 84vw); z-index: 1050; transform: translateX(-105%); transition: transform .25s ease; }
+    .painel-menu .menu-box { position: static; height: 100%; overflow-y: auto; border-radius: 0 16px 16px 0; padding: 1rem .75rem; border-top: 0 !important; border-left: 0; }
+    .painel-menu .menu-link { padding: .75rem .85rem; }
+    body.menu-aberto .painel-menu { transform: none; box-shadow: 0 0 0 100vmax rgba(5, 2, 26, .55); }
+    body.menu-aberto { overflow: hidden; }
+}
+
+/* ===== Layout padrão de todas as telas internas (menu lateral + conteúdo) ===== */
+.painel-conteudo > main, .painel-conteudo > .axion-web-container { max-width: none; padding: 0; margin: 0; min-height: 0 !important; display: block !important; }
+.painel-conteudo .axion-form-card { max-width: 980px; margin: 0; }
+.painel-conteudo > main > .card { max-width: 760px !important; }
+.trilha { font-size: .85rem; color: var(--axion-muted); margin-bottom: .75rem; display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.trilha a { color: var(--axion-muted); text-decoration: none; }
+.trilha a:hover { color: var(--axion-accent); }
+.trilha .atual { color: var(--axion-text); font-weight: 600; }
+@media print { .painel-layout, .axion-navbar { display: none !important; } }
+/* Evita "piscar" o cabeçalho antigo enquanto o layout padrão é montado */
+body[data-secao]:not(.layout-pronto) { visibility: hidden; }
+
+/* ===== Visual do Administrador (diferente do supervisor/motorista) ===== */
+/* Equipe (supervisor/motorista/cliente): topo azul-noite com azul. Admin: topo roxo, a outra cor da logo. */
+body.tema-admin .axion-navbar { background: linear-gradient(120deg, #05021a 0%, #1f0a5c 55%, #4c12b8 100%); box-shadow: 0 4px 18px rgba(124, 29, 245, .3); }
+body.tema-admin .painel-menu .menu-link.ativo { background: linear-gradient(135deg, #7c1df5, #5b21d6); }
+body.tema-admin .painel-menu .menu-box { border-top: 3px solid #7c1df5; }
+body:not(.tema-admin) .painel-menu .menu-box { border-top: 3px solid #1f8ef1; }
+
+/* ===== Foto de perfil ===== */
+.axion-avatar { border-radius: 50%; object-fit: cover; flex-shrink: 0; display: inline-block; border: 2px solid rgba(255, 255, 255, .7); background: #fff; }
+.axion-avatar-iniciais { display: inline-flex; align-items: center; justify-content: center; background: #e9e2fd; color: var(--axion-primary); font-weight: 700; }
+.axion-avatar.borda-escura { border-color: var(--axion-border); }
+
+/* ===== Logo e cores da marca aplicadas ao Bootstrap ===== */
+.axion-logo { width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(124, 29, 245, .55), 0 0 14px rgba(124, 29, 245, .45); flex-shrink: 0; }
+:root {
+    --bs-primary: #5b21d6; --bs-primary-rgb: 91, 33, 214;
+    --bs-primary-text-emphasis: #3b1290; --bs-primary-bg-subtle: #ece4fd; --bs-primary-border-subtle: #cdb8fa;
+    --bs-link-color: #5b21d6; --bs-link-color-rgb: 91, 33, 214; --bs-link-hover-color: #3b1290; --bs-link-hover-color-rgb: 59, 18, 144;
+    --bs-info: #1f8ef1; --bs-info-rgb: 31, 142, 241;
+}
+.btn-primary {
+    --bs-btn-bg: #5b21d6; --bs-btn-border-color: #5b21d6;
+    --bs-btn-hover-bg: #4a17b8; --bs-btn-hover-border-color: #4a17b8;
+    --bs-btn-active-bg: #3b1290; --bs-btn-active-border-color: #3b1290;
+    --bs-btn-disabled-bg: #8e6be3; --bs-btn-disabled-border-color: #8e6be3;
+    background-image: var(--axion-gradiente); border: none;
+}
+.btn-primary:hover { background-image: linear-gradient(135deg, #6a12e0 0%, #4338ca 50%, #1a7ad6 100%); }
+.btn-outline-primary {
+    --bs-btn-color: #5b21d6; --bs-btn-border-color: #5b21d6;
+    --bs-btn-hover-bg: #5b21d6; --bs-btn-hover-border-color: #5b21d6; --bs-btn-active-bg: #4a17b8; --bs-btn-active-border-color: #4a17b8;
+}
+.form-control:focus, .form-select:focus, .form-check-input:focus { border-color: #a07cf0; box-shadow: 0 0 0 .2rem rgba(91, 33, 214, .18); }
+.form-check-input:checked { background-color: #5b21d6; border-color: #5b21d6; }
+.nav-pills .nav-link.active { background: var(--axion-gradiente); }
+.page-item.active .page-link { background-color: #5b21d6; border-color: #5b21d6; }
+.progress-bar { background-color: #5b21d6; }
+
+/* Tela de login com a cara da logo */
+.axion-login-hero { background: radial-gradient(circle at 30% 20%, #2a0b78 0%, #0b0630 55%, #05021a 100%); border-radius: 16px; position: relative; overflow: hidden; }
+.axion-login-hero::after { content: ''; position: absolute; inset: auto -30% -40% auto; width: 70%; aspect-ratio: 1; background: radial-gradient(circle, rgba(31, 142, 241, .35), transparent 65%); pointer-events: none; }
+.axion-login-logo { width: 130px; height: 130px; border-radius: 50%; box-shadow: 0 0 0 3px rgba(124, 29, 245, .6), 0 0 40px rgba(124, 29, 245, .55); }
+
+/* ===== Ajustes para celular e tablet ===== */
+.min-w-0 { min-width: 0; }
+.btn-menu-mobile { padding: .2rem .45rem; line-height: 1; }
+@media (max-width: 575.98px) {
+    .axion-navbar { padding: .55rem 0; }
+    .axion-brand { font-size: 1.15rem; gap: .4rem; }
+    .axion-logo { width: 32px; height: 32px; }
+    .axion-brand-badge { display: none; }
+    .axion-navbar .border-start { border-left: 0 !important; padding-left: 0 !important; }
+    .secao-topo h1 { font-size: 1.15rem; }
+    .secao-topo > div:last-child { width: 100%; }
+    .kpi { padding: .8rem .85rem; }
+    .kpi .kpi-valor { font-size: 1.5rem; }
+    .cartao { padding: .9rem; }
+    .grafico, .grafico-vazio { height: 210px; }
+    .axion-form-card { padding: 1rem; }
+    .axion-table thead th, .axion-table tbody td { padding: .6rem .65rem; font-size: .85rem; }
+    .trilha { font-size: .78rem; }
+    /* Botões de rodapé de formulário ocupam a largura toda e ficam fáceis de tocar */
+    form .d-flex.justify-content-end > .btn, form .d-flex.justify-content-end > a.btn { flex: 1 1 100%; }
+    .modal-dialog { margin: .5rem; }
+}
+/* Campos com altura confortável para o toque */
+@media (pointer: coarse) {
+    .form-control, .form-select { min-height: 44px; font-size: 16px; }
+    .btn { min-height: 40px; }
+    .btn-sm { min-height: 34px; }
+}
+
+/* Listas no celular: cada linha vira um cartão com rótulo à esquerda e valor à direita */
+@media (max-width: 575.98px) {
+    .axion-table-wrapper .table-responsive { overflow-x: visible; }
+    .axion-table thead { display: none; }
+    .axion-table, .axion-table tbody { display: block; width: 100%; }
+    .axion-table tbody tr { display: block; padding: .7rem .85rem; border-bottom: 1px solid var(--axion-border); }
+    .axion-table tbody tr:last-child { border-bottom: 0; }
+    .axion-table tbody td { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: .25rem .4rem; padding: .22rem 0 !important; border: 0; text-align: right; }
+    .axion-table tbody td[data-label]::before { content: attr(data-label); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--axion-muted); text-align: left; flex-shrink: 0; margin-right: auto; }
+    .axion-table tbody td:first-child { justify-content: flex-start; text-align: left; font-size: .95rem; padding-bottom: .4rem !important; }
+    .axion-table tbody td:first-child::before { display: none; }
+    .axion-table tbody td[colspan] { display: block; text-align: center; }
+    .axion-table tbody td:empty, .axion-table tbody td[data-label=""]::before { display: none; }
+    .axion-table tbody td:last-child { padding-top: .5rem !important; justify-content: flex-end; flex-wrap: wrap; }
+    .axion-table tbody td:last-child::before { display: none; }
 }
