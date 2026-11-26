@@ -52,6 +52,7 @@
                 <div class="d-grid gap-2">
                     <button type="button" class="btn btn-primary btn-lg" id="btn-assinar" onclick="assinar()">Assinar</button>
                     <a class="btn btn-outline-secondary" id="link-revisar" href="#">Revisar a vistoria completa</a>
+                    <a class="btn btn-outline-warning d-none" id="link-corrigir" href="#"><i class="bi bi-pencil-square me-1"></i>Errei alguma resposta: corrigir</a>
                 </div>
             </form>
         </div>
@@ -150,6 +151,15 @@
             const v = json.dados;
             document.getElementById('resumo-vistoria').textContent = `Vistoria #${v.id_execucao} - ${v.placa_veiculo} - ${v.checklist_titulo}`;
             document.getElementById('link-revisar').href = `verVistoria.html?id=${v.id_execucao}`;
+            // Enquanto ninguém assinou, quem registrou pode corrigir as respostas
+            if (v.pode_corrigir) {
+                const c = document.getElementById('link-corrigir');
+                c.href = `cadcheck.html?editar=${v.id_execucao}`;
+                c.classList.remove('d-none');
+            }
+            if (new URLSearchParams(location.search).get('corrigida')) {
+                document.getElementById('formAssinatura').insertAdjacentHTML('afterbegin', '<div class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>Respostas corrigidas. Confira e assine.</div>');
+            }
             if (!v.pode_assinar) { window.location.href = `verVistoria.html?id=${v.id_execucao}`; return; }
             if (v.status_conformidade === 'nao_conforme' && !v.detalhes_nao_conformidade && v.pode_editar_avaria) {
                 window.location.href = `detalhesNaoConformidade.html?id=${v.id_execucao}`;

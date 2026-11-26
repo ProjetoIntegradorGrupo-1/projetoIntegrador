@@ -172,6 +172,7 @@
                     <i class="bi bi-pen me-1"></i>${precisaDetalhes ? 'Descrever avaria e assinar' : (v.meu_papel === 'vistoriador' && outroAssinou ? 'Aprovar e assinar' : 'Assinar')}</a>`;
                 if (outroAssinou) acaoPendente += ` <button class="btn btn-outline-danger" onclick="recusar()"><i class="bi bi-x-circle me-1"></i>Recusar</button>`;
             }
+            if (v.pode_corrigir) acaoPendente = `<a class="btn btn-outline-warning" href="cadcheck.html?editar=${v.id_execucao}"><i class="bi bi-pencil-square me-1"></i>Corrigir respostas</a> ` + acaoPendente;
             const situacoes = {
                 concluida: `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Concluída em ${v.assinado_em ? dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
                 aguardando_vistoriador: `<span class="badge bg-warning text-dark">Aguardando assinatura do supervisor</span>`,
@@ -198,7 +199,8 @@
             box.innerHTML = `
                 ${blocoLocacao}
                 ${msg ? `<div class="alert alert-${msg[0]} alert-dismissible fade show d-flex align-items-center gap-2"><i class="bi ${msg[1]} fs-5"></i><div>${msg[2]}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div>` : ''}
-                ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><i class="bi bi-x-octagon-fill me-1"></i><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
+                ${v.situacao === 'recusada' && ehClienteLogado ? '<div class="alert alert-info"><i class="bi bi-tools me-1"></i>Vamos resolver seu problema antes de liberar o veículo para você. O supervisor vai refazer a vistoria junto com você.</div>' : ''}
+                ${v.situacao === 'recusada' && !ehClienteLogado ? `<div class="alert alert-dark"><i class="bi bi-x-octagon-fill me-1"></i><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
                 ${Number(v.enviado_manutencao) === 1 && !msg ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>Veículo enviado para manutenção na aprovação desta vistoria.</div>' : ''}
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                     <div>
@@ -274,7 +276,7 @@
                 concluida: 'Concluída', aguardando_vistoriador: 'Aguardando supervisor',
                 aguardando_motorista: 'Aguardando motorista', aguardando_assinaturas: 'Não assinada', recusada: 'Recusada'
             };
-            const categorias = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', outros: 'Outros' };
+            const categorias = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', locacao: 'Locação', outros: 'Outros' };
             const dataHora = (d) => d ? `${dataBR(d)} ${e(d.slice(11, 16))}` : '-';
 
             let n = 0, totalAvaliados = 0, foraPadrao = 0;

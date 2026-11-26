@@ -35,6 +35,8 @@ if ($isAdmin) {
 
 // Pedidos de locação aguardando admin/supervisor
 $locacoesPendentes = $isGestor ? (int)$pdo->query("SELECT COUNT(*) FROM Locacoes WHERE status = 'pendente'")->fetchColumn() : 0;
+// Clientes que se cadastraram sozinhos e aguardam aprovação
+$clientesPendentes = $isGestor ? (int)$pdo->query("SELECT COUNT(*) FROM Usuarios WHERE perfil = 'cliente' AND status = 'pendente'")->fetchColumn() : 0;
 
 // Menu de acordo com o perfil (o mesmo é montado pelo axion.js nas outras telas)
 if ($isAdmin) {
@@ -182,6 +184,8 @@ $mapaErros = [
                     <span class="badge rounded-pill bg-warning text-dark"><?php echo $minhasPendencias; ?></span>
                     <?php elseif ($chave === 'locacoes' && $locacoesPendentes > 0): ?>
                     <span class="badge rounded-pill bg-info text-dark"><?php echo $locacoesPendentes; ?></span>
+                    <?php elseif ($chave === 'usuarios' && $clientesPendentes > 0): ?>
+                    <span class="badge rounded-pill bg-success" id="badge-clientes-pendentes"><?php echo $clientesPendentes; ?></span>
                     <?php endif; ?>
                 </a>
                 <?php endforeach; ?>
@@ -239,6 +243,13 @@ $mapaErros = [
                 <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
                     <div><i class="bi bi-key-fill me-1"></i><strong><?php echo $locacoesPendentes; ?></strong> <?php echo $locacoesPendentes > 1 ? 'pedidos de locação aguardando' : 'pedido de locação aguardando'; ?> a sua aprovação.</div>
                     <a href="#locacoes" data-secao="locacoes" class="btn btn-sm btn-info fw-semibold">Ver pedidos</a>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($clientesPendentes > 0): ?>
+                <div class="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm" id="alerta-clientes-pendentes">
+                    <div><i class="bi bi-person-plus-fill me-1"></i><strong><?php echo $clientesPendentes; ?></strong> <?php echo $clientesPendentes > 1 ? 'novos clientes se cadastraram e aguardam' : 'novo cliente se cadastrou e aguarda'; ?> a sua aprovação.</div>
+                    <a href="#usuarios" data-secao="usuarios" class="btn btn-sm btn-success fw-semibold">Ver cadastros</a>
                 </div>
                 <?php endif; ?>
 
@@ -347,7 +358,7 @@ $mapaErros = [
                 <div class="cartao mb-3">
                     <div class="row g-2">
                         <div class="col-md-5"><input type="search" id="busca-veiculos-q" class="form-control" placeholder="Buscar por placa, marca, modelo, cor, Renavam ou chassi..." oninput="buscarComAtraso('veiculos')"></div>
-                        <div class="col-md-3">
+                        <div class="col-md-3<?php echo $perfil_usuario === 'motorista' ? ' d-none' : ''; ?>">
                             <select id="busca-veiculos-finalidade" class="form-select" onchange="carregarBusca('veiculos')">
                                 <option value="">Frota e locação</option>
                                 <option value="frota">Só frota da empresa</option>
@@ -460,6 +471,19 @@ $mapaErros = [
                 </div>
             </section>
 
+            <!-- Ficha do cliente -->
+            <div class="modal fade" id="modal-ficha-cliente" tabindex="-1" aria-labelledby="titulo-ficha-cliente" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="titulo-ficha-cliente"><i class="bi bi-person-vcard me-1"></i>Dados do cliente</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <div class="modal-body" id="corpo-ficha-cliente"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Recusar pedido / registrar devolução -->
             <div class="modal fade" id="modal-acao-locacao" tabindex="-1" aria-labelledby="titulo-acao-locacao" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -492,6 +516,13 @@ $mapaErros = [
                     </div>
                     <a href="caduser.html" class="btn btn-success"><i class="bi bi-person-plus me-1"></i>Cadastrar usuário</a>
                 </div>
+                <?php if ($isGestor): ?>
+                <div class="cartao mb-3 border-success d-none" id="card-clientes-pendentes">
+                    <h3><i class="bi bi-person-plus text-success me-1"></i>Clientes aguardando aprovação</h3>
+                    <div class="cartao-sub">Cadastros feitos pelos próprios clientes. Confira os dados, escolha o supervisor responsável (testemunha das vistorias) e aprove.</div>
+                    <div id="lista-clientes-pendentes" class="d-flex flex-column gap-2"></div>
+                </div>
+                <?php endif; ?>
                 <div class="cartao mb-3">
                     <div class="row g-2">
                         <div class="col-md-7"><input type="search" id="busca-usuarios-q" class="form-control" placeholder="Buscar por nome, CPF (com ou sem pontos), e-mail ou cidade..." oninput="buscarComAtraso('usuarios')"></div>
@@ -607,6 +638,7 @@ $mapaErros = [
         const PERFIL = <?php echo json_encode($perfil_usuario); ?>;
         const IS_GESTOR = <?php echo $isGestor ? 'true' : 'false'; ?>;
         const IS_ADMIN = <?php echo $isAdmin ? 'true' : 'false'; ?>;
+        const IS_SUPERVISOR = <?php echo $isSupervisor ? 'true' : 'false'; ?>;
         const PODE_VISTORIAR = <?php echo $podeVistoriar ? 'true' : 'false'; ?>;
         const IS_CLIENTE = <?php echo $isCliente ? 'true' : 'false'; ?>;
         const CSRF = <?php echo json_encode($csrf); ?>;
@@ -680,7 +712,7 @@ $mapaErros = [
         function badgeConformidade(st) {
             return st === 'nao_conforme' ? '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Não conforme</span>' : '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Conforme</span>';
         }
-        const CATEGORIAS = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', outros: 'Outros' };
+        const CATEGORIAS = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', locacao: 'Locação', outros: 'Outros' };
         const nomeCategoria = (c) => CATEGORIAS[c] || c || '-';
         function badgeAprovacao(st) {
             return {
@@ -785,8 +817,8 @@ $mapaErros = [
                         <div class="d-flex align-items-center gap-2">
                             ${avatar(u.foto_url, u.nome, 36)}
                             <div>
-                                <div class="fw-semibold">${esc(u.nome)} ${u.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}</div>
-                                ${u.perfil === 'motorista' ? `<div class="small text-muted">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}
+                                <div class="fw-semibold">${esc(u.nome)} ${u.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}${u.status === 'pendente' ? '<span class="badge bg-success">Aguardando aprovação</span>' : ''}</div>
+                                ${['motorista', 'cliente'].includes(u.perfil) ? `<div class="small text-muted">Supervisor: ${esc(u.supervisor_nome || 'não definido')}</div>` : ''}
                             </div>
                         </div>
                     </td>
@@ -1118,7 +1150,8 @@ $mapaErros = [
                 aguardando_vistoriador: `<i class="bi bi-hourglass-split text-warning me-1"></i>aguardando ${souCliente ? 'a testemunha' : 'o supervisor'} ${esc(vis.nome_vistoriador || '')}`,
                 aguardando_motorista: `<i class="bi bi-pen text-warning me-1"></i>aguardando ${souCliente ? 'a sua assinatura' : 'a assinatura do cliente'}`,
                 aguardando_assinaturas: `<i class="bi bi-pen text-warning me-1"></i>aguardando ${souCliente ? 'a sua assinatura' : 'a assinatura do cliente'}`,
-                recusada: `<i class="bi bi-x-circle-fill text-danger me-1"></i>recusada${vis.motivo_recusa ? ': ' + esc(vis.motivo_recusa) : ''}${souCliente ? ' (faça de novo)' : ''}`
+                recusada: souCliente ? '<i class="bi bi-tools text-primary me-1"></i>em revisão com o supervisor'
+                    : `<i class="bi bi-x-circle-fill text-danger me-1"></i>recusada${vis.motivo_recusa ? ': ' + esc(vis.motivo_recusa) : ''} · refaça junto com o cliente`
             }[vis.situacao] || '';
             return `<div class="small"><a href="verVistoria.html?id=${vis.id_execucao}" class="text-decoration-none">Vistoria de ${nomeTipoVist[tipo]}</a>: ${sit}</div>`;
         }
@@ -1136,6 +1169,8 @@ $mapaErros = [
             const vt = l.vistorias || {};
             const pendente = [vt.retirada, vt.devolucao].find(x => x && ['aguardando_motorista', 'aguardando_assinaturas'].includes(x.situacao));
             if (pendente) return `<a href="assinaturaChecklist.html?id=${pendente.id_execucao}" class="btn btn-warning fw-semibold"><i class="bi bi-pen me-1"></i>Assinar vistoria de ${nomeTipoVist[pendente.tipo_locacao]}</a>`;
+            // Vistoria recusada: o cliente não precisa resolver; o supervisor refaz junto com ele
+            if (l.com_supervisor) return `<div class="alert alert-info py-2 mb-0"><i class="bi bi-tools me-1"></i>Vamos resolver seu problema antes de liberar o veículo para você. O supervisor vai refazer a vistoria junto com você.</div>`;
             if (l.proxima_vistoria === 'retirada') {
                 if (l.data_retirada > hojeISO()) return `<span class="btn btn-outline-secondary disabled"><i class="bi bi-calendar me-1"></i>Vistoria de retirada a partir de ${dataBR(l.data_retirada)}</span>`;
                 return `<a href="cadcheck.html?locacao=${l.id_locacao}" class="btn btn-primary fw-semibold"><i class="bi bi-clipboard2-check me-1"></i>Fazer vistoria de retirada</a>`;
@@ -1211,7 +1246,7 @@ $mapaErros = [
                         <div class="col-12 col-md-4"><div class="text-muted">Período</div><div class="fw-semibold">${plural(Number(l.dias), 'dia', 'dias')}</div></div>
                     </div>
                     ${l.status === 'ativa' ? `<div class="mt-2">${prazoDevolucao(l)}</div>` : ''}
-                    ${l.fase === 'aprovada' || l.fase === 'aguardando_retirada' ? '<div class="small text-muted mt-1">Antes de sair com o carro, faça a vistoria de retirada. Ela comprova o estado em que você recebeu o veículo e precisa da assinatura do supervisor (testemunha).</div>' : ''}
+                    ${(l.fase === 'aprovada' || l.fase === 'aguardando_retirada') && !l.com_supervisor ? '<div class="small text-muted mt-1">Antes de sair com o carro, faça a vistoria de retirada. Ela comprova o estado em que você recebeu o veículo e precisa da assinatura do supervisor (testemunha).</div>' : ''}
                     ${blocoVistoriasLocacao(l, true)}
                     ${acaoVistoriaCliente(l) ? `<div class="mt-2">${acaoVistoriaCliente(l)}</div>` : ''}
                     ${l.status === 'pendente' ? '<div class="small text-muted mt-2">A empresa ainda vai aprovar o seu pedido.</div>' : ''}
@@ -1327,7 +1362,7 @@ $mapaErros = [
                         <div class="d-flex align-items-center gap-2">
                             ${avatar(l.cliente_foto_url, l.cliente_nome, 36)}
                             <div>
-                                <div class="fw-semibold">${esc(l.cliente_nome)}</div>
+                                <a href="#" class="fw-semibold text-decoration-none" onclick="abrirFichaCliente(${l.id_cliente}); return false;" title="Ver dados completos e histórico">${esc(l.cliente_nome)} <i class="bi bi-person-vcard small"></i></a>
                                 <div class="small text-muted">${esc(l.cliente_email)}${l.cliente_telefone ? ' · ' + esc(l.cliente_telefone) : ''}</div>
                                 <div class="small ${l.cnh_vence_antes && l.status === 'pendente' ? 'text-danger fw-semibold' : 'text-muted'}">CNH ${esc(l.categoria_cnh || '-')} · ${l.validade_cnh ? 'vence ' + dataBR(l.validade_cnh) : 'não cadastrada'}</div>
                             </div>
@@ -1360,6 +1395,9 @@ $mapaErros = [
                             ? `<button type="button" class="btn btn-sm btn-primary" onclick="abrirAcaoLocacao('devolver', ${l.id_locacao})"><i class="bi bi-box-arrow-in-down me-1"></i>Devolução</button>`
                             : l.status === 'ativa' && l.vistorias.retirada && l.vistorias.retirada.situacao === 'concluida'
                                 ? '<span class="small text-muted" title="A devolução é registrada depois da vistoria de devolução assinada pelo cliente e pela testemunha">Aguardando vistoria de devolução</span>' : ''}
+                        ${IS_SUPERVISOR && l.proxima_vistoria && (l.proxima_vistoria !== 'retirada' || l.data_retirada <= hojeISO())
+                            ? `<a href="cadcheck.html?locacao=${l.id_locacao}" class="btn btn-sm ${l.vistorias[l.proxima_vistoria] ? 'btn-warning fw-semibold' : 'btn-outline-primary'} text-nowrap"
+                                  title="Registrar a vistoria com o cliente presente"><i class="bi bi-clipboard2-check me-1"></i>${l.vistorias[l.proxima_vistoria] ? 'Refazer' : 'Vistoriar'} ${l.proxima_vistoria === 'retirada' ? 'retirada' : 'devolução'}</a>` : ''}
                         ${l.status === 'ativa' && !(l.vistorias.retirada && l.vistorias.retirada.situacao === 'concluida')
                             ? `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="abrirAcaoLocacao('cancelar', ${l.id_locacao})" title="Cliente não retirou o veículo"><i class="bi bi-x-lg me-1"></i>Cancelar</button>` : ''}
                         </div>
@@ -1427,7 +1465,96 @@ $mapaErros = [
             });
         }
 
+
+        // ---------- Clientes: cadastros pendentes e ficha completa (admin e supervisor) ----------
+        let supervisoresAtivos = null;
+        async function carregarClientesPendentes() {
+            const card = document.getElementById('card-clientes-pendentes');
+            if (!card) return;
+            const j = await getJson('backend/api.php?acao=clientes_pendentes');
+            const lista = j.dados || [];
+            card.classList.toggle('d-none', !lista.length);
+            const badgeCli = document.getElementById('badge-clientes-pendentes');
+            if (badgeCli) { badgeCli.textContent = lista.length; badgeCli.classList.toggle('d-none', !lista.length); }
+            if (!lista.length) document.getElementById('alerta-clientes-pendentes')?.remove();
+            if (!lista.length) return;
+            if (!supervisoresAtivos) supervisoresAtivos = (await getJson('backend/api.php?acao=listar_pessoas')).supervisores || [];
+            const opcoes = supervisoresAtivos.map(s => `<option value="${s.id_usuario}" ${Number(s.id_usuario) === MEU_ID ? 'selected' : ''}>${esc(s.nome)}</option>`).join('');
+            document.getElementById('lista-clientes-pendentes').innerHTML = lista.map(c => `
+                <div class="d-flex flex-wrap align-items-center gap-2 p-2 border rounded bg-light">
+                    <div class="flex-grow-1" style="min-width:220px">
+                        <a href="#" class="fw-semibold text-decoration-none" onclick="abrirFichaCliente(${c.id_usuario}); return false;">${esc(c.nome)} <i class="bi bi-person-vcard small"></i></a>
+                        <div class="small text-muted">${esc(c.email)} · CPF ${esc(c.cpf_formatado)} · ${esc(c.telefone || '-')}</div>
+                        <div class="small text-muted">CNH ${esc(c.categoria_cnh || '-')} · vence ${dataBR(c.validade_cnh)}${c.cidade ? ' · ' + esc(c.cidade) + '/' + esc(c.estado || '') : ''} · cadastrado em ${dataBR(c.criado_em)}</div>
+                    </div>
+                    <select class="form-select form-select-sm" style="max-width:210px" id="sup-cli-${c.id_usuario}" aria-label="Supervisor responsável">
+                        ${IS_ADMIN ? '<option value="">Supervisor responsável...</option>' : ''}${opcoes}
+                    </select>
+                    <button type="button" class="btn btn-sm btn-success" onclick="decidirCliente(${c.id_usuario}, true)"><i class="bi bi-check-lg me-1"></i>Aprovar</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="decidirCliente(${c.id_usuario}, false)"><i class="bi bi-x-lg me-1"></i>Recusar</button>
+                </div>`).join('');
+        }
+        async function decidirCliente(id, aprovar) {
+            if (!aprovar && !confirm('Recusar este cadastro? Os dados enviados pelo cliente serão apagados.')) return;
+            const j = await postar(aprovar ? 'aprovar_cliente' : 'recusar_cliente', { id_usuario: id, id_supervisor: aprovar ? document.getElementById('sup-cli-' + id).value : '' });
+            avisar(j.sucesso ? j.mensagem : j.erro, j.sucesso ? 'success' : 'danger');
+            carregarClientesPendentes();
+            carregadas.usuarios = false;
+            if (document.getElementById('secao-usuarios').classList.contains('ativa')) carregarBusca('usuarios');
+        }
+
+        let modalFicha;
+        async function abrirFichaCliente(id) {
+            const corpo = document.getElementById('corpo-ficha-cliente');
+            corpo.innerHTML = '<span class="text-muted">Carregando...</span>';
+            modalFicha = modalFicha || new bootstrap.Modal(document.getElementById('modal-ficha-cliente'));
+            modalFicha.show();
+            const j = await getJson('backend/api.php?acao=ficha_cliente&id=' + id);
+            if (!j.sucesso) { corpo.innerHTML = `<div class="alert alert-danger">${esc(j.erro || 'Não foi possível carregar.')}</div>`; return; }
+            const c = j.dados, r = c.resumo;
+            const campo = (rot, val) => `<div class="col-6 col-md-4"><div class="small text-muted">${rot}</div><div class="fw-semibold">${val || '-'}</div></div>`;
+            const idade = c.data_nascimento ? Math.floor((Date.now() - new Date(c.data_nascimento + 'T12:00:00')) / 31557600000) : null;
+            const cnhVencida = c.validade_cnh && c.validade_cnh < hojeISO();
+            const endereco = [c.logradouro && `${c.logradouro}, ${c.numero || 's/n'}`, c.bairro, c.cidade && `${c.cidade}/${c.estado || ''}`, c.cep].filter(Boolean).join(' · ');
+            corpo.innerHTML = `
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    ${avatar(c.foto_url, c.nome, 56)}
+                    <div>
+                        <div class="fs-5 fw-semibold">${esc(c.nome)} ${c.status === 'pendente' ? '<span class="badge bg-success">Aguardando aprovação</span>' : c.status === 'inativo' ? '<span class="badge bg-secondary">Desativado</span>' : ''}</div>
+                        <div class="small text-muted">Cliente desde ${dataBR(c.criado_em)} · Supervisor responsável: ${esc(c.supervisor_nome || 'não definido')}</div>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    ${campo('CPF', esc(c.cpf_formatado))}
+                    ${campo('Nascimento', c.data_nascimento ? `${dataBR(c.data_nascimento)} (${idade} anos)` : '-')}
+                    ${campo('Telefone', esc(c.telefone))}
+                    ${campo('E-mail', esc(c.email))}
+                    ${campo('CNH', c.cnh ? `${esc(c.cnh)} · categoria ${esc(c.categoria_cnh || '-')}` : '-')}
+                    ${campo('Validade da CNH', c.validade_cnh ? `<span class="${cnhVencida ? 'text-danger' : ''}">${dataBR(c.validade_cnh)}${cnhVencida ? ' (vencida)' : ''}</span>` : '-')}
+                    <div class="col-12"><div class="small text-muted">Endereço</div><div class="fw-semibold">${esc(endereco) || '-'}</div></div>
+                </div>
+                <div class="row g-2 mb-3 text-center">
+                    <div class="col-3"><div class="p-2 border rounded"><div class="fs-4 fw-bold">${r.total}</div><div class="small text-muted">locações</div></div></div>
+                    <div class="col-3"><div class="p-2 border rounded"><div class="fs-4 fw-bold">${r.devolvidas}</div><div class="small text-muted">devolvidas</div></div></div>
+                    <div class="col-3"><div class="p-2 border rounded ${r.com_avaria ? 'border-danger' : ''}"><div class="fs-4 fw-bold ${r.com_avaria ? 'text-danger' : ''}">${r.com_avaria}</div><div class="small text-muted">voltaram com avaria</div></div></div>
+                    <div class="col-3"><div class="p-2 border rounded ${r.atrasos ? 'border-warning' : ''}"><div class="fs-4 fw-bold">${r.atrasos}</div><div class="small text-muted">com atraso</div></div></div>
+                </div>
+                <div class="fw-semibold mb-2">Histórico de locações</div>
+                ${c.locacoes.length ? `<div class="table-responsive"><table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Veículo</th><th>Período</th><th>Situação</th><th>Vistorias</th></tr></thead>
+                    <tbody>${c.locacoes.map(l => `<tr>
+                        <td><div class="fw-semibold">${esc(l.marca_modelo)}</div><span class="badge bg-dark font-monospace">${esc(l.placa)}</span></td>
+                        <td class="small">${dataBR(l.data_retirada)} a ${dataBR(l.data_devolucao)}${l.devolveu_atrasado ? '<div class="text-warning-emphasis">devolveu com atraso</div>' : ''}</td>
+                        <td class="small">${{ pendente: 'Aguardando aprovação', ativa: 'Em andamento', devolvida: 'Devolvida', recusada: 'Recusada', cancelada: 'Cancelada' }[l.status] || esc(l.status)}</td>
+                        <td class="small">
+                            ${l.id_vistoria_retirada ? `<a href="verVistoria.html?id=${l.id_vistoria_retirada}" target="_blank">Retirada</a> ${l.avaria_retirada ? '<span class="text-danger">(avaria)</span>' : '<span class="text-success">(ok)</span>'}` : '-'}
+                            ${l.id_vistoria_devolucao ? `<br><a href="verVistoria.html?id=${l.id_vistoria_devolucao}" target="_blank">Devolução</a> ${l.avaria_devolucao ? `<span class="text-danger">(avaria${l.avaria_nova ? ' nova' : ''})</span>` : '<span class="text-success">(ok)</span>'}` : ''}
+                        </td>
+                    </tr>`).join('')}</tbody></table></div>` : '<div class="text-muted small">Ainda não alugou nenhum veículo.</div>'}`;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            if (IS_GESTOR) carregarClientesPendentes();
             if (FILTRO_INICIAL) {
                 const alvo = { checklists: 'busca-checklists-cat', locacoes: 'busca-locacoes-status' }[ABA_INICIAL] || 'busca-vistorias-status';
                 if (document.getElementById(alvo)) document.getElementById(alvo).value = FILTRO_INICIAL;

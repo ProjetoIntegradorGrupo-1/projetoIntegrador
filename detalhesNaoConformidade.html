@@ -66,9 +66,12 @@
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center pt-2">
-                    <a href="oqfazer.php?aba=vistorias" class="btn btn-link text-decoration-none text-dark fw-bold ps-0" id="link-voltar">
-                        <i class="bi bi-chevron-left me-1"></i> Voltar ao painel
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <a href="oqfazer.php?aba=vistorias" class="btn btn-link text-decoration-none text-dark fw-bold ps-0" id="link-voltar">
+                            <i class="bi bi-chevron-left me-1"></i> Voltar ao painel
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-warning d-none" id="link-corrigir"><i class="bi bi-pencil-square me-1"></i>Marquei errado: corrigir respostas</a>
+                    </div>
                     <button type="submit" class="btn btn-primary fw-bold">
                         Salvar e ir para assinaturas <i class="bi bi-chevron-right ms-1"></i>
                     </button>
@@ -95,6 +98,11 @@
             }
             const v = json.dados;
             if (v.id_locacao) document.getElementById('link-voltar').href = 'oqfazer.php?aba=locacoes';
+            if (v.pode_corrigir) {
+                const c = document.getElementById('link-corrigir');
+                c.href = `cadcheck.html?editar=${v.id_execucao}`;
+                c.classList.remove('d-none');
+            }
             // Depois da primeira assinatura a descrição não muda mais (quem assina depois vê o mesmo conteúdo)
             if (!v.pode_editar_avaria) {
                 window.location.href = (v.pode_assinar ? 'assinaturaChecklist.html' : 'verVistoria.html') + `?id=${v.id_execucao}`;

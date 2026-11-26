@@ -286,6 +286,39 @@ function axion_garantir_estrutura(PDO $pdo): void {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
 
+    // 8. Checklist padrão das locações: itens que um cliente leigo consegue conferir sozinho
+    //    (resumo da lataria, vidros, pneus, luzes, interior, painel, itens obrigatórios e documento)
+    if (!(int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE categoria = 'locacao'")->fetchColumn()) {
+        $pdo->prepare("INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo, status_aprovacao)
+                       VALUES (NULL, 'Vistoria de locação', 'locacao', 'Conferência do veículo na retirada e na devolução da locação, feita pelo cliente com o supervisor como testemunha', 1, 'aprovado')")
+            ->execute();
+        $idChk = (int)$pdo->lastInsertId();
+        $insP = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
+                               VALUES (:chk, :pai, :cond, :ordem, :texto, :tipo, :obr, :esp, :ori)");
+        $itens = [
+            ['A lataria está sem riscos, amassados ou batidas?', 'sim_nao', 'sim', 'Dê uma volta no carro olhando portas, para-choques, capô e teto.',
+                ['Onde está o dano e como ele é?', 'nao']],
+            ['Vidros, para-brisa e retrovisores estão inteiros, sem trincas?', 'sim_nao', 'sim', null, ['Qual vidro ou retrovisor está danificado?', 'nao']],
+            ['Os pneus estão cheios e sem cortes ou bolhas aparentes?', 'sim_nao', 'sim', 'Olhe os quatro pneus e o estepe.', null],
+            ['Faróis, lanternas e setas acendem normalmente?', 'sim_nao', 'sim', 'Peça para alguém conferir as luzes de trás.', null],
+            ['O interior está limpo, sem manchas ou rasgos nos bancos?', 'sim_nao', 'sim', null, ['O que encontrou no interior?', 'nao']],
+            ['O painel liga sem nenhuma luz de alerta acesa (motor, óleo, freio)?', 'sim_nao', 'sim', 'Com o carro ligado, as luzes de alerta devem apagar em poucos segundos.', null],
+            ['Estepe, macaco, chave de roda e triângulo estão no carro?', 'sim_nao', 'sim', 'Normalmente ficam no porta-malas.', null],
+            ['O documento do veículo (CRLV) está no carro ou disponível no celular?', 'sim_nao', 'sim', null, null],
+            ['Nível de combustível', 'texto', null, 'Ex.: reserva, 1/4, 1/2, 3/4 ou cheio.', null],
+        ];
+        $ordem = 1;
+        foreach ($itens as [$texto, $tipo, $esp, $ori, $sub]) {
+            $insP->execute([':chk' => $idChk, ':pai' => null, ':cond' => null, ':ordem' => $ordem++, ':texto' => $texto,
+                            ':tipo' => $tipo, ':obr' => 1, ':esp' => $esp, ':ori' => $ori]);
+            if ($sub) {
+                $idPai = (int)$pdo->lastInsertId();
+                $insP->execute([':chk' => $idChk, ':pai' => $idPai, ':cond' => $sub[1], ':ordem' => $ordem++, ':texto' => $sub[0],
+                                ':tipo' => 'texto', ':obr' => 1, ':esp' => null, ':ori' => null]);
+            }
+        }
+    }
+
     // Só depois de garantir que a tabela existe (num banco novo ela ainda não existia aqui)
     $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
 }
