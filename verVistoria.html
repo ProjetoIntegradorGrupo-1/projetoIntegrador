@@ -133,6 +133,21 @@
             const json = await resp.json();
             if (!json.sucesso) { box.innerHTML = `<div class="alert alert-danger mb-0">${e(json.erro || 'Vistoria não encontrada.')}</div>`; return; }
             const v = json.dados;
+            // Na locação, quem fica no lugar do motorista é o cliente; o supervisor assina como testemunha
+            const rotMot = v.id_locacao ? 'Cliente' : 'Motorista';
+            const rotVist = v.id_locacao ? 'Testemunha (supervisor)' : 'Vistoriador';
+            const ehClienteLogado = json.usuario && json.usuario.perfil === 'cliente';
+            const tipoNome = { retirada: 'retirada', devolucao: 'devolução' };
+            let blocoLocacao = '';
+            if (v.id_locacao && v.locacao) {
+                const outra = (v.outras_vistorias_locacao || []).find(x => x.tipo_locacao !== v.tipo_locacao);
+                blocoLocacao = `<div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div><i class="bi bi-key-fill me-1"></i><strong>Vistoria de ${tipoNome[v.tipo_locacao] || ''}</strong> da locação #${v.locacao.id_locacao}
+                        (${dataBR(v.locacao.data_retirada)} a ${dataBR(v.locacao.data_devolucao)})</div>
+                    ${outra ? `<a class="btn btn-sm btn-outline-primary" href="verVistoria.html?id=${outra.id_execucao}"><i class="bi bi-arrow-left-right me-1"></i>Comparar com a vistoria de ${tipoNome[outra.tipo_locacao]}
+                        (${outra.status_conformidade === 'nao_conforme' ? 'com avaria' : 'sem avaria'})</a>` : ''}
+                </div>`;
+            }
 
             let n = 0;
             const linhas = (v.respostas || []).map(r => {
@@ -160,7 +175,7 @@
             const situacoes = {
                 concluida: `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Concluída em ${v.assinado_em ? dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
                 aguardando_vistoriador: `<span class="badge bg-warning text-dark">Aguardando assinatura do supervisor</span>`,
-                aguardando_motorista: `<span class="badge bg-warning text-dark">Aguardando assinatura do motorista</span>`,
+                aguardando_motorista: `<span class="badge bg-warning text-dark">Aguardando assinatura do ${rotMot.toLowerCase()}</span>`,
                 aguardando_assinaturas: `<span class="badge bg-secondary">Ainda não assinada</span>`,
                 recusada: `<span class="badge bg-dark">Recusada</span>`
             };
@@ -181,6 +196,7 @@
             const msg = mensagens[params.get('sucesso')];
 
             box.innerHTML = `
+                ${blocoLocacao}
                 ${msg ? `<div class="alert alert-${msg[0]} alert-dismissible fade show d-flex align-items-center gap-2"><i class="bi ${msg[1]} fs-5"></i><div>${msg[2]}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div>` : ''}
                 ${v.situacao === 'recusada' ? `<div class="alert alert-dark"><i class="bi bi-x-octagon-fill me-1"></i><strong>Recusada por ${e(v.recusado_por_nome || '')} em ${dataBR(v.recusado_em)}:</strong> ${e(v.motivo_recusa)}</div>` : ''}
                 ${Number(v.enviado_manutencao) === 1 && !msg ? '<div class="alert alert-warning py-2"><i class="bi bi-tools me-1"></i>Veículo enviado para manutenção na aprovação desta vistoria.</div>' : ''}
@@ -204,9 +220,9 @@
                         <div class="small">Km: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')}</div>
                     </div></div>
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
-                        <div class="small text-muted">Motorista</div>
+                        <div class="small text-muted">${rotMot}</div>
                         <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.motorista_foto_url, v.nome_motorista, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_motorista)}</div>
-                        <div class="small text-muted mt-2">Vistoriador</div>
+                        <div class="small text-muted mt-2">${rotVist}</div>
                         <div class="fw-semibold d-flex align-items-center gap-2">${axionAvatar(v.vistoriador_foto_url, v.nome_vistoriador, 28).replace('axion-avatar', 'axion-avatar borda-escura')}${e(v.nome_vistoriador)}</div>
                     </div></div>
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
@@ -230,11 +246,11 @@
                 <div class="axion-section-title"><i class="bi bi-pen"></i> Assinaturas</div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <div class="small text-muted mb-1">Motorista: ${e(v.nome_motorista)}</div>
+                        <div class="small text-muted mb-1">${rotMot}: ${e(v.nome_motorista)}</div>
                         ${fmtAss(v.assinatura_motorista, v.assinado_motorista_em)}
                     </div>
                     <div class="col-md-6">
-                        <div class="small text-muted mb-1">Vistoriador: ${e(v.nome_vistoriador)}</div>
+                        <div class="small text-muted mb-1">${rotVist}: ${e(v.nome_vistoriador)}</div>
                         ${fmtAss(v.assinatura_vistoriador, v.assinado_vistoriador_em)}
                     </div>
                 </div>
@@ -242,7 +258,7 @@
                 <div class="d-flex flex-wrap gap-2 justify-content-end nao-imprimir">
                     ${acaoPendente}
                     <button class="btn btn-outline-secondary" onclick="imprimirRelatorio()"><i class="bi bi-file-earmark-pdf me-1"></i>Gerar relatório (PDF)</button>
-                    <a href="oqfazer.php?aba=vistorias" class="btn btn-primary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+                    <a href="oqfazer.php?aba=${ehClienteLogado ? 'locacoes' : (v.id_locacao ? 'locacoes' : 'vistorias')}" class="btn btn-primary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
                 </div>`;
             montarRelatorio(v);
         });
@@ -318,8 +334,8 @@
                         <td><span class="rot">Data da vistoria</span><span class="val">${dataBR(v.data_vistoria)} ${e((v.hora_vistoria || '').slice(0, 5))}</span></td>
                     </tr>
                     <tr>
-                        <td colspan="2"><span class="rot">Motorista</span><span class="val">${e(v.nome_motorista)}</span></td>
-                        <td colspan="2"><span class="rot">Vistoriador / Supervisor</span><span class="val">${e(v.nome_vistoriador)}</span></td>
+                        <td colspan="2"><span class="rot">${v.id_locacao ? 'Cliente' : 'Motorista'}</span><span class="val">${e(v.nome_motorista)}</span></td>
+                        <td colspan="2"><span class="rot">${v.id_locacao ? 'Testemunha (supervisor)' : 'Vistoriador / Supervisor'}</span><span class="val">${e(v.nome_vistoriador)}</span></td>
                     </tr>
                     ${v.observacoes ? `<tr><td colspan="4"><span class="rot">Observações</span>${e(v.observacoes)}</td></tr>` : ''}
                 </table>
@@ -352,8 +368,8 @@
                 <div class="rel-evitar-quebra">
                     <div class="rel-secao">Assinaturas</div>
                     <div class="rel-assinaturas">
-                        ${assinatura(v.assinatura_motorista, v.nome_motorista, 'Motorista', v.assinado_motorista_em)}
-                        ${assinatura(v.assinatura_vistoriador, v.nome_vistoriador, 'Vistoriador / Supervisor', v.assinado_vistoriador_em)}
+                        ${assinatura(v.assinatura_motorista, v.nome_motorista, v.id_locacao ? 'Cliente' : 'Motorista', v.assinado_motorista_em)}
+                        ${assinatura(v.assinatura_vistoriador, v.nome_vistoriador, v.id_locacao ? 'Testemunha (supervisor)' : 'Vistoriador / Supervisor', v.assinado_vistoriador_em)}
                     </div>
                 </div>
 

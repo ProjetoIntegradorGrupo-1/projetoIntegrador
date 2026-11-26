@@ -39,6 +39,24 @@
             <form action="processar_cadastro_veiculo.php" method="post">
                 <div class="mb-4" id="campo-foto"></div>
 
+                <div class="axion-section-title"><i class="bi bi-signpost-split"></i> Uso do veículo</div>
+                <div class="row g-2 mb-3" role="radiogroup" aria-label="Uso do veículo">
+                    <div class="col-md-6">
+                        <input type="radio" class="btn-check" name="finalidade" id="finalidade-frota" value="frota" checked>
+                        <label class="btn btn-outline-primary w-100 text-start p-3" for="finalidade-frota">
+                            <i class="bi bi-bus-front fs-4 float-start me-3"></i><span class="fw-semibold d-block">Frota da empresa</span>
+                            <span class="small">Ônibus, van, caminhão e carros de uso dos motoristas</span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="radio" class="btn-check" name="finalidade" id="finalidade-locacao" value="locacao">
+                        <label class="btn btn-outline-primary w-100 text-start p-3" for="finalidade-locacao">
+                            <i class="bi bi-key fs-4 float-start me-3"></i><span class="fw-semibold d-block">Locação para clientes</span>
+                            <span class="small">Aparece para os clientes alugarem quando estiver disponível</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="axion-section-title"><i class="bi bi-info-circle"></i> Veículo</div>
                 <div class="row">
                     <div class="col-md-4 mb-3">

@@ -158,17 +158,22 @@
             papel = v.meu_papel;
             const outro = papel === 'motorista' ? v.nome_vistoriador : v.nome_motorista;
             const outroAssinou = papel === 'motorista' ? v.assinado_vistoriador_em : v.assinado_motorista_em;
-            document.getElementById('titulo').textContent = papel === 'motorista' ? 'Assinatura do motorista' : 'Aprovação do vistoriador';
-            document.getElementById('label-assinatura').textContent = `Sua assinatura (${papel === 'motorista' ? 'motorista' : 'vistoriador'}: ${ctx.usuario.nome})`;
+            const rotMot = v.id_locacao ? 'cliente' : 'motorista';
+            const rotVist = v.id_locacao ? 'testemunha' : 'vistoriador';
+            document.getElementById('titulo').textContent = papel === 'motorista' ? `Assinatura do ${rotMot}` : (v.id_locacao ? 'Assinatura da testemunha' : 'Aprovação do vistoriador');
+            document.getElementById('label-assinatura').textContent = `Sua assinatura (${papel === 'motorista' ? rotMot : rotVist}: ${ctx.usuario.nome})`;
             document.getElementById('texto-ajuda').textContent = outroAssinou
                 ? `${outro} já assinou. Sua assinatura conclui a vistoria.`
                 : `Ao assinar, a vistoria será enviada para ${outro} ${papel === 'motorista' ? 'revisar e aprovar' : 'conferir e assinar'}.`;
             const resultado = v.status_conformidade === 'nao_conforme'
                 ? '<span class="badge bg-danger">Não Conforme</span>' : '<span class="badge bg-success">Conforme</span>';
             document.getElementById('box-status').innerHTML = `<div class="p-2 bg-light border rounded small">Resultado: ${resultado}
-                · Motorista: <strong>${axionEsc(v.nome_motorista)}</strong> · Vistoriador: <strong>${axionEsc(v.nome_vistoriador)}</strong></div>`;
-            if (papel === 'vistoriador' && v.status_conformidade === 'nao_conforme') {
+                · ${v.id_locacao ? 'Cliente' : 'Motorista'}: <strong>${axionEsc(v.nome_motorista)}</strong> · ${v.id_locacao ? 'Testemunha' : 'Vistoriador'}: <strong>${axionEsc(v.nome_vistoriador)}</strong></div>`;
+            // Na retirada da locação a avaria só fica registrada (o carro segue com o cliente);
+            // na devolução, o carro vai para a manutenção quando a devolução for registrada
+            if (papel === 'vistoriador' && v.status_conformidade === 'nao_conforme' && v.tipo_locacao !== 'retirada') {
                 document.getElementById('box-manutencao').classList.remove('d-none');
+                if (v.tipo_locacao === 'devolucao') document.querySelector('label[for="enviar_manutencao"]').textContent = 'Mandar o veículo para manutenção quando a devolução for registrada';
             }
             document.getElementById('btn-assinar').textContent = (papel === 'vistoriador' && v.assinado_motorista_em) ? 'Aprovar e assinar' : 'Assinar';
             document.getElementById('formAssinatura').classList.remove('d-none');

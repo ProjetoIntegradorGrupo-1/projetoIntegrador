@@ -135,7 +135,9 @@ function axion_garantir_estrutura(PDO $pdo): void {
         'km_rodado' => "INT NOT NULL DEFAULT 0",
         'renavam'   => "VARCHAR(15) DEFAULT NULL",
         'chassi'    => "VARCHAR(25) DEFAULT NULL",
-        'criado_em' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        'criado_em' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        // frota = uso da empresa (ônibus, van, caminhão...); locacao = alugado para clientes
+        'finalidade' => "VARCHAR(20) NOT NULL DEFAULT 'frota'",
     ];
     foreach ($novasColunasVeiculos as $col => $def) {
         if (!in_array($col, $colunasVeiculos, true)) {
@@ -236,6 +238,9 @@ function axion_garantir_estrutura(PDO $pdo): void {
         'recusado_por'              => "INT DEFAULT NULL",
         'motivo_recusa'             => "TEXT DEFAULT NULL",
         'enviado_manutencao'        => "TINYINT(1) NOT NULL DEFAULT 0",
+        // Vistoria de uma locação: retirada (cliente pega o carro) ou devolucao. O cliente fica em id_motorista.
+        'id_locacao'                => "INT DEFAULT NULL",
+        'tipo_locacao'              => "VARCHAR(10) DEFAULT NULL",
     ]);
     // Resposta esperada só faz sentido em pergunta Sim/Não
     $pdo->exec("UPDATE Checklist_Perguntas SET resposta_esperada = NULL WHERE tipo <> 'sim_nao' AND resposta_esperada IS NOT NULL");
@@ -322,7 +327,7 @@ function axion_criar_contas_base(PDO $pdo): void {
                 WHERE email IN ('motorista@axion.com', 'cliente@axion.com') AND (cnh IS NULL OR cnh = '')");
     $idSup = $pdo->query("SELECT id_usuario FROM Usuarios WHERE email = 'supervisor@axion.com'")->fetchColumn();
     if ($idSup) {
-        $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email = 'motorista@axion.com' AND id_supervisor IS NULL")
+        $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email IN ('motorista@axion.com', 'cliente@axion.com') AND id_supervisor IS NULL")
             ->execute([':sup' => $idSup]);
     }
 }

@@ -78,7 +78,7 @@ if ($acao === 'contexto') {
     $stF->execute([':id' => $u['id']]);
     $u['foto_url'] = axion_url_foto($u['id'], $stF->fetchColumn() ?: null);
     $extra = ['supervisor' => null];
-    if ($u['perfil'] === 'motorista') {
+    if (in_array($u['perfil'], ['motorista', 'cliente'], true)) {
         $st = $pdo->prepare("SELECT s.id_usuario, s.nome FROM Usuarios m JOIN Usuarios s ON s.id_usuario = m.id_supervisor WHERE m.id_usuario = :id");
         $st->execute([':id' => $u['id']]);
         $extra['supervisor'] = $st->fetch() ?: null;
@@ -106,9 +106,13 @@ if ($acao === 'buscar') {
     $limite = min(250, max(10, (int)($_GET['limite'] ?? 100)));
 
     if ($tipo === 'veiculos') {
-        $sql = "SELECT id_veiculo, placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status, foto
+        $sql = "SELECT id_veiculo, placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status, finalidade, foto
                 FROM Veiculos WHERE 1=1";
         $params = [];
+        if (in_array($_GET['finalidade'] ?? '', ['frota', 'locacao'], true)) {
+            $sql .= " AND finalidade = :fin";
+            $params[':fin'] = $_GET['finalidade'];
+        }
         if ($termo !== '') {
             $placaLimpa = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $termo));
             $sql .= " AND (placa LIKE :q OR placa LIKE :placa OR marca_modelo LIKE :q OR marca LIKE :q OR modelo LIKE :q OR cor LIKE :q OR renavam LIKE :q OR chassi LIKE :q)";
@@ -214,7 +218,7 @@ if ($acao === 'buscar') {
     if ($tipo === 'vistorias') {
         $sql = "SELECT e.id_execucao, e.id_checklist, e.placa_veiculo, e.nome_motorista, e.nome_vistoriador, e.data_vistoria,
                        e.hora_vistoria, e.km_rodado, e.status_conformidade, e.assinado_em, e.id_motorista, e.id_vistoriador,
-                       e.assinado_motorista_em, e.assinado_vistoriador_em, e.recusado_em,
+                       e.assinado_motorista_em, e.assinado_vistoriador_em, e.recusado_em, e.id_locacao, e.tipo_locacao,
                        COALESCE(c.titulo, 'Checklist removido') AS checklist_titulo,
                        COALESCE(c.categoria, '-') AS checklist_categoria
                 FROM Checklist_Execucoes e
@@ -412,7 +416,12 @@ if ($acao === 'obter_veiculo') {
 }
 
 if ($acao === 'obter_checklist') {
-    axion_exigir_perfil(AXION_PERFIS_INTERNOS);
+    $euChk = axion_exigir_perfil();
+    if ($euChk['perfil'] === 'cliente') {
+        $stOk = $pdo->prepare("SELECT COUNT(*) FROM Checklists WHERE id_checklist = :id AND ativo = 1 AND status_aprovacao = 'aprovado'");
+        $stOk->execute([':id' => (int)($_GET['id'] ?? 0)]);
+        if (!(int)$stOk->fetchColumn()) axion_json(['sucesso' => false, 'erro' => 'Modelo indisponível.'], 403);
+    }
     $id = (int)($_GET['id'] ?? 0);
     $stmt = $pdo->prepare("SELECT c.*, COALESCE(u.nome, 'Sistema Axion') AS criador_nome, a.nome AS avaliador_nome
                            FROM Checklists c LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador LEFT JOIN Usuarios a ON a.id_usuario = c.avaliado_por
@@ -493,13 +502,14 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
     if ($nomeCompleto === '') $erro = 'nome_obrigatorio';
 
     $supValido = null;
-    if ($perfil === 'motorista' && $idSupervisor > 0) {
+    $temSupervisor = in_array($perfil, ['motorista', 'cliente'], true);
+    if ($temSupervisor && $idSupervisor > 0) {
         $s = axion_buscar_usuario($pdo, $idSupervisor);
         if (!$s || $s['perfil'] !== 'supervisor') $erro = 'supervisor_invalido';
         else $supValido = $idSupervisor;
     }
-    // Motorista sempre tem um supervisor responsável (o supervisor logado assume, se ninguém foi escolhido)
-    if ($perfil === 'motorista' && !$supValido) {
+    // Motorista e cliente sempre têm um supervisor responsável (o supervisor logado assume, se ninguém foi escolhido)
+    if ($temSupervisor && !$supValido) {
         if ($eu['perfil'] === 'supervisor') $supValido = (int)$eu['id'];
         else $erro = $erro ?: 'supervisor_obrigatorio';
     }
@@ -544,7 +554,7 @@ if ($acao === 'salvar_edicao_usuario' && $ehPost) {
     }
 
     // Trocou o supervisor do motorista: as solicitações dele que ainda esperam o supervisor vão para o novo
-    if ($perfil === 'motorista' && $supValido && (int)$supValido !== (int)$alvo['id_supervisor']) {
+    if ($temSupervisor && $supValido && (int)$supValido !== (int)$alvo['id_supervisor']) {
         $novo = axion_buscar_usuario($pdo, $supValido);
         $pdo->prepare("UPDATE Checklist_Execucoes SET id_vistoriador = :v, nome_vistoriador = :n
                        WHERE id_motorista = :m AND id_registrado_por = :m2 AND assinado_vistoriador_em IS NULL AND recusado_em IS NULL")
@@ -603,6 +613,11 @@ if ($acao === 'salvar_edicao_veiculo' && $ehPost) {
     $chassi      = strtoupper(trim($_POST['chassi'] ?? ''));
     $status      = trim($_POST['status'] ?? 'ativo');
     if (!in_array($status, AXION_STATUS_VEICULO, true)) $status = 'ativo';
+    $finalidade  = ($_POST['finalidade'] ?? '') === 'locacao' ? 'locacao' : 'frota';
+    // Carro com pedido ou locação em aberto continua sendo de locação
+    $stAberta = $pdo->prepare("SELECT COUNT(*) FROM Locacoes WHERE id_veiculo = :id AND status IN ('pendente', 'ativa')");
+    $stAberta->execute([':id' => $id]);
+    if ($finalidade === 'frota' && (int)$stAberta->fetchColumn() > 0) { header("Location: ../editarVeiculo.html?id=$id&erro=veiculo_com_locacao_aberta"); exit; }
     // "Locado" acompanha a locação: enquanto houver uma em andamento o carro continua locado
     $stLoc = $pdo->prepare("SELECT COUNT(*) FROM Locacoes WHERE id_veiculo = :id AND status = 'ativa'");
     $stLoc->execute([':id' => $id]);
@@ -616,12 +631,12 @@ if ($acao === 'salvar_edicao_veiculo' && $ehPost) {
     $stmt = $pdo->prepare("
         UPDATE Veiculos SET
             placa = :placa, marca = :marca, modelo = :modelo, marca_modelo = :marca_modelo,
-            ano = :ano, cor = :cor, km_rodado = :km, renavam = :renavam, chassi = :chassi, status = :status
+            ano = :ano, cor = :cor, km_rodado = :km, renavam = :renavam, chassi = :chassi, status = :status, finalidade = :fin
         WHERE id_veiculo = :id
     ");
     $stmt->execute([
         ':placa' => $placa, ':marca' => $marca, ':modelo' => $modelo, ':marca_modelo' => $marcaModelo, ':ano' => $ano,
-        ':cor' => $cor, ':km' => $km, ':renavam' => $renavam, ':chassi' => $chassi, ':status' => $status, ':id' => $id
+        ':cor' => $cor, ':km' => $km, ':renavam' => $renavam, ':chassi' => $chassi, ':status' => $status, ':fin' => $finalidade, ':id' => $id
     ]);
     try {
         $stFotoAnt = $pdo->prepare("SELECT foto FROM Veiculos WHERE id_veiculo = :id");
@@ -775,12 +790,24 @@ if (in_array($acao, ['aprovar_checklist', 'rejeitar_checklist'], true) && $ehPos
 // 9. REGISTRAR PREENCHIMENTO DE CHECKLIST / VISTORIA
 if ($acao === 'registrar_vistoria' && $ehPost) {
     // Vistoria é trabalho operacional: supervisor e motorista (o admin cuida da gestão)
-    $eu = axion_exigir_perfil(['supervisor', 'motorista']);
+    $eu = axion_exigir_perfil(['supervisor', 'motorista', 'cliente']);
     axion_validar_csrf();
-    $voltar = function (string $erro) {
-        header("Location: ../cadcheck.html?erro=$erro");
+    $idLocacaoPost = (int)($_POST['id_locacao'] ?? 0);
+    $voltar = function (string $erro) use ($idLocacaoPost) {
+        header("Location: ../cadcheck.html?erro=$erro" . ($idLocacaoPost ? "&locacao=$idLocacaoPost" : ''));
         exit;
     };
+    // Cliente: só a vistoria de retirada ou de devolução da própria locação (o veículo é o da locação)
+    $locacaoVist = null;
+    $tipoLocacao = null;
+    if ($eu['perfil'] === 'cliente') {
+        $locacaoVist = axion_locacao_do_cliente($pdo, (int)$eu['id'], $idLocacaoPost);
+        if (!$locacaoVist) $voltar('locacao_invalida');
+        $tipoLocacao = axion_proxima_vistoria_locacao($pdo, $locacaoVist);
+        if (!$tipoLocacao) $voltar('vistoria_locacao_em_andamento');
+        if ($tipoLocacao === 'retirada' && $locacaoVist['data_retirada'] > date('Y-m-d')) $voltar('retirada_antes_da_data');
+        $_POST['id_veiculo'] = $locacaoVist['id_veiculo'];
+    }
 
     $idChecklist = (int)($_POST['id_checklist'] ?? 0);
     $chk = $pdo->prepare("SELECT c.ativo, c.status_aprovacao, (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS qtd FROM Checklists c WHERE c.id_checklist = :id");
@@ -801,8 +828,8 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     // Hodômetro não volta: o km informado não pode ser menor que o último registrado
     if ($km < (int)$veiculo['km_rodado']) $voltar('km_menor_que_atual');
 
-    // Motorista: se quem está logado é motorista, é ele mesmo (não dá para escolher outro)
-    if ($eu['perfil'] === 'motorista') {
+    // Motorista: se quem está logado é motorista (ou cliente na locação), é ele mesmo (não dá para escolher outro)
+    if (in_array($eu['perfil'], ['motorista', 'cliente'], true)) {
         $motorista = axion_buscar_usuario($pdo, $eu['id']);
     } else {
         $motorista = axion_buscar_usuario($pdo, (int)($_POST['id_motorista'] ?? 0));
@@ -822,6 +849,7 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     // Motorista com CNH vencida não pode assumir veículo
     if (!empty($motorista['validade_cnh']) && $motorista['validade_cnh'] < date('Y-m-d')) $voltar('cnh_vencida');
     if ($vistoriador['id_usuario'] == $motorista['id_usuario']) $voltar('motorista_e_vistoriador_iguais');
+    if ($eu['perfil'] === 'cliente' && $motorista['perfil'] !== 'cliente') $voltar('locacao_invalida');
 
     // Respostas: guarda cada uma e apura a conformidade pelo gabarito do modelo
     $stP = $pdo->prepare("SELECT * FROM Checklist_Perguntas WHERE id_checklist = :id ORDER BY ordem, id_pergunta");
@@ -860,13 +888,14 @@ if ($acao === 'registrar_vistoria' && $ehPost) {
     $pdo->prepare("
         INSERT INTO Checklist_Execucoes (
             id_checklist, id_veiculo, placa_veiculo, id_motorista, nome_motorista, id_vistoriador, nome_vistoriador,
-            id_registrado_por, data_vistoria, hora_vistoria, km_rodado, status_conformidade, observacoes
-        ) VALUES (:chk, :veic, :placa, :id_mot, :mot, :id_vist, :vist, :reg, CURDATE(), CURTIME(), :km, :st, :obs)
+            id_registrado_por, data_vistoria, hora_vistoria, km_rodado, status_conformidade, observacoes, id_locacao, tipo_locacao
+        ) VALUES (:chk, :veic, :placa, :id_mot, :mot, :id_vist, :vist, :reg, CURDATE(), CURTIME(), :km, :st, :obs, :loc, :tloc)
     ")->execute([
         ':chk' => $idChecklist, ':veic' => $veiculo['id_veiculo'], ':placa' => $veiculo['placa'],
         ':id_mot' => $motorista['id_usuario'], ':mot' => $motorista['nome'],
         ':id_vist' => $vistoriador['id_usuario'], ':vist' => $vistoriador['nome'],
-        ':reg' => $eu['id'], ':km' => $km, ':st' => $status, ':obs' => mb_substr(trim($_POST['observacoes'] ?? ''), 0, 2000)
+        ':reg' => $eu['id'], ':km' => $km, ':st' => $status, ':obs' => mb_substr(trim($_POST['observacoes'] ?? ''), 0, 2000),
+        ':loc' => $locacaoVist ? $locacaoVist['id_locacao'] : null, ':tloc' => $tipoLocacao
     ]);
     $idExec = (int)$pdo->lastInsertId();
     $stR = $pdo->prepare("INSERT INTO Checklist_Respostas (id_execucao, id_pergunta, id_pergunta_pai, pergunta_texto, resposta, resposta_esperada, conforme) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -894,14 +923,14 @@ function axion_carregar_vistoria(PDO $pdo, array $eu, int $id): ?array {
     $st->execute([':id' => $id]);
     $v = $st->fetch();
     if (!$v) return null;
-    if ($eu['perfil'] === 'motorista' && (int)$v['id_motorista'] !== $eu['id']) return null;
+    if (in_array($eu['perfil'], ['motorista', 'cliente'], true) && (int)$v['id_motorista'] !== $eu['id']) return null;
     return $v;
 }
 
 // 9b. DETALHES DE NÃO CONFORMIDADE (descrição + foto)
 // Só pode ser preenchido/alterado antes da primeira assinatura: quem assina depois precisa ver exatamente o que o outro assinou.
 if ($acao === 'salvar_nao_conformidade' && $ehPost) {
-    $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
+    $eu = axion_exigir_perfil();
     axion_validar_csrf();
     $id = (int)($_POST['id_execucao'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
@@ -937,7 +966,7 @@ if ($acao === 'salvar_nao_conformidade' && $ehPost) {
 // Quem registra a vistoria assina primeiro; isso vira uma solicitação para a outra pessoa
 // (normalmente o supervisor), que revisa e assina depois, ou recusa com um motivo.
 if ($acao === 'assinar_vistoria' && $ehPost) {
-    $eu = axion_exigir_perfil(['admin', 'supervisor', 'motorista']);
+    $eu = axion_exigir_perfil();
     axion_validar_csrf();
     $id = (int)($_POST['id_execucao'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
@@ -969,7 +998,8 @@ if ($acao === 'assinar_vistoria' && $ehPost) {
         $pdo->prepare("UPDATE Checklist_Execucoes SET assinado_em = NOW() WHERE id_execucao = :id")->execute([':id' => $id]);
         // Supervisor pode mandar o carro para manutenção ao aprovar uma vistoria com avaria
         if ($papel === 'vistoriador' && $v['status_conformidade'] === 'nao_conforme' && !empty($_POST['enviar_manutencao']) && $v['id_veiculo']) {
-            $pdo->prepare("UPDATE Veiculos SET status = 'manutencao' WHERE id_veiculo = :v")->execute([':v' => $v['id_veiculo']]);
+            // Carro de locação continua com o cliente até a devolução; ele vai para a manutenção quando a devolução for registrada
+            if (!$v['id_locacao']) $pdo->prepare("UPDATE Veiculos SET status = 'manutencao' WHERE id_veiculo = :v")->execute([':v' => $v['id_veiculo']]);
             $pdo->prepare("UPDATE Checklist_Execucoes SET enviado_manutencao = 1 WHERE id_execucao = :id")->execute([':id' => $id]);
         }
     }
@@ -1000,7 +1030,7 @@ if ($acao === 'recusar_vistoria' && $ehPost) {
 
 // 10. VISUALIZAR VISTORIA PREENCHIDA (respostas, avaria, foto e assinaturas)
 if ($acao === 'obter_vistoria') {
-    $eu = axion_exigir_perfil(AXION_PERFIS_INTERNOS);
+    $eu = axion_exigir_perfil();
     $id = (int)($_GET['id'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
     if (!$v) axion_json(['sucesso' => false, 'erro' => 'Vistoria não encontrada ou sem permissão.'], 404);
@@ -1028,16 +1058,22 @@ if ($acao === 'obter_vistoria') {
         $r = axion_buscar_usuario($pdo, (int)$v['recusado_por']);
         $v['recusado_por_nome'] = $r['nome'] ?? '';
     }
-    // Cliente consulta a vistoria, mas não vê as assinaturas
-    if ($eu['perfil'] === 'cliente') {
-        $v['assinatura_motorista'] = $v['assinatura_motorista'] ? true : null;
-        $v['assinatura_vistoriador'] = $v['assinatura_vistoriador'] ? true : null;
+    // Vistoria de locação: dados da locação e a outra vistoria (retirada x devolução) para comparar
+    $v['locacao'] = null;
+    if ($v['id_locacao']) {
+        $stL = $pdo->prepare("SELECT id_locacao, data_retirada, data_devolucao, status FROM Locacoes WHERE id_locacao = :l");
+        $stL->execute([':l' => $v['id_locacao']]);
+        $v['locacao'] = $stL->fetch() ?: null;
+        $stPar = $pdo->prepare("SELECT id_execucao, tipo_locacao, status_conformidade, data_vistoria, km_rodado, recusado_em, assinado_motorista_em, assinado_vistoriador_em
+                                FROM Checklist_Execucoes WHERE id_locacao = :l AND id_execucao <> :id AND recusado_em IS NULL ORDER BY id_execucao DESC");
+        $stPar->execute([':l' => $v['id_locacao'], ':id' => $id]);
+        $v['outras_vistorias_locacao'] = array_map(function ($x) { $x['situacao'] = axion_situacao($x); return $x; }, $stPar->fetchAll());
     }
     axion_json(['sucesso' => true, 'dados' => $v, 'usuario' => $eu]);
 }
 
 if ($acao === 'foto_vistoria') {
-    $eu = axion_exigir_perfil(AXION_PERFIS_INTERNOS);
+    $eu = axion_exigir_perfil();
     $v = axion_carregar_vistoria($pdo, $eu, (int)($_GET['id'] ?? 0));
     $arq = $v && $v['foto_evidencia'] ? __DIR__ . '/../uploads/vistorias/' . basename($v['foto_evidencia']) : null;
     if (!$arq || !is_file($arq)) { http_response_code(404); exit; }
@@ -1154,12 +1190,49 @@ if ($acao === 'redefinir_senha' && $ehPost) {
 // 14. LOCAÇÃO DE VEÍCULOS
 // O cliente vê só os veículos disponíveis e as próprias locações; admin/supervisor aprovam e recebem a devolução.
 
-/** Fase da locação para mostrar na tela: aguardando, aprovada (antes da retirada), em andamento, atrasada ou encerrada. */
-function axion_fase_locacao(array $l): string {
+/** Locação aprovada (ativa) do próprio cliente. */
+function axion_locacao_do_cliente(PDO $pdo, int $idCliente, int $idLocacao): ?array {
+    $st = $pdo->prepare("SELECT * FROM Locacoes WHERE id_locacao = :id AND id_cliente = :c AND status = 'ativa'");
+    $st->execute([':id' => $idLocacao, ':c' => $idCliente]);
+    return $st->fetch() ?: null;
+}
+
+/** Vistoria mais recente de cada tipo (retirada e devolução) de uma locação, com a situação das assinaturas. */
+function axion_vistorias_locacao(PDO $pdo, int $idLocacao): array {
+    $st = $pdo->prepare("SELECT id_execucao, tipo_locacao, status_conformidade, km_rodado, enviado_manutencao, data_vistoria,
+                                assinado_motorista_em, assinado_vistoriador_em, recusado_em, motivo_recusa, nome_vistoriador
+                         FROM Checklist_Execucoes WHERE id_locacao = :l ORDER BY id_execucao DESC");
+    $st->execute([':l' => $idLocacao]);
+    $out = ['retirada' => null, 'devolucao' => null];
+    foreach ($st->fetchAll() as $x) {
+        $x['situacao'] = axion_situacao($x);
+        $tipo = $x['tipo_locacao'];
+        if (array_key_exists($tipo, $out) && $out[$tipo] === null) $out[$tipo] = $x;
+    }
+    return $out;
+}
+
+/** Qual vistoria o cliente pode fazer agora: retirada, devolução ou nenhuma (aguardando assinaturas). */
+function axion_proxima_vistoria_locacao(PDO $pdo, array $loc): ?string {
+    $v = axion_vistorias_locacao($pdo, (int)$loc['id_locacao']);
+    $ret = $v['retirada'];
+    if (!$ret || $ret['situacao'] === 'recusada') return 'retirada';
+    if ($ret['situacao'] !== 'concluida') return null;
+    $dev = $v['devolucao'];
+    if (!$dev || $dev['situacao'] === 'recusada') return 'devolucao';
+    return null;
+}
+
+/**
+ * Fase da locação para a tela. Locação aprovada só fica "em andamento" depois da vistoria de retirada
+ * assinada pelo cliente e pelo supervisor (testemunha).
+ */
+function axion_fase_locacao(array $l, ?array $vist = null): string {
     if ($l['status'] !== 'ativa') return $l['status'];
     $hoje = date('Y-m-d');
+    $retiradaOk = $vist && $vist['retirada'] && $vist['retirada']['situacao'] === 'concluida';
+    if (!$retiradaOk) return $l['data_retirada'] > $hoje ? 'aprovada' : 'aguardando_retirada';
     if ($l['data_devolucao'] < $hoje) return 'atrasada';
-    if ($l['data_retirada'] > $hoje) return 'aprovada';
     return 'em_andamento';
 }
 
@@ -1170,7 +1243,7 @@ function axion_dias_para(string $data): int {
 
 const AXION_SQL_VEICULOS_DISPONIVEIS = "SELECT v.id_veiculo, v.marca, v.modelo, v.marca_modelo, v.ano, v.cor, v.foto
     FROM Veiculos v
-    WHERE v.status = 'ativo'
+    WHERE v.status = 'ativo' AND v.finalidade = 'locacao'
       AND NOT EXISTS (SELECT 1 FROM Locacoes l WHERE l.id_veiculo = v.id_veiculo AND l.status IN ('pendente', 'ativa'))";
 
 if ($acao === 'locacao_veiculos') {
@@ -1191,8 +1264,10 @@ if ($acao === 'minhas_locacoes') {
                          WHERE l.id_cliente = :me
                          ORDER BY FIELD(l.status, 'ativa', 'pendente', 'devolvida', 'recusada', 'cancelada'), l.data_retirada DESC, l.id_locacao DESC");
     $st->execute([':me' => $eu['id']]);
-    $dados = array_map(function ($l) {
-        $l['fase'] = axion_fase_locacao($l);
+    $dados = array_map(function ($l) use ($pdo) {
+        $l['vistorias'] = axion_vistorias_locacao($pdo, (int)$l['id_locacao']);
+        $l['fase'] = axion_fase_locacao($l, $l['vistorias']);
+        $l['proxima_vistoria'] = $l['status'] === 'ativa' ? axion_proxima_vistoria_locacao($pdo, $l) : null;
         $l['dias_para_devolver'] = $l['status'] === 'ativa' ? axion_dias_para($l['data_devolucao']) : null;
         $l['dias'] = axion_dias_para($l['data_devolucao']) - axion_dias_para($l['data_retirada']) + 1;
         // A placa só aparece quando o carro é dele (locação aprovada)
@@ -1243,6 +1318,28 @@ if ($acao === 'solicitar_locacao' && $ehPost) {
     axion_json(['sucesso' => true, 'mensagem' => 'Pedido enviado! A empresa vai analisar e você acompanha a resposta em "Minhas locações".']);
 }
 
+// Dados para o cliente preencher a vistoria de retirada/devolução da própria locação
+if ($acao === 'dados_vistoria_locacao') {
+    $eu = axion_exigir_perfil(['cliente']);
+    $loc = axion_locacao_do_cliente($pdo, (int)$eu['id'], (int)($_GET['id'] ?? 0));
+    if (!$loc) axion_json(['sucesso' => false, 'erro' => 'Locação não encontrada ou ainda não aprovada.'], 404);
+    $tipo = axion_proxima_vistoria_locacao($pdo, $loc);
+    $stV = $pdo->prepare("SELECT id_veiculo, placa, marca_modelo, ano, cor, km_rodado, foto FROM Veiculos WHERE id_veiculo = :v");
+    $stV->execute([':v' => $loc['id_veiculo']]);
+    $veic = $stV->fetch();
+    $veic['foto_url'] = axion_url_foto_veiculo((int)$veic['id_veiculo'], $veic['foto']);
+    unset($veic['foto']);
+    $stS = $pdo->prepare("SELECT s.nome FROM Usuarios c JOIN Usuarios s ON s.id_usuario = c.id_supervisor WHERE c.id_usuario = :c");
+    $stS->execute([':c' => $eu['id']]);
+    $modelos = $pdo->query("SELECT c.id_checklist, c.titulo, c.categoria FROM Checklists c
+                            WHERE c.ativo = 1 AND c.status_aprovacao = 'aprovado'
+                              AND EXISTS (SELECT 1 FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist)
+                            ORDER BY c.titulo")->fetchAll();
+    axion_json(['sucesso' => true, 'locacao' => $loc, 'tipo' => $tipo, 'veiculo' => $veic,
+                'testemunha' => $stS->fetchColumn() ?: null, 'checklists' => $modelos,
+                'pode_hoje' => $tipo !== 'retirada' || $loc['data_retirada'] <= date('Y-m-d')]);
+}
+
 if ($acao === 'cancelar_locacao' && $ehPost) {
     $eu = axion_exigir_perfil(['cliente']);
     axion_validar_csrf();
@@ -1256,11 +1353,12 @@ if ($acao === 'listar_locacoes') {
     axion_exigir_perfil(['admin', 'supervisor']);
     $filtro = $_GET['filtro'] ?? '';
     $sql = "SELECT l.*, c.nome AS cliente_nome, c.email AS cliente_email, c.telefone AS cliente_telefone,
-                   c.categoria_cnh, c.validade_cnh, c.foto AS cliente_foto,
+                   c.categoria_cnh, c.validade_cnh, c.foto AS cliente_foto, sp.nome AS testemunha_nome,
                    v.placa, v.marca_modelo, v.ano, v.cor, v.km_rodado, v.status AS veiculo_status, v.foto AS veiculo_foto,
                    a.nome AS avaliado_por_nome, rb.nome AS recebido_por_nome
             FROM Locacoes l
             JOIN Usuarios c ON c.id_usuario = l.id_cliente
+            LEFT JOIN Usuarios sp ON sp.id_usuario = c.id_supervisor
             JOIN Veiculos v ON v.id_veiculo = l.id_veiculo
             LEFT JOIN Usuarios a ON a.id_usuario = l.avaliado_por
             LEFT JOIN Usuarios rb ON rb.id_usuario = l.recebido_por
@@ -1269,8 +1367,9 @@ if ($acao === 'listar_locacoes') {
     elseif ($filtro === 'atrasada') $sql .= " AND l.status = 'ativa' AND l.data_devolucao < CURDATE()";
     elseif ($filtro === 'encerradas') $sql .= " AND l.status IN ('devolvida', 'recusada', 'cancelada')";
     $sql .= " ORDER BY FIELD(l.status, 'pendente', 'ativa', 'devolvida', 'recusada', 'cancelada'), l.data_devolucao ASC, l.id_locacao DESC LIMIT 250";
-    $dados = array_map(function ($l) {
-        $l['fase'] = axion_fase_locacao($l);
+    $dados = array_map(function ($l) use ($pdo) {
+        $l['vistorias'] = axion_vistorias_locacao($pdo, (int)$l['id_locacao']);
+        $l['fase'] = axion_fase_locacao($l, $l['vistorias']);
         $l['dias_para_devolver'] = $l['status'] === 'ativa' ? axion_dias_para($l['data_devolucao']) : null;
         $l['dias'] = axion_dias_para($l['data_devolucao']) - axion_dias_para($l['data_retirada']) + 1;
         $l['cnh_vence_antes'] = !$l['validade_cnh'] || $l['validade_cnh'] < $l['data_devolucao'];
@@ -1282,7 +1381,7 @@ if ($acao === 'listar_locacoes') {
     axion_json(['sucesso' => true, 'dados' => $dados]);
 }
 
-if (in_array($acao, ['aprovar_locacao', 'recusar_locacao', 'registrar_devolucao'], true) && $ehPost) {
+if (in_array($acao, ['aprovar_locacao', 'recusar_locacao', 'registrar_devolucao', 'cancelar_locacao_gestor'], true) && $ehPost) {
     $eu = axion_exigir_perfil(['admin', 'supervisor']);
     axion_validar_csrf();
     $id = (int)($_POST['id_locacao'] ?? 0);
@@ -1298,6 +1397,9 @@ if (in_array($acao, ['aprovar_locacao', 'recusar_locacao', 'registrar_devolucao'
         if ($l['status'] !== 'pendente') $falhar('Este pedido já foi respondido.');
         if ($l['data_devolucao'] < date('Y-m-d')) $falhar('O período pedido já passou. Recuse o pedido para o cliente pedir de novo.');
         if ($l['veiculo_status'] !== 'ativo') $falhar('O veículo não está disponível agora (em rota, manutenção ou já locado).');
+        $stSup = $pdo->prepare("SELECT s.id_usuario FROM Usuarios c JOIN Usuarios s ON s.id_usuario = c.id_supervisor AND s.perfil = 'supervisor' AND s.status = 'ativo' WHERE c.id_usuario = :c");
+        $stSup->execute([':c' => $l['id_cliente']]);
+        if (!$stSup->fetchColumn()) $falhar('Este cliente não tem supervisor responsável. Edite o cadastro do cliente e escolha um: ele assina as vistorias de retirada e devolução.');
         $pdo->prepare("UPDATE Locacoes SET status = 'ativa', avaliado_por = :eu, avaliado_em = NOW() WHERE id_locacao = :id")
             ->execute([':eu' => $eu['id'], ':id' => $id]);
         $pdo->prepare("UPDATE Veiculos SET status = 'locado' WHERE id_veiculo = :v")->execute([':v' => $l['id_veiculo']]);
@@ -1309,16 +1411,35 @@ if (in_array($acao, ['aprovar_locacao', 'recusar_locacao', 'registrar_devolucao'
         $pdo->prepare("UPDATE Locacoes SET status = 'recusada', motivo_recusa = :m, avaliado_por = :eu, avaliado_em = NOW() WHERE id_locacao = :id")
             ->execute([':m' => $motivo, ':eu' => $eu['id'], ':id' => $id]);
         $msg = 'Pedido recusado. O cliente vê o motivo em "Minhas locações".';
+    } elseif ($acao === 'cancelar_locacao_gestor') {
+        // Cliente não apareceu para retirar: libera o carro (só antes da vistoria de retirada concluída)
+        $vist = axion_vistorias_locacao($pdo, $id);
+        if ($l['status'] !== 'ativa' || ($vist['retirada'] && $vist['retirada']['situacao'] === 'concluida')) {
+            $falhar('Só dá para cancelar uma locação aprovada antes da retirada do veículo.');
+        }
+        $motivo = mb_substr(trim((string)($_POST['motivo'] ?? '')), 0, 255);
+        if ($motivo === '') $falhar('Escreva o motivo do cancelamento: o cliente vai ver essa mensagem.', 422);
+        $pdo->prepare("UPDATE Locacoes SET status = 'cancelada', motivo_recusa = :m WHERE id_locacao = :id")->execute([':m' => $motivo, ':id' => $id]);
+        $pdo->prepare("UPDATE Veiculos SET status = 'ativo' WHERE id_veiculo = :v AND status = 'locado'")->execute([':v' => $l['id_veiculo']]);
+        $msg = 'Locação cancelada. O veículo voltou a ficar disponível.';
     } else {
         if ($l['status'] !== 'ativa') $falhar('Só dá para registrar a devolução de uma locação em andamento.');
-        $km = trim((string)($_POST['km_devolucao'] ?? ''));
-        $km = $km === '' ? null : (int)preg_replace('/\D/', '', $km);
-        if ($km !== null && $km < (int)$l['km_rodado']) $falhar('O km da devolução não pode ser menor que o km atual do veículo (' . number_format((int)$l['km_rodado'], 0, ',', '.') . ').', 422);
+        // A devolução só é registrada com a vistoria de devolução assinada pelo cliente e pelo supervisor
+        $vist = axion_vistorias_locacao($pdo, $id);
+        $dev = $vist['devolucao'];
+        if (!$dev || $dev['situacao'] !== 'concluida') {
+            $falhar('Falta a vistoria de devolução assinada pelo cliente e pelo supervisor. O cliente faz a vistoria em "Minhas locações".');
+        }
+        $km = (int)$dev['km_rodado'];
         $pdo->prepare("UPDATE Locacoes SET status = 'devolvida', devolvido_em = NOW(), km_devolucao = :km, recebido_por = :eu WHERE id_locacao = :id")
             ->execute([':km' => $km, ':eu' => $eu['id'], ':id' => $id]);
-        $pdo->prepare("UPDATE Veiculos SET status = 'ativo', km_rodado = GREATEST(km_rodado, :km) WHERE id_veiculo = :v")
-            ->execute([':km' => $km ?? 0, ':v' => $l['id_veiculo']]);
-        $msg = 'Devolução registrada. O veículo voltou a ficar disponível.';
+        // Se o supervisor mandou para a manutenção ao aprovar a vistoria com avaria, o carro vai direto para lá
+        $novoStatus = (int)$dev['enviado_manutencao'] === 1 ? 'manutencao' : 'ativo';
+        $pdo->prepare("UPDATE Veiculos SET status = :st, km_rodado = GREATEST(km_rodado, :km) WHERE id_veiculo = :v")
+            ->execute([':st' => $novoStatus, ':km' => $km, ':v' => $l['id_veiculo']]);
+        $msg = $novoStatus === 'manutencao'
+            ? 'Devolução registrada. Como a vistoria apontou avaria, o veículo foi para a manutenção.'
+            : 'Devolução registrada. O veículo voltou a ficar disponível.';
     }
     $pdo->commit();
     axion_json(['sucesso' => true, 'mensagem' => $msg]);

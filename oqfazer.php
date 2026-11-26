@@ -71,7 +71,7 @@ if ($isAdmin) {
         'locacoes' => ['bi-calendar-check', 'Minhas locações'],
     ];
 }
-$secaoPendencia = $isAdmin ? 'aprovacoes' : 'vistorias';
+$secaoPendencia = $isAdmin ? 'aprovacoes' : ($isCliente ? 'locacoes' : 'vistorias');
 
 // Compatibilidade com os links antigos (?aba=veiculos / ?aba=checklists)
 $aba = $_GET['aba'] ?? 'inicio';
@@ -139,8 +139,8 @@ $mapaErros = [
             </div>
             <div class="d-flex align-items-center gap-2 gap-md-3">
                 <?php if ($minhasPendencias > 0): ?>
-                <a href="<?php echo $isAdmin ? 'oqfazer.php?aba=aprovacoes' : 'oqfazer.php?aba=vistorias&filtro=minhas_pendencias'; ?>" class="btn btn-sm btn-warning fw-semibold">
-                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?><span class="d-none d-sm-inline"><?php echo $isMotorista ? ' para assinar' : ' para aprovar'; ?></span>
+                <a href="<?php echo $isAdmin ? 'oqfazer.php?aba=aprovacoes' : ($isCliente ? 'oqfazer.php?aba=locacoes' : 'oqfazer.php?aba=vistorias&filtro=minhas_pendencias'); ?>" class="btn btn-sm btn-warning fw-semibold">
+                    <i class="bi bi-bell-fill me-1"></i><?php echo $minhasPendencias; ?><span class="d-none d-sm-inline"><?php echo ($isMotorista || $isCliente) ? ' para assinar' : ' para aprovar'; ?></span>
                 </a>
                 <?php endif; ?>
                 <?php if ($locacoesPendentes > 0): ?>
@@ -223,7 +223,7 @@ $mapaErros = [
                     </div>
                 </div>
 
-                <?php if ($minhasPendencias > 0): ?>
+                <?php if ($minhasPendencias > 0 && !$isCliente): ?>
                 <div class="card border-warning shadow-sm mb-3">
                     <div class="card-header bg-warning-subtle fw-semibold">
                         <i class="bi bi-bell-fill text-warning-emphasis me-1"></i>
@@ -346,7 +346,14 @@ $mapaErros = [
                 </div>
                 <div class="cartao mb-3">
                     <div class="row g-2">
-                        <div class="col-md-8"><input type="search" id="busca-veiculos-q" class="form-control" placeholder="Buscar por placa, marca, modelo, cor, Renavam ou chassi..." oninput="buscarComAtraso('veiculos')"></div>
+                        <div class="col-md-5"><input type="search" id="busca-veiculos-q" class="form-control" placeholder="Buscar por placa, marca, modelo, cor, Renavam ou chassi..." oninput="buscarComAtraso('veiculos')"></div>
+                        <div class="col-md-3">
+                            <select id="busca-veiculos-finalidade" class="form-select" onchange="carregarBusca('veiculos')">
+                                <option value="">Frota e locação</option>
+                                <option value="frota">Só frota da empresa</option>
+                                <option value="locacao">Só locação</option>
+                            </select>
+                        </div>
                         <div class="col-md-4">
                             <select id="busca-veiculos-status" class="form-select" onchange="carregarBusca('veiculos')">
                                 <option value="">Todas as situações</option>
@@ -723,7 +730,8 @@ $mapaErros = [
             const tbody = document.getElementById(cfg[0]);
             if (!tbody) return;
             try {
-                const json = await getJson(`backend/api.php?acao=buscar&tipo=${tipo}&q=${encodeURIComponent(cfg[2])}&filtro=${encodeURIComponent(cfg[3])}&limite=250`);
+                const extra = tipo === 'veiculos' ? `&finalidade=${encodeURIComponent(val('busca-veiculos-finalidade'))}` : '';
+                const json = await getJson(`backend/api.php?acao=buscar&tipo=${tipo}&q=${encodeURIComponent(cfg[2])}&filtro=${encodeURIComponent(cfg[3])}&limite=250${extra}`);
                 const dados = json.dados || [];
                 if (!dados.length) {
                     tbody.innerHTML = `<tr><td colspan="${cfg[1]}" class="text-center py-4 text-muted">Nada encontrado.</td></tr>`;
@@ -741,8 +749,8 @@ $mapaErros = [
                     <td class="text-muted small">#${v.id_execucao}</td>
                     <td class="small">${dataBR(v.data_vistoria)} <span class="text-muted">${esc((v.hora_vistoria || '').slice(0, 5))}</span></td>
                     <td><span class="badge bg-dark font-monospace">${esc(v.placa_veiculo)}</span></td>
-                    <td class="small fw-semibold">${esc(v.checklist_titulo)}</td>
-                    <td class="small">${esc(v.nome_motorista)}</td>
+                    <td class="small fw-semibold">${esc(v.checklist_titulo)}${v.id_locacao ? `<div><span class="badge bg-info-subtle text-info-emphasis"><i class="bi bi-key me-1"></i>Locação · ${v.tipo_locacao === 'retirada' ? 'retirada' : 'devolução'}</span></div>` : ''}</td>
+                    <td class="small">${esc(v.nome_motorista)}${v.id_locacao ? ' <span class="text-muted">(cliente)</span>' : ''}</td>
                     <td class="small text-muted">${esc(v.nome_vistoriador)}</td>
                     <td>${badgeConformidade(v.status_conformidade)}<div class="mt-1">${badgeSituacao(v.situacao)}</div></td>
                     <td class="text-end text-nowrap">
@@ -756,7 +764,9 @@ $mapaErros = [
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             ${v.foto_url ? `<img src="${esc(v.foto_url)}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:6px">` : '<span class="d-inline-flex align-items-center justify-content-center bg-light border text-muted" style="width:64px;height:48px;border-radius:6px"><i class="bi bi-truck"></i></span>'}
-                            <span class="fw-semibold">${esc(v.marca_modelo)}</span>
+                            <div><div class="fw-semibold">${esc(v.marca_modelo)}</div>${v.finalidade === 'locacao'
+                                ? '<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="bi bi-key me-1"></i>Locação</span>'
+                                : '<span class="badge bg-light text-secondary border"><i class="bi bi-building me-1"></i>Frota da empresa</span>'}</div>
                         </div>
                     </td>
                     <td>${esc(v.ano)}</td>
@@ -1026,7 +1036,8 @@ $mapaErros = [
                 const outroAssinou = souVist ? v.assinado_motorista_em : v.assinado_vistoriador_em;
                 return `<a href="verVistoria.html?id=${v.id_execucao}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
-                        <div class="fw-semibold">${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)} ${badgeConformidade(v.status_conformidade)}</div>
+                        <div class="fw-semibold">${esc(v.placa_veiculo)} · ${esc(v.checklist_titulo)} ${badgeConformidade(v.status_conformidade)}
+                            ${v.id_locacao ? `<span class="badge bg-info-subtle text-info-emphasis"><i class="bi bi-key me-1"></i>Locação · ${v.tipo_locacao === 'retirada' ? 'retirada' : 'devolução'} (você é testemunha)</span>` : ''}</div>
                         <div class="small text-muted">${dataBR(v.data_vistoria)} · ${outroAssinou ? `${esc(outro)} assinou e enviou para você` : 'Falta a sua assinatura para enviar'}</div>
                     </div>
                     <span class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-pen me-1"></i>${souVist && outroAssinou ? 'Revisar e aprovar' : 'Assinar'}</span>
@@ -1062,6 +1073,7 @@ $mapaErros = [
             return {
                 pendente: '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Aguardando aprovação</span>',
                 aprovada: '<span class="badge bg-primary"><i class="bi bi-check2-circle me-1"></i>Aprovada</span>',
+                aguardando_retirada: '<span class="badge bg-primary"><i class="bi bi-clipboard2-check me-1"></i>Aguardando vistoria de retirada</span>',
                 em_andamento: '<span class="badge bg-success"><i class="bi bi-key me-1"></i>Em andamento</span>',
                 atrasada: '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Devolução atrasada</span>',
                 devolvida: '<span class="badge bg-secondary-subtle text-secondary-emphasis border"><i class="bi bi-check-all me-1"></i>Devolvida</span>',
@@ -1074,6 +1086,7 @@ $mapaErros = [
             if (l.status !== 'ativa') return '';
             const d = Number(l.dias_para_devolver);
             if (l.fase === 'aprovada') return `Retirada em ${dataBR(l.data_retirada)}`;
+            if (l.fase === 'aguardando_retirada') return 'Retirada liberada: falta a vistoria';
             if (d < 0) return `<span class="text-danger fw-semibold">${plural(-d, 'dia', 'dias')} de atraso</span>`;
             if (d === 0) return '<span class="text-warning-emphasis fw-semibold">Devolver hoje</span>';
             return `Faltam ${plural(d, 'dia', 'dias')}`;
@@ -1093,6 +1106,42 @@ $mapaErros = [
             const main = document.querySelector('.painel-conteudo');
             main.insertAdjacentHTML('afterbegin', `<div class="alert alert-${tipo} alert-dismissible fade show shadow-sm" role="alert">${esc(msg)}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button></div>`);
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Situação de uma vistoria da locação (retirada ou devolução)
+        const nomeTipoVist = { retirada: 'retirada', devolucao: 'devolução' };
+        function linhaVistoriaLocacao(tipo, vis, souCliente) {
+            if (!vis) return `<div class="small text-muted"><i class="bi bi-circle me-1"></i>Vistoria de ${nomeTipoVist[tipo]}: ainda não feita</div>`;
+            const res = vis.status_conformidade === 'nao_conforme' ? '<span class="text-danger">com avaria</span>' : '<span class="text-success">sem avaria</span>';
+            const sit = {
+                concluida: `<i class="bi bi-check-circle-fill text-success me-1"></i>assinada pelos dois (${res})`,
+                aguardando_vistoriador: `<i class="bi bi-hourglass-split text-warning me-1"></i>aguardando ${souCliente ? 'a testemunha' : 'o supervisor'} ${esc(vis.nome_vistoriador || '')}`,
+                aguardando_motorista: `<i class="bi bi-pen text-warning me-1"></i>aguardando ${souCliente ? 'a sua assinatura' : 'a assinatura do cliente'}`,
+                aguardando_assinaturas: `<i class="bi bi-pen text-warning me-1"></i>aguardando ${souCliente ? 'a sua assinatura' : 'a assinatura do cliente'}`,
+                recusada: `<i class="bi bi-x-circle-fill text-danger me-1"></i>recusada${vis.motivo_recusa ? ': ' + esc(vis.motivo_recusa) : ''}${souCliente ? ' (faça de novo)' : ''}`
+            }[vis.situacao] || '';
+            return `<div class="small"><a href="verVistoria.html?id=${vis.id_execucao}" class="text-decoration-none">Vistoria de ${nomeTipoVist[tipo]}</a>: ${sit}</div>`;
+        }
+        function blocoVistoriasLocacao(l, souCliente) {
+            if (!['ativa', 'devolvida'].includes(l.status) || !l.vistorias) return '';
+            const vt = l.vistorias;
+            return `<div class="mt-2 p-2 rounded border bg-light">
+                ${linhaVistoriaLocacao('retirada', vt.retirada, souCliente)}
+                ${vt.retirada && vt.retirada.situacao === 'concluida' ? linhaVistoriaLocacao('devolucao', vt.devolucao, souCliente) : ''}
+            </div>`;
+        }
+        // Botão principal do cliente na locação aprovada
+        function acaoVistoriaCliente(l) {
+            if (l.status !== 'ativa') return '';
+            const vt = l.vistorias || {};
+            const pendente = [vt.retirada, vt.devolucao].find(x => x && ['aguardando_motorista', 'aguardando_assinaturas'].includes(x.situacao));
+            if (pendente) return `<a href="assinaturaChecklist.html?id=${pendente.id_execucao}" class="btn btn-warning fw-semibold"><i class="bi bi-pen me-1"></i>Assinar vistoria de ${nomeTipoVist[pendente.tipo_locacao]}</a>`;
+            if (l.proxima_vistoria === 'retirada') {
+                if (l.data_retirada > hojeISO()) return `<span class="btn btn-outline-secondary disabled"><i class="bi bi-calendar me-1"></i>Vistoria de retirada a partir de ${dataBR(l.data_retirada)}</span>`;
+                return `<a href="cadcheck.html?locacao=${l.id_locacao}" class="btn btn-primary fw-semibold"><i class="bi bi-clipboard2-check me-1"></i>Fazer vistoria de retirada</a>`;
+            }
+            if (l.proxima_vistoria === 'devolucao') return `<a href="cadcheck.html?locacao=${l.id_locacao}" class="btn btn-primary fw-semibold"><i class="bi bi-clipboard2-check me-1"></i>Fazer vistoria de devolução</a>`;
+            return '';
         }
 
         // ---------- Cliente ----------
@@ -1162,7 +1211,11 @@ $mapaErros = [
                         <div class="col-12 col-md-4"><div class="text-muted">Período</div><div class="fw-semibold">${plural(Number(l.dias), 'dia', 'dias')}</div></div>
                     </div>
                     ${l.status === 'ativa' ? `<div class="mt-2">${prazoDevolucao(l)}</div>` : ''}
+                    ${l.fase === 'aprovada' || l.fase === 'aguardando_retirada' ? '<div class="small text-muted mt-1">Antes de sair com o carro, faça a vistoria de retirada. Ela comprova o estado em que você recebeu o veículo e precisa da assinatura do supervisor (testemunha).</div>' : ''}
+                    ${blocoVistoriasLocacao(l, true)}
+                    ${acaoVistoriaCliente(l) ? `<div class="mt-2">${acaoVistoriaCliente(l)}</div>` : ''}
                     ${l.status === 'pendente' ? '<div class="small text-muted mt-2">A empresa ainda vai aprovar o seu pedido.</div>' : ''}
+                    ${l.status === 'cancelada' && l.motivo_recusa ? `<div class="alert alert-secondary small py-2 mt-2 mb-0"><strong>Cancelada pela empresa:</strong> ${esc(l.motivo_recusa)}</div>` : ''}
                     ${l.status === 'recusada' && l.motivo_recusa ? `<div class="alert alert-secondary small py-2 mt-2 mb-0"><strong>Motivo da recusa:</strong> ${esc(l.motivo_recusa)}</div>` : ''}
                     ${l.status === 'devolvida' && l.devolvido_em ? `<div class="small text-muted mt-2">Devolvido em ${dataBR(l.devolvido_em)}</div>` : ''}
                     ${l.observacao ? `<div class="small text-muted mt-1"><i class="bi bi-chat-left-text me-1"></i>${esc(l.observacao)}</div>` : ''}
@@ -1264,9 +1317,9 @@ $mapaErros = [
             const cont = (f) => tudo.filter(f).length;
             document.getElementById('kpis-locacoes').innerHTML = [
                 kpi('bi-hourglass-split', 'Aguardando aprovação', cont(l => l.status === 'pendente'), 'Pedidos dos clientes', '#b07c00'),
-                kpi('bi-key', 'Em andamento', cont(l => l.status === 'ativa'), 'Veículos com clientes'),
+                kpi('bi-key', 'Em andamento', cont(l => ['em_andamento', 'atrasada'].includes(l.fase)), `${cont(l => ['aprovada', 'aguardando_retirada'].includes(l.fase))} aguardando retirada`),
                 kpi('bi-exclamation-triangle', 'Devolução atrasada', cont(l => l.fase === 'atrasada'), 'Passaram da data combinada', COR.nao),
-                kpi('bi-calendar-event', 'Devolvem hoje', cont(l => l.status === 'ativa' && Number(l.dias_para_devolver) === 0), 'Prazo termina hoje'),
+                kpi('bi-calendar-event', 'Devolvem hoje', cont(l => l.fase === 'em_andamento' && Number(l.dias_para_devolver) === 0), 'Prazo termina hoje'),
             ].join('');
             tbody.innerHTML = locacoesGestor.length ? locacoesGestor.map(l => `
                 <tr>
@@ -1294,13 +1347,21 @@ $mapaErros = [
                         ${l.status === 'recusada' && l.motivo_recusa ? `<div class="text-muted">Motivo: ${esc(l.motivo_recusa)}</div>` : ''}
                         ${l.avaliado_por_nome && l.status !== 'pendente' ? `<div class="text-muted">${l.status === 'recusada' ? 'Recusada' : 'Aprovada'} por ${esc(l.avaliado_por_nome)}</div>` : ''}
                         ${l.status === 'devolvida' ? `<div class="text-muted">Devolvida em ${dataBR(l.devolvido_em)}${l.km_devolucao ? ' · ' + Number(l.km_devolucao).toLocaleString('pt-BR') + ' km' : ''}</div>` : ''}
+                        ${l.status === 'cancelada' && l.motivo_recusa ? `<div class="text-muted">Cancelada: ${esc(l.motivo_recusa)}</div>` : ''}
+                        ${['ativa', 'devolvida'].includes(l.status) ? `<div class="text-muted">Testemunha: ${esc(l.testemunha_nome || 'sem supervisor')}</div>` : ''}
+                        ${blocoVistoriasLocacao(l, false)}
                     </td>
                     <td class="text-end">
                         <div class="d-inline-flex flex-column gap-1">
                         ${l.status === 'pendente' ? `
                             <button type="button" class="btn btn-sm btn-success text-nowrap" onclick="aprovarLocacao(${l.id_locacao})"><i class="bi bi-check-lg me-1"></i>Aprovar</button>
                             <button type="button" class="btn btn-sm btn-outline-danger text-nowrap" onclick="abrirAcaoLocacao('recusar', ${l.id_locacao})"><i class="bi bi-x-lg me-1"></i>Recusar</button>` : ''}
-                        ${l.status === 'ativa' ? `<button type="button" class="btn btn-sm btn-primary" onclick="abrirAcaoLocacao('devolver', ${l.id_locacao})"><i class="bi bi-box-arrow-in-down me-1"></i>Devolução</button>` : ''}
+                        ${l.status === 'ativa' && l.vistorias.devolucao && l.vistorias.devolucao.situacao === 'concluida'
+                            ? `<button type="button" class="btn btn-sm btn-primary" onclick="abrirAcaoLocacao('devolver', ${l.id_locacao})"><i class="bi bi-box-arrow-in-down me-1"></i>Devolução</button>`
+                            : l.status === 'ativa' && l.vistorias.retirada && l.vistorias.retirada.situacao === 'concluida'
+                                ? '<span class="small text-muted" title="A devolução é registrada depois da vistoria de devolução assinada pelo cliente e pela testemunha">Aguardando vistoria de devolução</span>' : ''}
+                        ${l.status === 'ativa' && !(l.vistorias.retirada && l.vistorias.retirada.situacao === 'concluida')
+                            ? `<button type="button" class="btn btn-sm btn-outline-secondary" onclick="abrirAcaoLocacao('cancelar', ${l.id_locacao})" title="Cliente não retirou o veículo"><i class="bi bi-x-lg me-1"></i>Cancelar</button>` : ''}
                         </div>
                     </td>
                 </tr>`).join('') : '<tr><td colspan="4" class="text-center py-4 text-muted">Nenhuma locação aqui.</td></tr>';
@@ -1320,17 +1381,29 @@ $mapaErros = [
         function abrirAcaoLocacao(tipo, id) {
             const l = locacoesGestor.find(x => Number(x.id_locacao) === id);
             acaoAtual = { tipo, id };
-            const recusar = tipo === 'recusar';
-            document.getElementById('titulo-acao-locacao').innerHTML = recusar ? '<i class="bi bi-x-circle me-1"></i>Recusar pedido' : '<i class="bi bi-box-arrow-in-down me-1"></i>Registrar devolução';
+            const recusar = tipo === 'recusar' || tipo === 'cancelar';
+            document.getElementById('titulo-acao-locacao').innerHTML = tipo === 'recusar' ? '<i class="bi bi-x-circle me-1"></i>Recusar pedido'
+                : tipo === 'cancelar' ? '<i class="bi bi-x-circle me-1"></i>Cancelar locação aprovada' : '<i class="bi bi-box-arrow-in-down me-1"></i>Registrar devolução';
             document.getElementById('acao-locacao-resumo').innerHTML = `<strong>${esc(l.marca_modelo)}</strong> (${esc(l.placa)}) · ${esc(l.cliente_nome)}<br>${dataBR(l.data_retirada)} a ${dataBR(l.data_devolucao)}`;
+            const ret = l.vistorias.retirada, dev = l.vistorias.devolucao;
+            const comAvaria = (x) => x && x.status_conformidade === 'nao_conforme';
             document.getElementById('acao-locacao-campo').innerHTML = recusar
-                ? '<label for="acao-motivo" class="form-label fw-semibold">Motivo da recusa</label><textarea id="acao-motivo" class="form-control" rows="3" maxlength="255" required placeholder="O cliente vai ver esta mensagem"></textarea>'
-                : `<label for="acao-km" class="form-label fw-semibold">Km do veículo na devolução <span class="text-muted fw-normal">(opcional)</span></label>
-                   <input type="number" id="acao-km" class="form-control" min="${Number(l.km_rodado)}" placeholder="Km atual: ${Number(l.km_rodado).toLocaleString('pt-BR')}">
-                   <div class="form-text">O veículo volta a ficar disponível para locação.</div>`;
+                ? `<label for="acao-motivo" class="form-label fw-semibold">Motivo ${tipo === 'cancelar' ? 'do cancelamento' : 'da recusa'}</label><textarea id="acao-motivo" class="form-control" rows="3" maxlength="255" required placeholder="O cliente vai ver esta mensagem"></textarea>`
+                : `<div class="row g-2 small">
+                       <div class="col-6"><div class="p-2 border rounded h-100"><div class="text-muted">Retirada</div>
+                           <a href="verVistoria.html?id=${ret.id_execucao}" target="_blank">Vistoria #${ret.id_execucao}</a>
+                           <div class="${comAvaria(ret) ? 'text-danger' : 'text-success'} fw-semibold">${comAvaria(ret) ? 'Com avaria' : 'Sem avaria'}</div>
+                           <div>${Number(ret.km_rodado).toLocaleString('pt-BR')} km</div></div></div>
+                       <div class="col-6"><div class="p-2 border rounded h-100"><div class="text-muted">Devolução</div>
+                           <a href="verVistoria.html?id=${dev.id_execucao}" target="_blank">Vistoria #${dev.id_execucao}</a>
+                           <div class="${comAvaria(dev) ? 'text-danger' : 'text-success'} fw-semibold">${comAvaria(dev) ? 'Com avaria' : 'Sem avaria'}</div>
+                           <div>${Number(dev.km_rodado).toLocaleString('pt-BR')} km (${plural(Number(dev.km_rodado) - Number(ret.km_rodado), 'km rodado', 'km rodados')})</div></div></div>
+                   </div>
+                   ${comAvaria(dev) && !comAvaria(ret) ? '<div class="alert alert-danger small py-2 mt-2 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>O carro saiu sem avaria e voltou com avaria: a vistoria de retirada assinada comprova o estado na entrega.</div>' : ''}
+                   <div class="form-text mt-2">${Number(dev.enviado_manutencao) === 1 ? 'Na aprovação da vistoria foi pedido manutenção: o veículo vai direto para a manutenção.' : 'O veículo volta a ficar disponível para locação.'}</div>`;
             const btn = document.getElementById('acao-locacao-enviar');
             btn.className = 'btn ' + (recusar ? 'btn-danger' : 'btn-primary');
-            btn.innerHTML = recusar ? 'Recusar pedido' : 'Confirmar devolução';
+            btn.innerHTML = tipo === 'recusar' ? 'Recusar pedido' : tipo === 'cancelar' ? 'Cancelar locação' : 'Confirmar devolução';
             document.getElementById('acao-locacao-erro').classList.add('d-none');
             modalAcao = modalAcao || new bootstrap.Modal(document.getElementById('modal-acao-locacao'));
             modalAcao.show();
@@ -1338,10 +1411,10 @@ $mapaErros = [
         if (IS_GESTOR) {
             document.getElementById('form-acao-locacao').addEventListener('submit', async (ev) => {
                 ev.preventDefault();
-                const recusar = acaoAtual.tipo === 'recusar';
-                const j = recusar
-                    ? await postar('recusar_locacao', { id_locacao: acaoAtual.id, motivo: document.getElementById('acao-motivo').value })
-                    : await postar('registrar_devolucao', { id_locacao: acaoAtual.id, km_devolucao: document.getElementById('acao-km').value });
+                const t = acaoAtual.tipo;
+                const j = t === 'devolver'
+                    ? await postar('registrar_devolucao', { id_locacao: acaoAtual.id })
+                    : await postar(t === 'recusar' ? 'recusar_locacao' : 'cancelar_locacao_gestor', { id_locacao: acaoAtual.id, motivo: document.getElementById('acao-motivo').value });
                 if (!j.sucesso) {
                     const e = document.getElementById('acao-locacao-erro');
                     e.textContent = j.erro; e.classList.remove('d-none');

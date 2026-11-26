@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $chassi       = strtoupper(trim($_POST['chassi'] ?? ''));
     $status       = isset($_POST['status']) ? trim($_POST['status']) : 'ativo';
     if (!in_array($status, ['ativo', 'em_rota', 'manutencao'], true)) $status = 'ativo';
+    $finalidade   = ($_POST['finalidade'] ?? '') === 'locacao' ? 'locacao' : 'frota';
     axion_validar_csrf();
     // Evita carro repetido: mesma placa, Renavam ou chassi
     $dup = $pdo->prepare("SELECT COUNT(*) FROM Veiculos WHERE placa = :placa OR (:ren <> '' AND renavam = :ren2) OR (:ch <> '' AND chassi = :ch2)");
@@ -27,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $sql = "INSERT INTO Veiculos (placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status)
-                VALUES (:placa, :marca, :modelo, :marca_modelo, :ano, :cor, :km_rodado, :renavam, :chassi, :status)";
+        $sql = "INSERT INTO Veiculos (placa, marca, modelo, marca_modelo, ano, cor, km_rodado, renavam, chassi, status, finalidade)
+                VALUES (:placa, :marca, :modelo, :marca_modelo, :ano, :cor, :km_rodado, :renavam, :chassi, :status, :finalidade)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -41,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ':km_rodado'    => $kmrodado,
             ':renavam'      => $renavam,
             ':chassi'       => $chassi,
-            ':status'       => $status
+            ':status'       => $status,
+            ':finalidade'   => $finalidade
         ]);
 
         // Foto enviada junto com o cadastro (opcional)

@@ -113,8 +113,10 @@
             const ctx = await AxionSessao.pronta;
             if (!ctx) return;
             const eu = ctx.usuario;
+            // Cliente: vistoria de retirada ou devolução da própria locação
+            if (eu.perfil === 'cliente') { await inicializarVistoriaLocacao(); return; }
             // Vistoria é feita por supervisores e motoristas; o administrador acompanha pelos relatórios
-            if (eu.perfil === 'admin' || eu.perfil === 'cliente') {
+            if (eu.perfil === 'admin') {
                 document.getElementById('formVistoria').outerHTML = '<div class="alert alert-info mb-0">Vistorias são feitas pelos supervisores e motoristas. Você pode acompanhar todas na área <a href="oqfazer.php?aba=vistorias">Vistorias</a>.</div>';
                 return;
             }
@@ -183,6 +185,54 @@
                 </select>
                 <div class="form-text text-warning-emphasis">Seu cadastro ainda não tem supervisor responsável.</div>`;
             }
+        }
+
+        // ---------- Cliente: vistoria de retirada / devolução da locação ----------
+        async function inicializarVistoriaLocacao() {
+            const form = document.getElementById('formVistoria');
+            const idLoc = params.get('locacao');
+            const json = idLoc ? await getJson(`backend/api.php?acao=dados_vistoria_locacao&id=${encodeURIComponent(idLoc)}`) : { sucesso: false };
+            if (!json.sucesso) {
+                form.outerHTML = '<div class="alert alert-info mb-0">Abra a vistoria pela área <a href="oqfazer.php?aba=locacoes">Minhas locações</a>, na locação aprovada.</div>';
+                return;
+            }
+            if (!json.tipo) {
+                form.outerHTML = '<div class="alert alert-info mb-0">Esta locação já tem uma vistoria aguardando assinatura. Acompanhe em <a href="oqfazer.php?aba=locacoes">Minhas locações</a>.</div>';
+                return;
+            }
+            const retirada = json.tipo === 'retirada';
+            if (!json.pode_hoje) {
+                form.outerHTML = `<div class="alert alert-info mb-0">A vistoria de retirada fica disponível a partir de ${json.locacao.data_retirada.split('-').reverse().join('/')}.</div>`;
+                return;
+            }
+            document.querySelector('h1').innerHTML = `<i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Vistoria de ${retirada ? 'retirada' : 'devolução'}`;
+            document.querySelector('h1 + p').textContent = retirada
+                ? 'Confira o veículo antes de sair com ele. Esta vistoria comprova o estado em que você recebeu o carro.'
+                : 'Confira o veículo na entrega. Ela é comparada com a vistoria de retirada.';
+            form.insertAdjacentHTML('afterbegin', `<input type="hidden" name="id_locacao" value="${Number(json.locacao.id_locacao)}">
+                <div class="alert alert-light border small"><i class="bi bi-shield-check me-1"></i>Depois de responder, você assina e a vistoria vai para
+                <strong>${axionEsc(json.testemunha || 'o supervisor responsável')}</strong> assinar como testemunha.</div>`);
+
+            const sel = document.getElementById('id_checklist');
+            sel.innerHTML = '<option value="">Selecione o checklist...</option>' + json.checklists.map(c =>
+                `<option value="${c.id_checklist}">${axionEsc(c.titulo)}</option>`).join('');
+            sel.addEventListener('change', () => carregarPerguntasModelo(sel.value));
+
+            const v = json.veiculo;
+            const selV = document.getElementById('id_veiculo');
+            selV.innerHTML = `<option value="${v.id_veiculo}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}</option>`;
+            selV.disabled = true; // o veículo é o da locação (o servidor usa o da locação)
+            if (v.foto_url) { const f = document.getElementById('foto-veiculo'); f.src = v.foto_url; f.classList.remove('d-none'); }
+            const km = document.getElementById('kmrodado');
+            km.min = v.km_rodado || 0;
+            km.placeholder = `Mínimo: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km`;
+
+            document.querySelector('label[for="campo-motorista"]').textContent = 'Cliente';
+            document.getElementById('campo-motorista').innerHTML = `<input class="form-control" value="${axionEsc((await AxionSessao.pronta).usuario.nome)}" disabled>`;
+            document.querySelector('label[for="campo-vistoriador"]').textContent = 'Testemunha (supervisor)';
+            document.getElementById('campo-vistoriador').innerHTML = `<input class="form-control" value="${axionEsc(json.testemunha || 'Sem supervisor')}" disabled>
+                <div class="form-text">Supervisor responsável pelo seu cadastro.</div>`;
+            document.querySelector('#formVistoria a[href="oqfazer.php"]').href = 'oqfazer.php?aba=locacoes';
         }
 
         async function carregarPerguntasModelo(id) {

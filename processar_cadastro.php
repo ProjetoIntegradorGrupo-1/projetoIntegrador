@@ -51,18 +51,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "<script>alert('Somente o Administrador pode cadastrar Supervisores ou Admins.'); window.history.back();</script>";
         exit;
     }
-    // Motorista fica vinculado a um supervisor responsável (escolhido no cadastro)
+    // Motorista e cliente ficam vinculados a um supervisor responsável (ele assina as vistorias como testemunha)
     $id_supervisor = null;
-    if ($perfil_solicitado === 'motorista' && !empty($_POST['id_supervisor'])) {
+    $temSupervisor = in_array($perfil_solicitado, ['motorista', 'cliente'], true);
+    if ($temSupervisor && !empty($_POST['id_supervisor'])) {
         $stSup = $pdo->prepare("SELECT id_usuario FROM Usuarios WHERE id_usuario = :id AND perfil = 'supervisor'");
         $stSup->execute([':id' => (int)$_POST['id_supervisor']]);
         $id_supervisor = $stSup->fetchColumn() ?: null;
     }
-    if ($perfil_solicitado === 'motorista' && !$id_supervisor && $eu['perfil'] === 'supervisor') {
+    if ($temSupervisor && !$id_supervisor && $eu['perfil'] === 'supervisor') {
         $id_supervisor = $eu['id']; // supervisor que cadastrou vira o responsável
     }
-    if ($perfil_solicitado === 'motorista' && !$id_supervisor) {
-        echo "<script>alert('Escolha o supervisor responsável pelo motorista.'); window.history.back();</script>";
+    if ($temSupervisor && !$id_supervisor) {
+        echo "<script>alert('Escolha o supervisor responsável (motorista e cliente precisam de um).'); window.history.back();</script>";
         exit;
     }
     if (in_array($perfil_solicitado, ['motorista', 'cliente'], true) && (strlen($cnh) !== 11 || $categoria_cnh === '' || !$validade_cnh)) {
