@@ -523,3 +523,18 @@ Entre os materiais estão:
 - modelo conceitual;
 - PMC;
 - demais documentos produzidos durante o projeto.
+
+---
+
+## Como rodar o sistema (XAMPP)
+
+1. Copie a pasta do projeto para `C:\xampp\htdocs\projetoIntegrador`.
+2. No XAMPP Control Panel, clique em **Start** no **Apache** e no **MySQL**.
+3. Escolha como quer o banco:
+   - **Com os dados de exemplo:** no phpMyAdmin (`http://localhost/phpmyadmin`), vá em **Importar** e escolha `database/axion_db_completo.sql`. Ele traz 13 veículos de frota e de locação, modelos de checklist, vistorias e locações.
+   - **Banco vazio:** não importe nada. Na primeira vez que o sistema abre, ele cria o banco `axion_db`, as tabelas e as 4 contas de teste.
+4. Abra `http://localhost/projetoIntegrador/`.
+
+Contas de teste (senha `mudar123`): `admin@axion.com`, `supervisor@axion.com`, `motorista@axion.com` e `cliente@axion.com`. Novos clientes também podem criar a própria conta pela tela de login; o gestor aprova.
+
+Se o MySQL do seu XAMPP usar outra porta (ex.: 3307), crie um arquivo `config.local.php` na raiz com `<?php $porta = 3307;`. Esse arquivo não vai para o GitHub.

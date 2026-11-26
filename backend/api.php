@@ -1141,8 +1141,8 @@ if ($acao === 'obter_vistoria') {
 if ($acao === 'foto_vistoria') {
     $eu = axion_exigir_perfil();
     $v = axion_carregar_vistoria($pdo, $eu, (int)($_GET['id'] ?? 0));
-    $arq = $v && $v['foto_evidencia'] ? __DIR__ . '/../uploads/vistorias/' . basename($v['foto_evidencia']) : null;
-    if (!$arq || !is_file($arq)) { http_response_code(404); exit; }
+    $arq = $v && $v['foto_evidencia'] ? axion_caminho_foto(__DIR__ . '/../uploads/vistorias', $v['foto_evidencia']) : null;
+    if (!$arq) { http_response_code(404); exit; }
     $tipos = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif'];
     header('Content-Type: ' . ($tipos[strtolower(pathinfo($arq, PATHINFO_EXTENSION))] ?? 'application/octet-stream'));
     header('Content-Length: ' . filesize($arq));
