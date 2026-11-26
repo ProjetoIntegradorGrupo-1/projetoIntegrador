@@ -257,6 +257,30 @@ function axion_garantir_estrutura(PDO $pdo): void {
             INDEX idx_resp_execucao (id_execucao)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    // 7. Locações: o cliente pede um veículo disponível; admin/supervisor aprova e depois registra a devolução.
+    //    status: pendente | ativa (aprovada, carro com o cliente) | recusada | cancelada | devolvida
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS Locacoes (
+            id_locacao INT AUTO_INCREMENT PRIMARY KEY,
+            id_veiculo INT NOT NULL,
+            id_cliente INT NOT NULL,
+            data_retirada DATE NOT NULL,
+            data_devolucao DATE NOT NULL,
+            observacao VARCHAR(255) DEFAULT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+            motivo_recusa VARCHAR(255) DEFAULT NULL,
+            avaliado_por INT DEFAULT NULL,
+            avaliado_em DATETIME DEFAULT NULL,
+            devolvido_em DATETIME DEFAULT NULL,
+            km_devolucao INT DEFAULT NULL,
+            recebido_por INT DEFAULT NULL,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_loc_cliente (id_cliente),
+            INDEX idx_loc_veiculo (id_veiculo),
+            INDEX idx_loc_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
     // Só depois de garantir que a tabela existe (num banco novo ela ainda não existia aqui)
     $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
 }
@@ -293,6 +317,9 @@ function axion_criar_contas_base(PDO $pdo): void {
             ':senha' => $hash, ':cpf' => $cpf, ':perfil' => $perfil,
         ]);
     }
+    // Motorista e cliente precisam de CNH (o cliente aluga e conduz os veículos)
+    $pdo->exec("UPDATE Usuarios SET cnh = IF(email = 'cliente@axion.com', '98765432111', '98765432100'), categoria_cnh = 'B', validade_cnh = DATE_ADD(CURDATE(), INTERVAL 5 YEAR)
+                WHERE email IN ('motorista@axion.com', 'cliente@axion.com') AND (cnh IS NULL OR cnh = '')");
     $idSup = $pdo->query("SELECT id_usuario FROM Usuarios WHERE email = 'supervisor@axion.com'")->fetchColumn();
     if ($idSup) {
         $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email = 'motorista@axion.com' AND id_supervisor IS NULL")
@@ -304,7 +331,7 @@ function axion_criar_contas_base(PDO $pdo): void {
 function axion_zerar_banco(PDO $pdo): void {
     axion_garantir_estrutura($pdo);
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-    foreach (['Checklist_Respostas', 'Checklist_Execucoes', 'Checklist_Perguntas', 'Checklists', 'Veiculos', 'Usuarios'] as $t) {
+    foreach (['Locacoes', 'Checklist_Respostas', 'Checklist_Execucoes', 'Checklist_Perguntas', 'Checklists', 'Veiculos', 'Usuarios'] as $t) {
         $pdo->exec("TRUNCATE TABLE `$t`");
     }
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
