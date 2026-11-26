@@ -360,7 +360,14 @@ document.addEventListener('DOMContentLoaded', () => {
         checklist_nao_selecionado: 'Selecione um checklist na lista antes de continuar.',
         sem_permissao: 'Seu nível de acesso não permite esta operação. Supervisor só gerencia a própria equipe e clientes.',
         supervisor_com_equipe: 'Este supervisor ainda tem motoristas na equipe. Passe os motoristas para outro supervisor antes.',
-        supervisor_obrigatorio: 'Escolha o supervisor responsável pelo motorista.',
+        supervisor_obrigatorio: 'Escolha o supervisor responsável (motorista e cliente precisam de um).',
+        veiculo_com_locacao_aberta: 'Este veículo tem pedido ou locação em aberto: ele precisa continuar como veículo de locação até a devolução.',
+        locacao_invalida: 'Esta locação não está aprovada ou não é sua.',
+        vistoria_locacao_em_andamento: 'Já existe uma vistoria desta locação aguardando assinatura. Assine ou espere o supervisor responder.',
+        retirada_antes_da_data: 'A vistoria de retirada só pode ser feita a partir da data de retirada.',
+        veiculo_de_locacao: 'Este veículo é de locação: a vistoria dele é feita pelo cliente (ou pelo supervisor). Motorista vistoria só os carros da frota.',
+        vistoria_com_supervisor: 'Vamos resolver seu problema antes de liberar o veículo para você. O supervisor vai refazer a vistoria junto com você.',
+        vistoria_nao_editavel: 'Esta vistoria não pode mais ser corrigida: alguém já assinou.',
         nao_pode_mudar_proprio_perfil: 'Você não pode alterar o seu próprio nível de acesso.',
         nao_pode_excluir_a_si_mesmo: 'Você não pode excluir a sua própria conta.',
         cpf_invalido: 'CPF inválido.',
@@ -406,6 +413,8 @@ const AxionLayout = {
     secoes: {
         inicio: ['bi-speedometer2', 'Painel'],
         aprovacoes: ['bi-patch-check', 'Aprovações'],
+        locacoes: ['bi-key', 'Locações'],
+        locar: ['bi-car-front', 'Alugar um veículo'],
         vistorias: ['bi-clipboard2-check', 'Vistorias'],
         frota: ['bi-truck-front', 'Frota'],
         usuarios: ['bi-people', 'Usuários'],
@@ -416,8 +425,9 @@ const AxionLayout = {
 
     // Mesma ordem e mesmos nomes do menu do painel (oqfazer.php)
     menuDoPerfil(perfil) {
-        if (perfil === 'admin') return ['inicio', 'aprovacoes', 'usuarios', 'checklists', 'frota', 'vistorias', 'admin'];
-        if (perfil === 'supervisor') return ['inicio', 'vistorias', 'usuarios', 'frota', 'checklists'];
+        if (perfil === 'admin') return ['inicio', 'aprovacoes', 'locacoes', 'usuarios', 'checklists', 'frota', 'vistorias', 'admin'];
+        if (perfil === 'supervisor') return ['inicio', 'vistorias', 'locacoes', 'usuarios', 'frota', 'checklists'];
+        if (perfil === 'cliente') return ['inicio', 'locar', 'locacoes'];
         return ['inicio', 'vistorias', 'frota'];
     },
 
@@ -426,17 +436,21 @@ const AxionLayout = {
         if (secao === 'vistorias' && perfil === 'supervisor') return 'Vistorias da equipe';
         if (secao === 'usuarios' && perfil === 'supervisor') return 'Minha equipe';
         if (secao === 'checklists' && perfil === 'supervisor') return 'Checklists';
+        if (secao === 'locacoes' && perfil === 'cliente') return 'Minhas locações';
+        if (secao === 'inicio' && perfil === 'cliente') return 'Início';
         return this.secoes[secao][1];
     },
 
     montar(ctx) {
         const body = document.body;
-        const secaoAtual = body.dataset.secao;
         const u = ctx.usuario;
+        const secaoAtual = u.perfil === 'cliente' && body.dataset.secao === 'vistorias' ? 'locacoes' : body.dataset.secao;
         const podeVistoriar = ['supervisor', 'motorista'].includes(u.perfil);
         const ehAdmin = u.perfil === 'admin';
         if (ehAdmin) body.classList.add('tema-admin');
         const pend = Number(ctx.pendencias || 0);
+        const pendLoc = Number(ctx.locacoes_pendentes || 0);
+        const ehCliente = u.perfil === 'cliente';
 
         // Cabeçalho
         document.querySelectorAll('nav.axion-navbar').forEach(n => n.remove());
@@ -444,9 +458,11 @@ const AxionLayout = {
         nav.className = 'axion-navbar text-white';
         nav.innerHTML = `
             <div class="container-fluid px-3 px-lg-4 d-flex flex-nowrap justify-content-between align-items-center gap-2">
-                <div class="d-flex align-items-center gap-2 min-w-0"><button type="button" class="btn btn-sm btn-outline-light d-lg-none btn-menu-mobile" data-abrir-menu aria-label="Abrir menu"><i class="bi bi-list fs-5"></i></button><a href="oqfazer.php" class="axion-brand"><img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion"><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : 'Frota & Checklists'}</span></a></div>
+                <div class="d-flex align-items-center gap-2 min-w-0"><button type="button" class="btn btn-sm btn-outline-light d-lg-none btn-menu-mobile" data-abrir-menu aria-label="Abrir menu"><i class="bi bi-list fs-5"></i></button><a href="oqfazer.php" class="axion-brand"><img src="frontend/img/logo.png" class="axion-logo" alt="Logo Axion"><span>AXION</span><span class="axion-brand-badge">${ehAdmin ? 'Administração' : (ehCliente ? 'Locação de veículos' : 'Frota & Checklists')}</span></a></div>
                 <div class="d-flex align-items-center gap-2 gap-md-3">
-                    ${pend > 0 ? (ehAdmin
+                    ${pendLoc > 0 ? `<a href="oqfazer.php?aba=locacoes&filtro=pendente" class="btn btn-sm btn-info fw-semibold"><i class="bi bi-key-fill me-1"></i>${pendLoc}<span class="d-none d-sm-inline"> ${pendLoc > 1 ? 'locações' : 'locação'}</span></a>` : ''}
+                    ${pend > 0 && ehCliente ? `<a href="oqfazer.php?aba=locacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend}<span class="d-none d-sm-inline"> para assinar</span></a>` : ''}
+                    ${pend > 0 && !ehCliente ? (ehAdmin
                         ? `<a href="oqfazer.php?aba=aprovacoes" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend}<span class="d-none d-sm-inline"> para aprovar</span></a>`
                         : `<a href="oqfazer.php?aba=vistorias&filtro=minhas_pendencias" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-bell-fill me-1"></i>${pend}<span class="d-none d-sm-inline"> ${u.perfil === 'motorista' ? 'para assinar' : 'para aprovar'}</span></a>`) : ''}
                     <a href="meuPerfil.html" class="d-flex align-items-center gap-2 small border-start ps-3 border-light border-opacity-25 text-white text-decoration-none" title="Meu perfil">
@@ -462,6 +478,8 @@ const AxionLayout = {
             <a href="oqfazer.php?aba=${s}" class="menu-link ${s === secaoAtual ? 'ativo' : ''}">
                 <i class="bi ${this.secoes[s][0]}"></i><span>${this.rotulo(s, u.perfil)}</span>
                 ${((s === 'vistorias' && !ehAdmin) || (s === 'aprovacoes' && ehAdmin)) && pend > 0 ? `<span class="badge rounded-pill bg-warning text-dark">${pend}</span>` : ''}
+                ${s === 'locacoes' && pendLoc > 0 ? `<span class="badge rounded-pill bg-info text-dark">${pendLoc}</span>` : ''}
+                ${s === 'locacoes' && ehCliente && pend > 0 ? `<span class="badge rounded-pill bg-warning text-dark">${pend}</span>` : ''}
             </a>`).join('');
 
         const layout = document.createElement('div');

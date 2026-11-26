@@ -38,10 +38,22 @@ function axion_apagar_foto(string $tipo, ?string $arquivo): void {
     if (is_file($caminho)) @unlink($caminho);
 }
 
+/**
+ * Caminho real de uma foto: primeiro em uploads/; se não estiver lá, nas fotos de exemplo
+ * que vêm com o banco (database/fotos_exemplo), para quem importou o axion_db_completo.sql.
+ */
+function axion_caminho_foto(string $pasta, string $arquivo): ?string {
+    $nome = basename($arquivo);
+    foreach ([$pasta, __DIR__ . '/../database/fotos_exemplo/' . basename($pasta)] as $dir) {
+        if (is_file("$dir/$nome")) return "$dir/$nome";
+    }
+    return null;
+}
+
 /** Envia a foto para o navegador. */
 function axion_servir_foto(string $tipo, ?string $arquivo): void {
-    $caminho = $arquivo ? axion_pasta_fotos($tipo) . '/' . basename($arquivo) : null;
-    if (!$caminho || !is_file($caminho)) { http_response_code(404); exit; }
+    $caminho = $arquivo ? axion_caminho_foto(axion_pasta_fotos($tipo), $arquivo) : null;
+    if (!$caminho) { http_response_code(404); exit; }
     $ext = strtolower(pathinfo($caminho, PATHINFO_EXTENSION));
     header('Content-Type: ' . (array_flip(AXION_FOTO_TIPOS)[$ext] ?? 'application/octet-stream'));
     header('Content-Length: ' . filesize($caminho));

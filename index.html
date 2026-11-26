@@ -100,6 +100,9 @@
                             </button>
                         </div>
                     </form>
+                    <div class="text-center mt-3 small">
+                        Quer alugar um veículo? <a href="cadastroCliente.html" class="fw-semibold text-decoration-none">Crie sua conta de cliente</a>
+                    </div>
 
                     <!-- Botões de preenchimento rápido também visíveis no mobile -->
                     <div class="mt-4 pt-3 border-top text-center d-lg-none">
@@ -125,7 +128,12 @@
         }
         const paramsLogin = new URLSearchParams(window.location.search);
         if (paramsLogin.get('erro')) {
-            document.getElementById('alertaErroLogin').classList.remove('d-none');
+            const aviso = document.getElementById('alertaErroLogin');
+            aviso.classList.remove('d-none');
+            if (paramsLogin.get('erro') === 'cadastro_em_analise') {
+                aviso.className = 'alert alert-info small py-2';
+                aviso.textContent = 'Seu cadastro ainda está em análise. Assim que a empresa liberar o acesso, você já consegue entrar.';
+            }
         }
         if (paramsLogin.get('info') === 'banco_zerado') {
             const aviso = document.getElementById('alertaErroLogin');

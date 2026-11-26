@@ -135,7 +135,9 @@ function axion_garantir_estrutura(PDO $pdo): void {
         'km_rodado' => "INT NOT NULL DEFAULT 0",
         'renavam'   => "VARCHAR(15) DEFAULT NULL",
         'chassi'    => "VARCHAR(25) DEFAULT NULL",
-        'criado_em' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        'criado_em' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        // frota = uso da empresa (ônibus, van, caminhão...); locacao = alugado para clientes
+        'finalidade' => "VARCHAR(20) NOT NULL DEFAULT 'frota'",
     ];
     foreach ($novasColunasVeiculos as $col => $def) {
         if (!in_array($col, $colunasVeiculos, true)) {
@@ -236,6 +238,9 @@ function axion_garantir_estrutura(PDO $pdo): void {
         'recusado_por'              => "INT DEFAULT NULL",
         'motivo_recusa'             => "TEXT DEFAULT NULL",
         'enviado_manutencao'        => "TINYINT(1) NOT NULL DEFAULT 0",
+        // Vistoria de uma locação: retirada (cliente pega o carro) ou devolucao. O cliente fica em id_motorista.
+        'id_locacao'                => "INT DEFAULT NULL",
+        'tipo_locacao'              => "VARCHAR(10) DEFAULT NULL",
     ]);
     // Resposta esperada só faz sentido em pergunta Sim/Não
     $pdo->exec("UPDATE Checklist_Perguntas SET resposta_esperada = NULL WHERE tipo <> 'sim_nao' AND resposta_esperada IS NOT NULL");
@@ -257,6 +262,63 @@ function axion_garantir_estrutura(PDO $pdo): void {
             INDEX idx_resp_execucao (id_execucao)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    // 7. Locações: o cliente pede um veículo disponível; admin/supervisor aprova e depois registra a devolução.
+    //    status: pendente | ativa (aprovada, carro com o cliente) | recusada | cancelada | devolvida
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS Locacoes (
+            id_locacao INT AUTO_INCREMENT PRIMARY KEY,
+            id_veiculo INT NOT NULL,
+            id_cliente INT NOT NULL,
+            data_retirada DATE NOT NULL,
+            data_devolucao DATE NOT NULL,
+            observacao VARCHAR(255) DEFAULT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+            motivo_recusa VARCHAR(255) DEFAULT NULL,
+            avaliado_por INT DEFAULT NULL,
+            avaliado_em DATETIME DEFAULT NULL,
+            devolvido_em DATETIME DEFAULT NULL,
+            km_devolucao INT DEFAULT NULL,
+            recebido_por INT DEFAULT NULL,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_loc_cliente (id_cliente),
+            INDEX idx_loc_veiculo (id_veiculo),
+            INDEX idx_loc_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 8. Checklist padrão das locações: itens que um cliente leigo consegue conferir sozinho
+    //    (resumo da lataria, vidros, pneus, luzes, interior, painel, itens obrigatórios e documento)
+    if (!(int)$pdo->query("SELECT COUNT(*) FROM Checklists WHERE categoria = 'locacao'")->fetchColumn()) {
+        $pdo->prepare("INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo, status_aprovacao)
+                       VALUES (NULL, 'Vistoria de locação', 'locacao', 'Conferência do veículo na retirada e na devolução da locação, feita pelo cliente com o supervisor como testemunha', 1, 'aprovado')")
+            ->execute();
+        $idChk = (int)$pdo->lastInsertId();
+        $insP = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
+                               VALUES (:chk, :pai, :cond, :ordem, :texto, :tipo, :obr, :esp, :ori)");
+        $itens = [
+            ['A lataria está sem riscos, amassados ou batidas?', 'sim_nao', 'sim', 'Dê uma volta no carro olhando portas, para-choques, capô e teto.',
+                ['Onde está o dano e como ele é?', 'nao']],
+            ['Vidros, para-brisa e retrovisores estão inteiros, sem trincas?', 'sim_nao', 'sim', null, ['Qual vidro ou retrovisor está danificado?', 'nao']],
+            ['Os pneus estão cheios e sem cortes ou bolhas aparentes?', 'sim_nao', 'sim', 'Olhe os quatro pneus e o estepe.', null],
+            ['Faróis, lanternas e setas acendem normalmente?', 'sim_nao', 'sim', 'Peça para alguém conferir as luzes de trás.', null],
+            ['O interior está limpo, sem manchas ou rasgos nos bancos?', 'sim_nao', 'sim', null, ['O que encontrou no interior?', 'nao']],
+            ['O painel liga sem nenhuma luz de alerta acesa (motor, óleo, freio)?', 'sim_nao', 'sim', 'Com o carro ligado, as luzes de alerta devem apagar em poucos segundos.', null],
+            ['Estepe, macaco, chave de roda e triângulo estão no carro?', 'sim_nao', 'sim', 'Normalmente ficam no porta-malas.', null],
+            ['O documento do veículo (CRLV) está no carro ou disponível no celular?', 'sim_nao', 'sim', null, null],
+            ['Nível de combustível', 'texto', null, 'Ex.: reserva, 1/4, 1/2, 3/4 ou cheio.', null],
+        ];
+        $ordem = 1;
+        foreach ($itens as [$texto, $tipo, $esp, $ori, $sub]) {
+            $insP->execute([':chk' => $idChk, ':pai' => null, ':cond' => null, ':ordem' => $ordem++, ':texto' => $texto,
+                            ':tipo' => $tipo, ':obr' => 1, ':esp' => $esp, ':ori' => $ori]);
+            if ($sub) {
+                $idPai = (int)$pdo->lastInsertId();
+                $insP->execute([':chk' => $idChk, ':pai' => $idPai, ':cond' => $sub[1], ':ordem' => $ordem++, ':texto' => $sub[0],
+                                ':tipo' => 'texto', ':obr' => 1, ':esp' => null, ':ori' => null]);
+            }
+        }
+    }
+
     // Só depois de garantir que a tabela existe (num banco novo ela ainda não existia aqui)
     $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
 }
@@ -293,9 +355,12 @@ function axion_criar_contas_base(PDO $pdo): void {
             ':senha' => $hash, ':cpf' => $cpf, ':perfil' => $perfil,
         ]);
     }
+    // Motorista e cliente precisam de CNH (o cliente aluga e conduz os veículos)
+    $pdo->exec("UPDATE Usuarios SET cnh = IF(email = 'cliente@axion.com', '98765432111', '98765432100'), categoria_cnh = 'B', validade_cnh = DATE_ADD(CURDATE(), INTERVAL 5 YEAR)
+                WHERE email IN ('motorista@axion.com', 'cliente@axion.com') AND (cnh IS NULL OR cnh = '')");
     $idSup = $pdo->query("SELECT id_usuario FROM Usuarios WHERE email = 'supervisor@axion.com'")->fetchColumn();
     if ($idSup) {
-        $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email = 'motorista@axion.com' AND id_supervisor IS NULL")
+        $pdo->prepare("UPDATE Usuarios SET id_supervisor = :sup WHERE email IN ('motorista@axion.com', 'cliente@axion.com') AND id_supervisor IS NULL")
             ->execute([':sup' => $idSup]);
     }
 }
@@ -304,7 +369,7 @@ function axion_criar_contas_base(PDO $pdo): void {
 function axion_zerar_banco(PDO $pdo): void {
     axion_garantir_estrutura($pdo);
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
-    foreach (['Checklist_Respostas', 'Checklist_Execucoes', 'Checklist_Perguntas', 'Checklists', 'Veiculos', 'Usuarios'] as $t) {
+    foreach (['Locacoes', 'Checklist_Respostas', 'Checklist_Execucoes', 'Checklist_Perguntas', 'Checklists', 'Veiculos', 'Usuarios'] as $t) {
         $pdo->exec("TRUNCATE TABLE `$t`");
     }
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");

@@ -115,11 +115,11 @@
                 </div>
                 <div class="row" id="linha-supervisor" style="display:none">
                     <div class="col-md-6 mb-3">
-                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável pelo motorista</label>
+                        <label for="id_supervisor" class="form-label fw-semibold">Supervisor responsável</label>
                         <select id="id_supervisor" name="id_supervisor" class="form-select">
                             <option value="">Sem supervisor definido</option>
                         </select>
-                        <div class="form-text">É este supervisor que assina as vistorias feitas por este motorista.</div>
+                        <div class="form-text">Assina como testemunha as vistorias do motorista (ou da retirada e devolução do cliente).</div>
                     </div>
                 </div>
 
@@ -237,8 +237,9 @@
         function atualizarLinhaSupervisor() {
             const perfil = document.getElementById('perfil').value;
             const ehMotorista = perfil === 'motorista';
-            document.getElementById('linha-supervisor').style.display = ehMotorista ? '' : 'none';
-            document.getElementById('id_supervisor').required = ehMotorista;
+            const temSupervisor = ehMotorista || perfil === 'cliente';
+            document.getElementById('linha-supervisor').style.display = temSupervisor ? '' : 'none';
+            document.getElementById('id_supervisor').required = temSupervisor;
             // Motorista e cliente precisam de CNH completa
             ['cnh', 'categoria-cnh', 'validade-cnh'].forEach(id => document.getElementById(id).required = ehMotorista || perfil === 'cliente');
         }

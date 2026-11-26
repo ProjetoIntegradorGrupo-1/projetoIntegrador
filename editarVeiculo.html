@@ -52,7 +52,25 @@
                 <div class="mb-4" id="campo-foto"></div>
                 <input type="hidden" name="id_veiculo" id="id_veiculo" value="">
 
-                <div class="row">
+                <div class="axion-section-title"><i class="bi bi-signpost-split"></i> Uso do veículo</div>
+                <div class="row g-2 mb-3" role="radiogroup" aria-label="Uso do veículo">
+                    <div class="col-md-6">
+                        <input type="radio" class="btn-check" name="finalidade" id="finalidade-frota" value="frota" checked>
+                        <label class="btn btn-outline-primary w-100 text-start p-3" for="finalidade-frota">
+                            <i class="bi bi-bus-front fs-4 float-start me-3"></i><span class="fw-semibold d-block">Frota da empresa</span>
+                            <span class="small">Ônibus, van, caminhão e carros de uso dos motoristas</span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="radio" class="btn-check" name="finalidade" id="finalidade-locacao" value="locacao">
+                        <label class="btn btn-outline-primary w-100 text-start p-3" for="finalidade-locacao">
+                            <i class="bi bi-key fs-4 float-start me-3"></i><span class="fw-semibold d-block">Locação para clientes</span>
+                            <span class="small">Aparece para os clientes alugarem quando estiver disponível</span>
+                        </label>
+                    </div>
+                </div>
+
+                                <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="marca" class="form-label fw-semibold">Marca</label>
                         <input type="text" id="marca" name="marca" class="form-control" required>
@@ -97,6 +115,7 @@
                             <option value="ativo">Ativo</option>
                             <option value="em_rota">Em Rota</option>
                             <option value="manutencao">Manutenção</option>
+                            <option value="locado">Locado (definido pela locação)</option>
                         </select>
                     </div>
                 </div>
@@ -146,6 +165,7 @@
             document.getElementById('renavam').value = v.renavam || '';
             document.getElementById('chassi').value = v.chassi || '';
             document.getElementById('status').value = v.status || 'ativo';
+            document.getElementById(v.finalidade === 'locacao' ? 'finalidade-locacao' : 'finalidade-frota').checked = true;
             AxionFoto.montar(document.getElementById('campo-foto'), { largura: 800, altura: 600, titulo: 'Foto do veículo', urlAtual: v.foto_url });
         }
         document.addEventListener('DOMContentLoaded', () => carregarListaVeiculos());

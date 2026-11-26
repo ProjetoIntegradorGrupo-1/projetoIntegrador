@@ -46,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         header("Location: oqfazer.php");
         exit;
+    } elseif ($usuario && ($usuario['status'] ?? '') === 'pendente' && password_verify($senha_digitada, $usuario['senha'])) {
+        // Cliente que se cadastrou sozinho e ainda não foi aprovado
+        header("Location: index.html?erro=cadastro_em_analise");
+        exit;
     } else {
         header("Location: index.html?erro=credenciais_invalidas");
         exit;

@@ -183,7 +183,7 @@
                         <select id="id_supervisor" name="id_supervisor" class="form-select">
                             <option value="">Carregando supervisores...</option>
                         </select>
-                        <div class="form-text">É este supervisor que assina as vistorias feitas pelo motorista.</div>
+                        <div class="form-text">É este supervisor que assina como testemunha as vistorias do motorista (ou da retirada e devolução do cliente).</div>
                     </div>
                 </div>
 
@@ -200,7 +200,7 @@
     <script>
         const explicacoes = {
             motorista: 'Faz vistorias nos veículos. Precisa de CNH e de um supervisor responsável, que aprova as vistorias dele.',
-            cliente: 'Consulta a frota e o histórico de vistorias. Precisa de CNH, porque pode conduzir os veículos.',
+            cliente: 'Aluga veículos de locação. Precisa de CNH e de um supervisor responsável, que assina como testemunha as vistorias de retirada e devolução.',
             supervisor: 'Gerencia motoristas, veículos e checklists, e aprova as vistorias da equipe.',
             admin: 'Acesso total ao sistema, incluindo a administração da base de dados.'
         };
@@ -218,10 +218,10 @@
                 el.disabled = !precisaCnh;
             });
             const sup = document.getElementById('id_supervisor');
-            sup.required = ehMotorista;
-            sup.disabled = !ehMotorista;
+            sup.required = precisaCnh;
+            sup.disabled = !precisaCnh;
             document.getElementById('bloco-motorista').style.display = precisaCnh ? '' : 'none';
-            document.getElementById('bloco-supervisor').style.display = ehMotorista ? '' : 'none';
+            document.getElementById('bloco-supervisor').style.display = precisaCnh ? '' : 'none';
             document.getElementById('explica-tipo').textContent = explicacoes[perfil];
             document.getElementById('btn-cadastrar').innerHTML = `<i class="bi bi-check2-circle me-1"></i>${nomesBotao[perfil]}`;
         }
