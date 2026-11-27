@@ -468,7 +468,7 @@ A rastreabilidade relaciona as histórias de usuário às telas e às tabelas, g
 
 ## 10. PMC
 
-<img width="3618" height="2031" alt="PMC_Axion" src="https://github.com/user-attachments/assets/b1daf71d-4a6c-4b29-9c87-f5ca14da3f6c" />
+<img width="3618" height="2031" alt="PMC_Axion" src="https://github.com/user-attachments/assets/eef26cd4-c789-4e08-87a9-6c2bae719f57" />
 
 
 ---
