@@ -108,7 +108,7 @@ A ideia foi selecionada por ser viável dentro do prazo disponível, por não en
 
 ---
 
-## 3. MINIMUNDO
+## 3. MINI-MUNDO
 
 O **Axion** é um sistema web para empresas que mantêm uma frota própria de veículos e também alugam veículos para clientes. Ele substitui as fichas de papel por checklists digitais, registra as vistorias com assinatura de quem participou e acompanha o ciclo das locações.
 
