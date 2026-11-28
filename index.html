@@ -46,11 +46,11 @@
 
                     <div class="p-3 rounded bg-dark bg-opacity-25 border border-light border-opacity-25 small" style="position: relative; z-index: 1;">
                         <div class="fw-bold mb-2"><i class="bi bi-key-fill me-1"></i>Acesso Rápido de Demonstração (1 Clique):</div>
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-xs btn-sm btn-light fw-semibold" onclick="preencherDemo('admin@axion.com')">Admin</button>
-                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" onclick="preencherDemo('supervisor@axion.com')">Supervisor</button>
-                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" onclick="preencherDemo('motorista@axion.com')">Motorista</button>
-                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" onclick="preencherDemo('cliente@axion.com')">Cliente</button>
+                        <div class="d-flex flex-wrap gap-1" id="grupoDemoDesktop">
+                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" data-demo-email="admin@axion.com" onclick="preencherDemo('admin@axion.com')">Admin</button>
+                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" data-demo-email="supervisor@axion.com" onclick="preencherDemo('supervisor@axion.com')">Supervisor</button>
+                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" data-demo-email="motorista@axion.com" onclick="preencherDemo('motorista@axion.com')">Motorista</button>
+                            <button type="button" class="btn btn-xs btn-sm btn-outline-light" data-demo-email="cliente@axion.com" onclick="preencherDemo('cliente@axion.com')">Cliente</button>
                         </div>
                     </div>
                 </div>
@@ -107,11 +107,11 @@
                     <!-- Botões de preenchimento rápido também visíveis no mobile -->
                     <div class="mt-4 pt-3 border-top text-center d-lg-none">
                         <div class="small text-muted mb-2">Preencher credenciais de teste:</div>
-                        <div class="d-flex justify-content-center flex-wrap gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="preencherDemo('admin@axion.com')">Admin</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="preencherDemo('supervisor@axion.com')">Supervisor</button>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="preencherDemo('motorista@axion.com')">Motorista</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="preencherDemo('cliente@axion.com')">Cliente</button>
+                        <div class="d-flex justify-content-center flex-wrap gap-1" id="grupoDemoMobile">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-demo-email="admin@axion.com" onclick="preencherDemo('admin@axion.com')">Admin</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-demo-email="supervisor@axion.com" onclick="preencherDemo('supervisor@axion.com')">Supervisor</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-demo-email="motorista@axion.com" onclick="preencherDemo('motorista@axion.com')">Motorista</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-demo-email="cliente@axion.com" onclick="preencherDemo('cliente@axion.com')">Cliente</button>
                         </div>
                     </div>
                 </div>
@@ -122,10 +122,33 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function atualizarDestaqueDemo(emailAtivo) {
+            const limpo = String(emailAtivo || '').trim().toLowerCase();
+            document.querySelectorAll('#grupoDemoDesktop [data-demo-email]').forEach(btn => {
+                const ativo = btn.dataset.demoEmail === limpo;
+                btn.classList.toggle('btn-light', ativo);
+                btn.classList.toggle('fw-semibold', ativo);
+                btn.classList.toggle('btn-outline-light', !ativo);
+                btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+            });
+            document.querySelectorAll('#grupoDemoMobile [data-demo-email]').forEach(btn => {
+                const ativo = btn.dataset.demoEmail === limpo;
+                btn.classList.toggle('btn-primary', ativo);
+                btn.classList.toggle('fw-semibold', ativo);
+                btn.classList.toggle('btn-outline-primary', !ativo);
+                btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+            });
+        }
+
         function preencherDemo(email) {
             document.getElementById('user').value = email;
             document.getElementById('senha').value = 'mudar123';
+            atualizarDestaqueDemo(email);
         }
+
+        document.getElementById('user').addEventListener('input', (ev) => {
+            atualizarDestaqueDemo(ev.target.value);
+        });
         const paramsLogin = new URLSearchParams(window.location.search);
         if (paramsLogin.get('erro')) {
             const aviso = document.getElementById('alertaErroLogin');

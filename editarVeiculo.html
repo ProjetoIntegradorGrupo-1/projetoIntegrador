@@ -81,7 +81,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="ano" class="form-label fw-semibold">Ano</label>
-                        <input type="number" id="ano" name="ano" class="form-control" min="1980" max="2030" required>
+                        <input type="number" id="ano" name="ano" class="form-control" min="1980" max="2026" required>
                     </div>
                 </div>
 
@@ -159,6 +159,7 @@
             document.getElementById('marca').value = v.marca || (v.marca_modelo || '').split(' ')[0] || '';
             document.getElementById('modelo').value = v.modelo || v.marca_modelo || '';
             document.getElementById('ano').value = v.ano || 2023;
+            document.getElementById('ano').dispatchEvent(new Event('input'));
             document.getElementById('placa').value = v.placa || '';
             document.getElementById('cor').value = v.cor || 'Branco';
             document.getElementById('kmrodado').value = v.km_rodado || 0;

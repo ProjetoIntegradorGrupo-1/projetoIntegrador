@@ -9,41 +9,60 @@ $statusAprovacao = $eu['perfil'] === 'admin' ? 'aprovado' : 'pendente';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     axion_validar_csrf();
     $id_criador = (int)$_SESSION['id_usuario'];
+    $id_veiculo = !empty($_POST['id_veiculo']) ? (int)$_POST['id_veiculo'] : null;
     $titulo     = trim($_POST['titulo'] ?? '');
-    $categoria  = trim($_POST['categoria'] ?? 'outros');
-    $descricao  = trim($_POST['descricao'] ?? "Checklist operacional da categoria $categoria");
+    $descricao  = trim($_POST['descricao'] ?? '');
+    $catsValidas = ['eletrico', 'mecanico', 'estetico', 'seguranca', 'pre_viagem', 'locacao', 'outros'];
+
+    // Coleta as categorias das perguntas principais para definir a categoria de referência do modelo
+    $categoriasPerguntas = [];
+    if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
+        foreach ($_POST['perguntas'] as $p) {
+            $cp = trim($p['categoria'] ?? '');
+            if (in_array($cp, $catsValidas, true)) $categoriasPerguntas[] = $cp;
+        }
+    }
+    $categoriasUnicas = array_values(array_unique($categoriasPerguntas));
+    $categoriaModelo = count($categoriasUnicas) === 1 ? $categoriasUnicas[0] : ($categoriasUnicas[0] ?? 'outros');
+    if ($descricao === '') {
+        $descricao = 'Checklist multicategoria de vistoria veicular';
+    }
 
     try {
         $pdo->beginTransaction();
 
-        $sql = "INSERT INTO Checklists (id_criador, titulo, categoria, descricao, ativo, status_aprovacao)
-                VALUES (:id_criador, :titulo, :categoria, :descricao, 1, :status_aprovacao)";
+        $sql = "INSERT INTO Checklists (id_criador, id_veiculo, titulo, categoria, descricao, ativo, status_aprovacao)
+                VALUES (:id_criador, :id_veiculo, :titulo, :categoria, :descricao, 1, :status_aprovacao)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':id_criador' => $id_criador,
+            ':id_veiculo' => $id_veiculo,
             ':titulo'     => $titulo,
-            ':categoria'  => $categoria,
+            ':categoria'  => $categoriaModelo,
             ':descricao'  => $descricao,
             ':status_aprovacao' => $statusAprovacao
         ]);
         $idChecklist = (int)$pdo->lastInsertId();
 
-        // Salva perguntas principais e subperguntas condicionais
+        // Salva perguntas principais (com sua própria categoria) e subperguntas condicionais (sem categoria própria: NULL)
         if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
             $stmtPerg = $pdo->prepare("
                 INSERT INTO Checklist_Perguntas (
-                    id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
+                    id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
                 ) VALUES (
-                    :id_chk, :id_pai, :cond, :ordem, :texto, :tipo, :obrig, :esp, :ori
+                    :id_chk, :cat, :id_pai, :cond, :ordem, :texto, :tipo, :obrig, :esp, :ori
                 )
             ");
             $ordem = 1;
             foreach ($_POST['perguntas'] as $p) {
                 $textoP = trim($p['texto'] ?? '');
                 if ($textoP === '') continue;
+                $catP = trim($p['categoria'] ?? 'mecanico');
+                if (!in_array($catP, $catsValidas, true)) $catP = 'outros';
 
                 $stmtPerg->execute([
                     ':id_chk' => $idChecklist,
+                    ':cat'    => $catP,
                     ':id_pai' => null,
                     ':cond'   => null,
                     ':ordem'  => $ordem++,
@@ -62,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         if ($textoSub === '') continue;
                         $stmtPerg->execute([
                             ':id_chk' => $idChecklist,
+                            ':cat'    => null,
                             ':id_pai' => $idPai,
                             ':cond'   => $sub['condicao'] ?? 'sim',
                             ':ordem'  => $subOrdem++,

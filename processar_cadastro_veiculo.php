@@ -10,6 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $modelo       = trim($_POST['modelo'] ?? '');
     $marca_modelo = !empty($_POST['marca_modelo']) ? trim($_POST['marca_modelo']) : trim("$marca $modelo");
     $ano          = (int)($_POST['ano'] ?? date('Y'));
+    $anoAtual     = (int)date('Y');
+    if ($ano > $anoAtual) {
+        echo "<script>alert('Operação bloqueada: Não é permitido cadastrar veículo com ano de fabricação futuro ($ano). O ano máximo permitido é $anoAtual.'); window.history.back();</script>";
+        exit;
+    }
+    if ($ano < 1980) {
+        echo "<script>alert('Ano de fabricação inválido ($ano). Informe um ano a partir de 1980.'); window.history.back();</script>";
+        exit;
+    }
     $placa        = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $_POST['placa'] ?? ''));
     $cor          = trim($_POST['cor'] ?? '');
     $kmrodado     = (int)($_POST['kmrodado'] ?? 0);

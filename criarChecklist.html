@@ -35,26 +35,19 @@
 
             <form action="criar_checklist_dinamico.php" method="post" id="formCriarChecklist">
                 <div class="row">
-                    <div class="col-md-5 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
-                        <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Vistoria Diária de Segurança" required>
+                        <input type="text" id="tituloChecklist" name="titulo" class="form-control" placeholder="Ex: Checklist Turno 12H TABR ou Checklist ADM Vale" required>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
-                        <select id="categoriaChecklist" name="categoria" class="form-select" required>
-                            <option value="" selected disabled>Selecione...</option>
-                            <option value="eletrico">Elétrico</option>
-                            <option value="mecanico">Mecânico</option>
-                            <option value="estetico">Estético</option>
-                            <option value="seguranca">Segurança</option>
-                            <option value="pre_viagem">Pré-Viagem</option>
-                            <option value="locacao">Locação (vistoria do cliente)</option>
-                            <option value="outros">Outros</option>
+                    <div class="col-md-4 mb-3">
+                        <label for="veiculoChecklist" class="form-label fw-bold">Veículo Alvo</label>
+                        <select id="veiculoChecklist" name="id_veiculo" class="form-select">
+                            <option value="">Todos os veículos da frota (Geral)</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="descricaoChecklist" class="form-label fw-bold">Descrição Resumida</label>
-                        <input type="text" id="descricaoChecklist" name="descricao" class="form-control" placeholder="Ex: Inspeção de rotina pré-turno">
+                        <input type="text" id="descricaoChecklist" name="descricao" class="form-control" placeholder="Ex: Inspeção completa pré-turno">
                     </div>
                 </div>
 
@@ -74,7 +67,19 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6 mb-2">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label fw-semibold">Categoria da Pergunta</label>
+                                <select name="perguntas[1][categoria]" class="form-select" required>
+                                    <option value="" selected disabled>Selecione...</option>
+                                    <option value="eletrico">Elétrico</option>
+                                    <option value="mecanico">Mecânico</option>
+                                    <option value="estetico">Estético</option>
+                                    <option value="seguranca">Segurança</option>
+                                    <option value="pre_viagem">Pré-Viagem</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
                                 <label class="form-label fw-semibold">Tipo de Resposta</label>
                                 <select name="perguntas[1][tipo]" class="form-select" required>
                                     <option value="sim_nao" selected>Sim / Não</option>
@@ -82,7 +87,7 @@
                                     <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="col-md-4 mb-2 d-flex align-items-end">
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" name="perguntas[1][obrigatorio]" value="1" id="req_1" checked>
                                     <label class="form-check-label" for="req_1">Resposta Obrigatória</label>
@@ -133,7 +138,19 @@
                         <input type="text" name="perguntas[${contadorPerguntas}][texto]" class="form-control" placeholder="Digite a pergunta principal..." required>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-2">
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label fw-semibold">Categoria da Pergunta</label>
+                            <select name="perguntas[${contadorPerguntas}][categoria]" class="form-select" required>
+                                <option value="" selected disabled>Selecione...</option>
+                                <option value="eletrico">Elétrico</option>
+                                <option value="mecanico">Mecânico</option>
+                                <option value="estetico">Estético</option>
+                                <option value="seguranca">Segurança</option>
+                                <option value="pre_viagem">Pré-Viagem</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
                             <label class="form-label fw-semibold">Tipo de Resposta</label>
                             <select name="perguntas[${contadorPerguntas}][tipo]" class="form-select" required>
                                 <option value="sim_nao" selected>Sim / Não</option>
@@ -141,7 +158,7 @@
                                 <option value="numero">Número (Ex: Quilometragem/Pressão)</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="perguntas[${contadorPerguntas}][obrigatorio]" value="1" id="req_${contadorPerguntas}" checked>
                                 <label class="form-check-label" for="req_${contadorPerguntas}">Resposta Obrigatória</label>
@@ -219,12 +236,22 @@
     <script src="frontend/js/axion.js"></script>
 
     <script>
-        // Aviso do fluxo de aprovação para o supervisor
-        AxionSessao.pronta.then(ctx => {
+        // Aviso do fluxo de aprovação para o supervisor e carregamento da frota para vincular checklist ao veículo
+        AxionSessao.pronta.then(async ctx => {
             if (ctx && ctx.usuario.perfil === 'supervisor') {
                 document.getElementById('aviso-aprovacao').innerHTML =
                     '<div class="alert alert-info py-2 small"><i class="bi bi-info-circle me-1"></i>O modelo será enviado para o administrador aprovar. Depois de aprovado, ele aparece para as vistorias.</div>';
             }
+            try {
+                const resp = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=250');
+                const json = await resp.json();
+                const selV = document.getElementById('veiculoChecklist');
+                if (selV && json.dados) {
+                    selV.innerHTML = '<option value="">Todos os veículos da frota (Geral)</option>' + json.dados.map(v =>
+                        `<option value="${v.id_veiculo}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}</option>`
+                    ).join('');
+                }
+            } catch (e) {}
         });
     </script>
 </body>

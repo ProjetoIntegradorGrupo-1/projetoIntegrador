@@ -30,27 +30,27 @@
     <main class="axion-web-container">
         <div class="axion-form-card" style="max-width: 920px;">
             <h1 class="h4 fw-bold mb-1"><i class="bi bi-clipboard2-check-fill text-warning me-2"></i>Nova vistoria</h1>
-            <p class="text-muted small mb-4">Escolha o checklist e o veículo, e responda às perguntas.</p>
+            <p class="text-muted small mb-4">Escolha o veículo para exibir os checklists elaborados para ele e responda às perguntas.</p>
 
             <form action="backend/api.php?acao=registrar_vistoria" method="post" id="formVistoria">
                 <div class="axion-section-title"><i class="bi bi-car-front"></i> Veículo e responsáveis</div>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="id_checklist" class="form-label fw-semibold">Modelo de Checklist</label>
-                        <select id="id_checklist" name="id_checklist" class="form-select" required>
-                            <option value="">Carregando modelos de checklist...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-5 mb-3">
                         <label for="id_veiculo" class="form-label fw-semibold">Veículo</label>
                         <select id="id_veiculo" name="id_veiculo" class="form-select" required>
                             <option value="">Carregando frota...</option>
                         </select>
                         <img id="foto-veiculo" alt="" class="d-none mt-2 w-100" style="height:120px;object-fit:cover;border-radius:8px">
                     </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="id_checklist" class="form-label fw-semibold">Checklist do Veículo</label>
+                        <select id="id_checklist" name="id_checklist" class="form-select" required disabled>
+                            <option value="">Selecione um veículo primeiro...</option>
+                        </select>
+                    </div>
                     <div class="col-md-2 mb-3">
                         <label for="kmrodado" class="form-label fw-semibold">Km Atual</label>
-                        <input type="number" id="kmrodado" name="kmrodado" class="form-control" placeholder="Ex: 45000" min="0" required>
+                        <input type="number" id="kmrodado" name="kmrodado" class="form-control font-monospace" placeholder="Ex: 45000" min="0" required>
                     </div>
                 </div>
 
@@ -124,22 +124,49 @@
             }
             const ehGestor = eu.perfil === 'admin' || eu.perfil === 'supervisor';
 
-            // Modelos de checklist
+            // Frota e Checklists elaborados para o veículo selecionado
             const jChk = await getJson('backend/api.php?acao=buscar&tipo=checklists&limite=250&somente_ativos=1');
+            const todosChecklists = (jChk.dados || []).filter(c => eu.perfil !== 'motorista' || c.categoria !== 'locacao');
             const sel = document.getElementById('id_checklist');
-            if (jChk.dados && jChk.dados.length > 0) {
-                sel.innerHTML = '<option value="">Selecione o modelo...</option>' + jChk.dados.filter(c => eu.perfil !== 'motorista' || c.categoria !== 'locacao').map(c =>
-                    `<option value="${c.id_checklist}">${axionEsc(c.titulo)} [${axionEsc(c.categoria.toUpperCase())}]</option>`).join('');
-                if (params.get('id_checklist')) sel.value = params.get('id_checklist');
-                if (sel.value) carregarPerguntasModelo(sel.value);
-            } else {
-                sel.innerHTML = '<option value="">Nenhum modelo cadastrado. Crie um checklist primeiro.</option>';
+            const selV = document.getElementById('id_veiculo');
+
+            function atualizarChecklistsDoVeiculo(idVeiculoSelecionado, checklistPreferido = '') {
+                if (!idVeiculoSelecionado) {
+                    sel.innerHTML = '<option value="">Selecione um veículo primeiro...</option>';
+                    sel.disabled = true;
+                    carregarPerguntasModelo('');
+                    return;
+                }
+                const idV = Number(idVeiculoSelecionado);
+                // Mostra primeiro os checklists específicos daquele veículo e em seguida os checklists operacionais da frota
+                const compativeis = todosChecklists
+                    .filter(c => !c.id_veiculo || Number(c.id_veiculo) === idV)
+                    .sort((a, b) => (Number(b.id_veiculo) === idV ? 1 : 0) - (Number(a.id_veiculo) === idV ? 1 : 0));
+
+                if (compativeis.length === 0) {
+                    sel.innerHTML = '<option value="">Nenhum checklist disponível para este veículo.</option>';
+                    sel.disabled = true;
+                    carregarPerguntasModelo('');
+                    return;
+                }
+
+                sel.disabled = false;
+                sel.innerHTML = '<option value="">Selecione o checklist deste veículo...</option>' + compativeis.map(c => {
+                    const tagVeic = Number(c.id_veiculo) === idV ? ` (${axionEsc(c.veiculo_placa || 'Exclusivo deste veículo')})` : '';
+                    return `<option value="${c.id_checklist}">${axionEsc(c.titulo)}${tagVeic}</option>`;
+                }).join('');
+
+                if (checklistPreferido && compativeis.some(c => String(c.id_checklist) === String(checklistPreferido))) {
+                    sel.value = checklistPreferido;
+                } else if (compativeis.length === 1 || Number(compativeis[0].id_veiculo) === idV) {
+                    sel.value = compativeis[0].id_checklist;
+                }
+                carregarPerguntasModelo(sel.value);
             }
+
             sel.addEventListener('change', () => carregarPerguntasModelo(sel.value));
 
-            // Frota
             const jVeic = await getJson('backend/api.php?acao=buscar&tipo=veiculos&limite=250');
-            const selV = document.getElementById('id_veiculo');
             const veiculos = jVeic.dados || [];
             selV.innerHTML = veiculos.length
                 ? '<option value="">Selecione o veículo...</option>' + veiculos.map(v =>
@@ -152,10 +179,25 @@
                 if (opt && opt.dataset.foto) { foto.src = opt.dataset.foto; foto.classList.remove('d-none'); } else { foto.classList.add('d-none'); }
                 // O hodômetro não volta: o mínimo é o último km registrado do carro
                 if (opt && opt.dataset.km) { km.min = opt.dataset.km; km.placeholder = `Mínimo: ${Number(opt.dataset.km).toLocaleString('pt-BR')} km`; }
+                atualizarChecklistsDoVeiculo(selV.value, params.get('id_checklist') || '');
             });
             if (params.get('placa')) {
                 const v = veiculos.find(x => x.placa === params.get('placa'));
                 if (v) { selV.value = v.id_veiculo; selV.dispatchEvent(new Event('change')); }
+            } else if (params.get('id_checklist')) {
+                // Se veio da tela de checklists clicando em "Usar em uma vistoria", verifica se o checklist tem veículo fixo
+                const chkAlvo = todosChecklists.find(c => String(c.id_checklist) === String(params.get('id_checklist')));
+                if (chkAlvo && chkAlvo.id_veiculo && veiculos.some(v => Number(v.id_veiculo) === Number(chkAlvo.id_veiculo))) {
+                    selV.value = chkAlvo.id_veiculo;
+                    selV.dispatchEvent(new Event('change'));
+                } else {
+                    atualizarChecklistsDoVeiculo('', params.get('id_checklist'));
+                    sel.disabled = false;
+                    sel.innerHTML = '<option value="">Selecione o checklist...</option>' + todosChecklists.map(c =>
+                        `<option value="${c.id_checklist}">${axionEsc(c.titulo)}</option>`).join('');
+                    sel.value = params.get('id_checklist');
+                    carregarPerguntasModelo(sel.value);
+                }
             }
 
             const pessoas = await getJson('backend/api.php?acao=listar_pessoas');
@@ -223,6 +265,7 @@
                     : `O cliente <strong>${axionEsc(json.cliente || '')}</strong> recebe a vistoria para assinar no login dele; você assina como testemunha.`}</div>`);
 
             const sel = document.getElementById('id_checklist');
+            sel.disabled = false;
             sel.innerHTML = (souCliente ? '' : '<option value="">Selecione o checklist...</option>') + json.checklists.map(c =>
                 `<option value="${c.id_checklist}">${axionEsc(c.titulo)}</option>`).join('');
             sel.addEventListener('change', () => carregarPerguntasModelo(sel.value));
@@ -266,6 +309,7 @@
             form.insertAdjacentHTML('afterbegin', `<input type="hidden" name="id_execucao_editar" value="${Number(v.id_execucao)}">`);
 
             const sel = document.getElementById('id_checklist');
+            sel.disabled = false;
             sel.innerHTML = `<option value="${v.id_checklist}">${axionEsc(v.checklist_titulo)}</option>`;
             sel.value = v.id_checklist;
             await carregarPerguntasModelo(v.id_checklist);
@@ -308,27 +352,34 @@
                 box.innerHTML = '<div class="alert alert-light border small">Este modelo não possui perguntas cadastradas.</div>';
                 return;
             }
+            const NOMES_CAT = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-Viagem', locacao: 'Locação', outros: 'Outros' };
             let n = 0;
             box.innerHTML = json.dados.perguntas.map(p => {
                 const ehSub = p.id_pergunta_pai !== null;
                 const numero = ehSub ? '↳' : `${++n}.`;
                 const req = Number(p.obrigatorio) === 1 ? 'required' : '';
                 const nome = `respostas[${p.id_pergunta}]`;
+                const badgeCat = (!ehSub && p.categoria)
+                    ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">${axionEsc(NOMES_CAT[p.categoria] || p.categoria)}</span>`
+                    : '';
                 const campo = p.tipo === 'sim_nao' ? `
-                    <div class="d-flex gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="${nome}" id="r${p.id_pergunta}s" value="sim" ${req} data-pergunta="${p.id_pergunta}">
-                            <label class="form-check-label small" for="r${p.id_pergunta}s">Sim</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="${nome}" id="r${p.id_pergunta}n" value="nao" ${req} data-pergunta="${p.id_pergunta}">
-                            <label class="form-check-label small" for="r${p.id_pergunta}n">Não</label>
-                        </div>
+                    <div class="axion-choice-group mt-2" role="group" aria-label="Opções de resposta">
+                        <input class="btn-check" type="radio" name="${nome}" id="r${p.id_pergunta}s" value="sim" ${req} data-pergunta="${p.id_pergunta}">
+                        <label class="btn btn-outline-success axion-choice-btn axion-choice-sim" for="r${p.id_pergunta}s">
+                            <i class="bi bi-check-circle-fill me-1"></i>Sim
+                        </label>
+                        <input class="btn-check" type="radio" name="${nome}" id="r${p.id_pergunta}n" value="nao" ${req} data-pergunta="${p.id_pergunta}">
+                        <label class="btn btn-outline-danger axion-choice-btn axion-choice-nao" for="r${p.id_pergunta}n">
+                            <i class="bi bi-x-circle-fill me-1"></i>Não
+                        </label>
                     </div>`
-                    : `<input type="${p.tipo === 'numero' ? 'number' : 'text'}" name="${nome}" class="form-control form-control-sm" maxlength="255" placeholder="Informe a resposta..." ${req}>`;
+                    : `<input type="${p.tipo === 'numero' ? 'number' : 'text'}" name="${nome}" class="form-control mt-2" maxlength="255" placeholder="Informe a resposta..." ${req}>`;
                 return `<div class="p-3 mb-2 ${ehSub ? 'ms-4 border-start border-3 border-warning bg-white' : 'bg-light'} border rounded pergunta"
                             data-id="${p.id_pergunta}" data-pai="${p.id_pergunta_pai ?? ''}" data-condicao="${axionEsc(p.condicao_pai ?? '')}">
-                    <label class="form-label fw-semibold small mb-1">${numero} ${axionEsc(p.texto)}${req ? ' <span class="text-danger">*</span>' : ''}</label>
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                        <label class="form-label fw-semibold small mb-0">${numero} ${axionEsc(p.texto)}${req ? ' <span class="text-danger">*</span>' : ''}</label>
+                        ${badgeCat}
+                    </div>
                     ${campo}
                     ${p.orientacao ? `<div class="form-text">${axionEsc(p.orientacao)}</div>` : ''}
                 </div>`;

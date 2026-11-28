@@ -149,15 +149,19 @@
                 </div>`;
             }
 
+            const NOMES_CAT = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', locacao: 'Locação', outros: 'Outros' };
             let n = 0;
             const linhas = (v.respostas || []).map(r => {
                 const ehSub = r.id_pergunta_pai !== null;
                 const conf = r.conforme === null ? '<span class="text-muted">-</span>'
                     : Number(r.conforme) === 1 ? '<span class="badge bg-success-subtle text-success">OK</span>'
                     : '<span class="badge bg-danger">Fora do padrão</span>';
+                const badgeCat = (!ehSub && r.categoria)
+                    ? ` <span class="badge bg-light text-secondary border ms-1">${e(NOMES_CAT[r.categoria] || r.categoria)}</span>`
+                    : '';
                 return `<tr class="${r.conforme !== null && Number(r.conforme) === 0 ? 'table-danger' : ''}">
                     <td class="small text-muted">${ehSub ? '↳' : ++n}</td>
-                    <td class="${ehSub ? 'ps-4 small' : ''}">${e(r.pergunta_texto)}</td>
+                    <td class="${ehSub ? 'ps-4 small' : ''}">${e(r.pergunta_texto)}${badgeCat}</td>
                     <td class="fw-semibold">${e(fmtResp(r.resposta))}</td>
                     <td class="small text-muted">${r.resposta_esperada ? e(fmtResp(r.resposta_esperada)) : '-'}</td>
                     <td>${conf}</td>
@@ -174,7 +178,7 @@
             }
             if (v.pode_corrigir) acaoPendente = `<a class="btn btn-outline-warning" href="cadcheck.html?editar=${v.id_execucao}"><i class="bi bi-pencil-square me-1"></i>Corrigir respostas</a> ` + acaoPendente;
             const situacoes = {
-                concluida: `<span class="text-success"><i class="bi bi-patch-check-fill"></i> Concluída em ${v.assinado_em ? dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
+                concluida: `<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"><i class="bi bi-patch-check-fill me-1"></i>Concluída${v.assinado_em ? ' em ' + dataBR(v.assinado_em) + ' ' + e(v.assinado_em.slice(11, 16)) : ''}</span>`,
                 aguardando_vistoriador: `<span class="badge bg-warning text-dark">Aguardando assinatura do supervisor</span>`,
                 aguardando_motorista: `<span class="badge bg-warning text-dark">Aguardando assinatura do ${rotMot.toLowerCase()}</span>`,
                 aguardando_assinaturas: `<span class="badge bg-secondary">Ainda não assinada</span>`,
@@ -219,7 +223,7 @@
                         <div class="small text-muted">Veículo</div>
                         <div class="fw-bold font-monospace">${e(v.placa_veiculo)}</div>
                         <div class="small">${e(v.marca_modelo || '')} ${e(v.ano || '')} ${e(v.cor || '')}</div>
-                        <div class="small">Km: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')}</div>
+                        <div class="small font-monospace">Km: ${Number(v.km_rodado || 0).toLocaleString('pt-BR')}</div>
                     </div></div>
                     <div class="col-md-4"><div class="p-3 bg-light rounded border h-100">
                         <div class="small text-muted">${rotMot}</div>
@@ -279,6 +283,9 @@
             const categorias = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', locacao: 'Locação', outros: 'Outros' };
             const dataHora = (d) => d ? `${dataBR(d)} ${e(d.slice(11, 16))}` : '-';
 
+            const resumoCatsRel = (v.checklist_categorias || v.checklist_categoria || '')
+                .split(',').map(s => s.trim()).filter(Boolean)
+                .map(k => categorias[k] || k).join(', ') || '-';
             let n = 0, totalAvaliados = 0, foraPadrao = 0;
             const linhas = (v.respostas || []).map(r => {
                 const ehSub = r.id_pergunta_pai !== null;
@@ -287,9 +294,10 @@
                 if (avaliada) { totalAvaliados++; if (fora) foraPadrao++; }
                 const sit = !avaliada ? '<span style="color:#8a96a3">—</span>'
                     : fora ? '<span class="rel-tag nok">FORA DO PADRÃO</span>' : '<span class="rel-tag ok">OK</span>';
+                const catTag = (!ehSub && r.categoria) ? ` <span style="font-size:8pt;color:#6b7785">[${e(categorias[r.categoria] || r.categoria)}]</span>` : '';
                 return `<tr class="${fora ? 'fora' : ''}">
                     <td style="width:26px">${ehSub ? '' : ++n}</td>
-                    <td class="${ehSub ? 'sub' : ''}">${ehSub ? '↳ ' : ''}${e(r.pergunta_texto)}</td>
+                    <td class="${ehSub ? 'sub' : ''}">${ehSub ? '↳ ' : ''}${e(r.pergunta_texto)}${catTag}</td>
                     <td style="width:28%"><b>${e(fmtResp(r.resposta))}</b></td>
                     <td style="width:120px">${sit}</td>
                 </tr>`;
@@ -332,7 +340,7 @@
                     </tr>
                     <tr>
                         <td colspan="2"><span class="rot">Checklist aplicado</span><span class="val">${e(v.checklist_titulo)}</span></td>
-                        <td><span class="rot">Categoria</span><span class="val">${e(categorias[v.checklist_categoria] || v.checklist_categoria || '-')}</span></td>
+                        <td><span class="rot">Categorias</span><span class="val">${e(resumoCatsRel)}</span></td>
                         <td><span class="rot">Data da vistoria</span><span class="val">${dataBR(v.data_vistoria)} ${e((v.hora_vistoria || '').slice(0, 5))}</span></td>
                     </tr>
                     <tr>

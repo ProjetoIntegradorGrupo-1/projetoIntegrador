@@ -295,6 +295,92 @@ const AxionUtils = {
                 input.value = AxionUtils.mascaraChassi(input.value);
             });
         });
+
+        // 8. Campo Ano de Fabricação (impede anos futuros e pede confirmação para veículos com mais de 5 anos)
+        document.querySelectorAll('#ano').forEach((input) => {
+            const anoAtual = new Date().getFullYear();
+            const anoLimiteConfirmacao = anoAtual - 5; // ex: em 2026, veículos anteriores a 2021 (< 2021) pedem confirmação
+            input.max = String(anoAtual);
+
+            let feedback = input.parentElement.querySelector('.ano-feedback');
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.className = 'ano-feedback small mt-1';
+                input.parentElement.appendChild(feedback);
+            }
+
+            const validarAno = () => {
+                const valor = String(input.value || '').trim();
+                if (!valor) {
+                    input.classList.remove('is-valid', 'is-invalid');
+                    input.setCustomValidity('');
+                    feedback.textContent = '';
+                    feedback.className = 'ano-feedback small mt-1';
+                    return;
+                }
+                const ano = parseInt(valor, 10);
+                if (Number.isNaN(ano) || ano > anoAtual) {
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    input.setCustomValidity(`Não é permitido cadastrar veículo que ainda não foi fabricado (ano máximo: ${anoAtual}).`);
+                    feedback.textContent = `✗ Ano inválido: não é permitido cadastrar veículo com data futura (máximo: ${anoAtual}).`;
+                    feedback.className = 'ano-feedback small mt-1 text-danger fw-semibold';
+                } else if (ano < 1980) {
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    input.setCustomValidity('Ano de fabricação inválido (mínimo: 1980).');
+                    feedback.textContent = '✗ Ano de fabricação inválido (mínimo: 1980).';
+                    feedback.className = 'ano-feedback small mt-1 text-danger fw-semibold';
+                } else if (ano < anoLimiteConfirmacao) {
+                    input.classList.remove('is-invalid', 'is-valid');
+                    input.setCustomValidity('');
+                    const idade = anoAtual - ano;
+                    feedback.textContent = `⚠ Veículo com mais de 5 anos de fabricação (${idade} anos — anterior a ${anoLimiteConfirmacao}). Será solicitada confirmação ao salvar.`;
+                    feedback.className = 'ano-feedback small mt-1 text-warning-emphasis fw-semibold';
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    input.setCustomValidity('');
+                    feedback.textContent = '✓ Ano de fabricação válido';
+                    feedback.className = 'ano-feedback small mt-1 text-success';
+                }
+            };
+
+            input.addEventListener('input', validarAno);
+            input.addEventListener('change', validarAno);
+            if (input.value) validarAno();
+
+            const form = input.closest('form');
+            if (form && !form.dataset.axionFiltroAnoBound) {
+                form.dataset.axionFiltroAnoBound = '1';
+                form.addEventListener('submit', (ev) => {
+                    validarAno();
+                    const ano = parseInt(input.value, 10);
+                    if (Number.isNaN(ano) || ano > anoAtual) {
+                        ev.preventDefault();
+                        alert(`Operação bloqueada: Não é permitido cadastrar veículo com ano de fabricação futuro (${input.value}). O ano máximo permitido é ${anoAtual}.`);
+                        input.focus();
+                        return;
+                    }
+                    if (ano < 1980) {
+                        ev.preventDefault();
+                        alert('Ano de fabricação inválido (mínimo: 1980).');
+                        input.focus();
+                        return;
+                    }
+                    if (ano < anoLimiteConfirmacao) {
+                        const idade = anoAtual - ano;
+                        const confirmou = window.confirm(
+                            `Atenção: Este veículo possui mais de 5 anos de fabricação (Ano ${ano} — ${idade} anos de uso, anterior a ${anoLimiteConfirmacao}).\n\nDeseja confirmar o cadastro/alteração deste veículo mesmo assim?`
+                        );
+                        if (!confirmou) {
+                            ev.preventDefault();
+                            input.focus();
+                        }
+                    }
+                });
+            }
+        });
     }
 };
 
@@ -374,6 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
         email_invalido: 'E-mail inválido.',
         cpf_ou_email_duplicado: 'Já existe outro usuário com este CPF ou e-mail.',
         placa_renavam_ou_chassi_duplicado: 'Já existe outro veículo com esta placa, Renavam ou chassi.',
+        ano_futuro_invalido: 'Não é permitido cadastrar veículo com ano de fabricação futuro (superior ao ano atual).',
+        ano_invalido: 'Ano de fabricação inválido (deve estar entre 1980 e o ano atual).',
         supervisor_invalido: 'Supervisor responsável inválido.',
         checklist_invalido: 'Escolha um modelo de checklist.',
         veiculo_invalido: 'Escolha um veículo da frota.',

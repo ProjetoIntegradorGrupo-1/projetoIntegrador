@@ -64,13 +64,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="frontend/js/axion.js"></script>
     <script>
+        const CATEGORIAS_NOMES = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-Viagem', locacao: 'Locação', outros: 'Outros' };
+        const formatarCategorias = (str, fallback) => {
+            const lista = (str || fallback || '').split(',').map(s => s.trim()).filter(Boolean);
+            return lista.length ? lista.map(c => CATEGORIAS_NOMES[c] || c).join(', ') : 'Multicategoria';
+        };
+
         async function inicializarExclusaoChecklist() {
             const resp = await fetch('backend/api.php?acao=buscar&tipo=checklists');
             const json = await resp.json();
             const sel = document.getElementById('select-checklist');
             if (!json.dados || json.dados.length === 0) return;
             sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(c =>
-                `<option value="${c.id_checklist}">#${c.id_checklist} - ${axionEsc(c.titulo)} (${axionEsc(c.categoria.toUpperCase())})</option>`
+                `<option value="${c.id_checklist}">#${c.id_checklist} - ${axionEsc(c.titulo)} (${axionEsc(formatarCategorias(c.categorias_perguntas, c.categoria))})</option>`
             ).join('');
             const urlId = new URLSearchParams(window.location.search).get('id');
             if (urlId) {
@@ -88,7 +94,7 @@
             document.getElementById('resumo-checklist').innerHTML = `
                 <li><strong>ID:</strong> #${c.id_checklist}</li>
                 <li><strong>Título:</strong> ${axionEsc(c.titulo)}</li>
-                <li><strong>Categoria:</strong> ${axionEsc(c.categoria.toUpperCase())}</li>
+                <li><strong>Categorias das Perguntas:</strong> ${axionEsc(formatarCategorias(c.categorias_perguntas, c.categoria))}</li>
                 <li><strong>Total de Perguntas:</strong> ${(c.perguntas || []).length} perguntas cadastradas</li>
             `;
         }

@@ -69,12 +69,19 @@
             }[sucesso];
 
             let n = 0;
+            const resumoCategorias = (c.categorias_perguntas || c.categoria || '')
+                .split(',').map(s => s.trim()).filter(Boolean)
+                .map(k => categorias[k] || k).join(', ') || 'Multicategoria';
             const perguntas = (c.perguntas || []).map(p => {
                 const ehSub = p.id_pergunta_pai !== null;
+                const badgeCat = (!ehSub && p.categoria)
+                    ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle me-1">${e(categorias[p.categoria] || p.categoria)}</span>`
+                    : '';
                 return `<div class="p-3 mb-2 border rounded ${ehSub ? 'ms-4 border-start border-3 border-warning bg-white' : 'bg-light'}">
                     <div class="d-flex justify-content-between gap-2">
                         <div class="fw-semibold">${ehSub ? `<span class="text-muted small">Se a resposta for "${e(p.condicao_pai === 'nao' ? 'Não' : 'Sim')}":</span> ` : `${++n}. `}${e(p.texto)}</div>
                         <div class="text-nowrap small">
+                            ${badgeCat}
                             <span class="badge bg-secondary-subtle text-secondary">${tipos[p.tipo] || e(p.tipo)}</span>
                             ${Number(p.obrigatorio) === 1 ? '<span class="badge bg-primary-subtle text-primary">Obrigatória</span>' : ''}
                         </div>
@@ -99,7 +106,7 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                     <div>
                         <h1 class="h4 fw-bold mb-1"><i class="bi bi-ui-checks-grid text-primary me-2"></i>${e(c.titulo)}</h1>
-                        <div class="text-muted small">${e(categorias[c.categoria] || c.categoria)} · criado por ${e(c.criador_nome)} ${c.criado_em ? 'em ' + dataBR(c.criado_em) : ''}</div>
+                        <div class="text-muted small">${c.veiculo_placa ? `Veículo: <span class="badge bg-dark font-monospace">${e(c.veiculo_placa)} - ${e(c.veiculo_modelo || '')}</span> · ` : 'Aplicável a: <strong>Todos os veículos da frota</strong> · '}Categorias das perguntas: ${e(resumoCategorias)} · criado por ${e(c.criador_nome)} ${c.criado_em ? 'em ' + dataBR(c.criado_em) : ''}</div>
                         ${c.descricao ? `<div class="mt-1">${e(c.descricao)}</div>` : ''}
                     </div>
                     <div class="text-end">

@@ -44,20 +44,14 @@
                 <input type="hidden" name="id_checklist" id="id_checklist" value="">
 
                 <div class="row">
-                    <div class="col-md-5 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="tituloChecklist" class="form-label fw-bold">Título do Checklist</label>
                         <input type="text" id="tituloChecklist" name="titulo" class="form-control" required>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label for="categoriaChecklist" class="form-label fw-bold">Categoria</label>
-                        <select id="categoriaChecklist" name="categoria" class="form-select" required>
-                            <option value="eletrico">Elétrico</option>
-                            <option value="mecanico">Mecânico</option>
-                            <option value="estetico">Estético</option>
-                            <option value="seguranca">Segurança</option>
-                            <option value="pre_viagem">Pré-Viagem</option>
-                            <option value="locacao">Locação (vistoria do cliente)</option>
-                            <option value="outros">Outros</option>
+                    <div class="col-md-4 mb-3">
+                        <label for="veiculoChecklist" class="form-label fw-bold">Veículo Alvo</label>
+                        <select id="veiculoChecklist" name="id_veiculo" class="form-select">
+                            <option value="">Todos os veículos da frota (Geral)</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
@@ -88,8 +82,15 @@
     <script>
         let contadorPerguntas = 0;
 
+        const CATEGORIAS_NOMES = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-Viagem', locacao: 'Locação', outros: 'Outros' };
+        const formatarCategorias = (str, fallback) => {
+            const lista = (str || fallback || '').split(',').map(s => s.trim()).filter(Boolean);
+            return lista.length ? lista.map(c => CATEGORIAS_NOMES[c] || c).join(', ') : 'Multicategoria';
+        };
+
         function renderizarBlocoPergunta(idx, p = {}) {
             const texto = p.texto || '';
+            const cat = p.categoria || 'mecanico';
             const tipo = p.tipo || 'sim_nao';
             const obrig = (p.obrigatorio === undefined || Number(p.obrigatorio) === 1) ? 'checked' : '';
             const esperada = p.resposta_esperada || 'sim';
@@ -106,10 +107,21 @@
                         <label class="form-label fw-semibold">Texto da Pergunta</label>
                         <input type="hidden" name="perguntas[${idx}][id_pergunta]" value="${p.id_pergunta || ''}">
                         <input type="text" name="perguntas[${idx}][texto]" class="form-control" value="${axionEsc(texto)}" required>
-                        ${p.qtd_sub ? `<div class="form-text">Esta pergunta tem ${p.qtd_sub} subpergunta(s) condicional(is), que são mantidas.</div>` : ''}
+                        ${p.qtd_sub ? `<div class="form-text">Esta pergunta tem ${p.qtd_sub} subpergunta(s) condicional(is), que são mantidas (sem categoria própria).</div>` : ''}
                     </div>
                     <div class="row mb-2">
-                        <div class="col-md-6 mb-2">
+                        <div class="col-md-4 mb-2">
+                            <label class="form-label fw-semibold">Categoria da Pergunta</label>
+                            <select name="perguntas[${idx}][categoria]" class="form-select" required>
+                                <option value="eletrico" ${cat === 'eletrico' ? 'selected' : ''}>Elétrico</option>
+                                <option value="mecanico" ${cat === 'mecanico' ? 'selected' : ''}>Mecânico</option>
+                                <option value="estetico" ${cat === 'estetico' ? 'selected' : ''}>Estético</option>
+                                <option value="seguranca" ${cat === 'seguranca' ? 'selected' : ''}>Segurança</option>
+                                <option value="pre_viagem" ${cat === 'pre_viagem' ? 'selected' : ''}>Pré-Viagem</option>
+                                <option value="outros" ${cat === 'outros' ? 'selected' : ''}>Outros</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-2">
                             <label class="form-label fw-semibold">Tipo de Resposta</label>
                             <select name="perguntas[${idx}][tipo]" class="form-select" onchange="alternarCamposConformidade(this, ${idx})" required>
                                 <option value="sim_nao" ${tipo === 'sim_nao' ? 'selected' : ''}>Sim / Não</option>
@@ -117,7 +129,7 @@
                                 <option value="numero" ${tipo === 'numero' ? 'selected' : ''}>Número (Ex: Quilometragem/Pressão)</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                        <div class="col-md-4 mb-2 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="perguntas[${idx}][obrigatorio]" value="1" id="req_${idx}" ${obrig}>
                                 <label class="form-check-label" for="req_${idx}">Resposta Obrigatória</label>
@@ -161,12 +173,23 @@
         }
 
         async function inicializarEdicaoChecklist() {
+            try {
+                const rv = await fetch('backend/api.php?acao=buscar&tipo=veiculos&limite=250');
+                const jv = await rv.json();
+                const selV = document.getElementById('veiculoChecklist');
+                if (selV && jv.dados) {
+                    selV.innerHTML = '<option value="">Todos os veículos da frota (Geral)</option>' + jv.dados.map(v =>
+                        `<option value="${v.id_veiculo}">${axionEsc(v.placa)} - ${axionEsc(v.marca_modelo)}</option>`
+                    ).join('');
+                }
+            } catch (e) {}
+
             const resp = await fetch('backend/api.php?acao=buscar&tipo=checklists');
             const json = await resp.json();
             const sel = document.getElementById('select-checklist');
             if (!json.dados || json.dados.length === 0) return;
             sel.innerHTML = '<option value="">Selecione...</option>' + json.dados.map(c =>
-                `<option value="${c.id_checklist}">#${c.id_checklist} - ${axionEsc(c.titulo)} (${axionEsc(c.categoria.toUpperCase())})</option>`
+                `<option value="${c.id_checklist}">#${c.id_checklist} - ${axionEsc(c.titulo)}${c.veiculo_placa ? ' [' + axionEsc(c.veiculo_placa) + ']' : ''}</option>`
             ).join('');
             const urlId = new URLSearchParams(window.location.search).get('id');
             if (urlId) {
@@ -182,8 +205,9 @@
             const c = json.dados;
             document.getElementById('id_checklist').value = c.id_checklist;
             document.getElementById('tituloChecklist').value = c.titulo || '';
-            document.getElementById('categoriaChecklist').value = c.categoria || 'outros';
             document.getElementById('descricaoChecklist').value = c.descricao || '';
+            const selV = document.getElementById('veiculoChecklist');
+            if (selV) selV.value = c.id_veiculo || '';
 
             const cont = document.getElementById('containerPerguntas');
             cont.innerHTML = '';

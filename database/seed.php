@@ -169,11 +169,12 @@ function axion_garantir_estrutura(PDO $pdo): void {
         }
     }
 
-    // 4. Tabela Checklist_Perguntas
+    // 4. Tabela Checklist_Perguntas (categoria pertence a cada pergunta principal; subperguntas têm categoria NULL)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS Checklist_Perguntas (
             id_pergunta INT AUTO_INCREMENT PRIMARY KEY,
             id_checklist INT NOT NULL,
+            categoria VARCHAR(50) DEFAULT NULL,
             id_pergunta_pai INT DEFAULT NULL,
             condicao_pai VARCHAR(20) DEFAULT NULL,
             ordem INT NOT NULL DEFAULT 1,
@@ -184,6 +185,9 @@ function axion_garantir_estrutura(PDO $pdo): void {
             orientacao VARCHAR(255) DEFAULT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    axion_garantir_colunas($pdo, 'Checklist_Perguntas', [
+        'categoria' => "VARCHAR(50) DEFAULT NULL AFTER id_checklist",
+    ]);
 
     // 5. Tabela Checklist_Execucoes (Checklists preenchidos / Vistorias)
     $pdo->exec("
@@ -210,6 +214,7 @@ function axion_garantir_estrutura(PDO $pdo): void {
 
     // Aprovação de modelos de checklist: o supervisor cria, o admin aprova
     axion_garantir_colunas($pdo, 'Checklists', [
+        'id_veiculo'       => "INT DEFAULT NULL AFTER id_criador",
         'status_aprovacao' => "VARCHAR(20) NOT NULL DEFAULT 'aprovado'",
         'motivo_rejeicao'  => "TEXT DEFAULT NULL",
         'avaliado_por'     => "INT DEFAULT NULL",
@@ -293,34 +298,117 @@ function axion_garantir_estrutura(PDO $pdo): void {
                        VALUES (NULL, 'Vistoria de locação', 'locacao', 'Conferência do veículo na retirada e na devolução da locação, feita pelo cliente com o supervisor como testemunha', 1, 'aprovado')")
             ->execute();
         $idChk = (int)$pdo->lastInsertId();
-        $insP = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
-                               VALUES (:chk, :pai, :cond, :ordem, :texto, :tipo, :obr, :esp, :ori)");
+        $insP = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
+                               VALUES (:chk, :cat, :pai, :cond, :ordem, :texto, :tipo, :obr, :esp, :ori)");
         $itens = [
-            ['A lataria está sem riscos, amassados ou batidas?', 'sim_nao', 'sim', 'Dê uma volta no carro olhando portas, para-choques, capô e teto.',
+            ['A lataria está sem riscos, amassados ou batidas?', 'estetico', 'sim_nao', 'sim', 'Dê uma volta no carro olhando portas, para-choques, capô e teto.',
                 ['Onde está o dano e como ele é?', 'nao']],
-            ['Vidros, para-brisa e retrovisores estão inteiros, sem trincas?', 'sim_nao', 'sim', null, ['Qual vidro ou retrovisor está danificado?', 'nao']],
-            ['Os pneus estão cheios e sem cortes ou bolhas aparentes?', 'sim_nao', 'sim', 'Olhe os quatro pneus e o estepe.', null],
-            ['Faróis, lanternas e setas acendem normalmente?', 'sim_nao', 'sim', 'Peça para alguém conferir as luzes de trás.', null],
-            ['O interior está limpo, sem manchas ou rasgos nos bancos?', 'sim_nao', 'sim', null, ['O que encontrou no interior?', 'nao']],
-            ['O painel liga sem nenhuma luz de alerta acesa (motor, óleo, freio)?', 'sim_nao', 'sim', 'Com o carro ligado, as luzes de alerta devem apagar em poucos segundos.', null],
-            ['Estepe, macaco, chave de roda e triângulo estão no carro?', 'sim_nao', 'sim', 'Normalmente ficam no porta-malas.', null],
-            ['O documento do veículo (CRLV) está no carro ou disponível no celular?', 'sim_nao', 'sim', null, null],
-            ['Nível de combustível', 'texto', null, 'Ex.: reserva, 1/4, 1/2, 3/4 ou cheio.', null],
+            ['Vidros, para-brisa e retrovisores estão inteiros, sem trincas?', 'estetico', 'sim_nao', 'sim', null, ['Qual vidro ou retrovisor está danificado?', 'nao']],
+            ['Os pneus estão cheios e sem cortes ou bolhas aparentes?', 'mecanico', 'sim_nao', 'sim', 'Olhe os quatro pneus e o estepe.', null],
+            ['Faróis, lanternas e setas acendem normalmente?', 'eletrico', 'sim_nao', 'sim', 'Peça para alguém conferir as luzes de trás.', null],
+            ['O interior está limpo, sem manchas ou rasgos nos bancos?', 'estetico', 'sim_nao', 'sim', null, ['O que encontrou no interior?', 'nao']],
+            ['O painel liga sem nenhuma luz de alerta acesa (motor, óleo, freio)?', 'eletrico', 'sim_nao', 'sim', 'Com o carro ligado, as luzes de alerta devem apagar em poucos segundos.', null],
+            ['Estepe, macaco, chave de roda e triângulo estão no carro?', 'seguranca', 'sim_nao', 'sim', 'Normalmente ficam no porta-malas.', null],
+            ['O documento do veículo (CRLV) está no carro ou disponível no celular?', 'pre_viagem', 'sim_nao', 'sim', null, null],
+            ['Nível de combustível', 'mecanico', 'texto', null, 'Ex.: reserva, 1/4, 1/2, 3/4 ou cheio.', null],
         ];
         $ordem = 1;
-        foreach ($itens as [$texto, $tipo, $esp, $ori, $sub]) {
-            $insP->execute([':chk' => $idChk, ':pai' => null, ':cond' => null, ':ordem' => $ordem++, ':texto' => $texto,
+        foreach ($itens as [$texto, $catItem, $tipo, $esp, $ori, $sub]) {
+            $insP->execute([':chk' => $idChk, ':cat' => $catItem, ':pai' => null, ':cond' => null, ':ordem' => $ordem++, ':texto' => $texto,
                             ':tipo' => $tipo, ':obr' => 1, ':esp' => $esp, ':ori' => $ori]);
             if ($sub) {
                 $idPai = (int)$pdo->lastInsertId();
-                $insP->execute([':chk' => $idChk, ':pai' => $idPai, ':cond' => $sub[1], ':ordem' => $ordem++, ':texto' => $sub[0],
+                $insP->execute([':chk' => $idChk, ':cat' => null, ':pai' => $idPai, ':cond' => $sub[1], ':ordem' => $ordem++, ':texto' => $sub[0],
                                 ':tipo' => 'texto', ':obr' => 1, ':esp' => null, ':ori' => null]);
             }
         }
     }
 
+    // Migração automática para modelos já criados anteriormente:
+    // Subperguntas não possuem categoria própria (herdam o contexto da pergunta-mãe)
+    $pdo->exec("UPDATE Checklist_Perguntas SET categoria = NULL WHERE id_pergunta_pai IS NOT NULL AND categoria IS NOT NULL");
+    // Perguntas principais sem categoria recebem classificação inteligente pelo assunto da pergunta ou do modelo original
+    $pdo->exec("
+        UPDATE Checklist_Perguntas p
+        LEFT JOIN Checklists c ON c.id_checklist = p.id_checklist
+        SET p.categoria = CASE
+            WHEN p.texto REGEXP 'lataria|pintura|riscos|amassados|limp|interior|bancos|estétic|estetic|vidro|retrovisor|cabine' THEN 'estetico'
+            WHEN p.texto REGEXP 'farol|faróis|farois|lanterna|seta|luz|painel|bateria|elétric|eletric|ar-condicionado|câmera|camera|giroflex|rastreador' THEN 'eletrico'
+            WHEN p.texto REGEXP 'freio|extintor|triângulo|triangulo|macaco|cinto|segurança|seguranca|epi|amarração|amarracao|emergência' THEN 'seguranca'
+            WHEN p.texto REGEXP 'documento|crlv|cnh|rota|viagem|observações complementares' THEN 'pre_viagem'
+            WHEN p.texto REGEXP 'pneu|óleo|oleo|motor|quilometragem|odômetro|odometro|km|mecânic|mecanico|suspensão|direção|combustível|vazamento' THEN 'mecanico'
+            WHEN c.categoria IN ('eletrico', 'mecanico', 'estetico', 'seguranca', 'pre_viagem', 'outros') THEN c.categoria
+            ELSE 'mecanico'
+        END
+        WHERE p.id_pergunta_pai IS NULL AND (p.categoria IS NULL OR p.categoria = '' OR p.categoria = 'locacao')
+    ");
+
     // Só depois de garantir que a tabela existe (num banco novo ela ainda não existia aqui)
     $pdo->exec("UPDATE Checklist_Respostas r JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta SET r.resposta_esperada = NULL WHERE p.tipo <> 'sim_nao' AND r.resposta_esperada IS NOT NULL");
+
+    // Migração automática dos checklists antigos por categoria para checklists operacionais de veículo (Multicategoria):
+    // Como agora a categoria pertence a cada pergunta, os checklists antigos ("Estética e limpeza", "Segurança obrigatória",
+    // "Sistema elétrico", "Inspeção mecânica", "Pré-viagem diária") passam a ter nomes operacionais de turno/contrato/frota
+    // e perguntas de múltiplas categorias (elétrica, mecânica, estética, segurança e pré-viagem).
+    $mapaRenomear = [
+        'Pré-viagem diária'     => ['Checklist Turno 12H TABR', 'Vistoria operacional completa de troca de turno 12h (mecânica, elétrica, segurança e estética)'],
+        'Inspeção mecânica'     => ['Checklist ADM Vale', 'Vistoria operacional de veículos a serviço do contrato ADM Vale'],
+        'Sistema elétrico'      => ['Checklist Operacional Frota Pesada / Utilitários', 'Vistoria multicategoria para furgões, caminhões e ônibus da frota'],
+        'Segurança obrigatória' => ['Checklist Pré-Turno Operacional (6H / 8H)', 'Inspeção completa do veículo antes do início da jornada diária'],
+        'Estética e limpeza'    => ['Checklist de Liberação e Conservação Veicular', 'Verificação integrada de carroceria, cabine, pneus, luzes e equipamentos'],
+    ];
+    $stUpdChk = $pdo->prepare("UPDATE Checklists SET titulo = :novo, descricao = :desc, categoria = 'multicategoria' WHERE titulo = :antigo");
+    foreach ($mapaRenomear as $antigo => [$novo, $desc]) {
+        $stUpdChk->execute([':novo' => $novo, ':desc' => $desc, ':antigo' => $antigo]);
+    }
+
+    // Garante que cada um desses checklists operacionais tenha perguntas das diversas categorias do veículo
+    $perguntasExtrasMulticategoria = [
+        ['Checklist Turno 12H TABR', [
+            ['Nível do óleo do motor e fluido de freio estão dentro do padrão?', 'mecanico', 'sim_nao', 'sim', 'Verificar com o veículo em local plano antes da partida.'],
+            ['Extintor, triângulo, macaco, chave de roda e cintos estão em perfeitas condições?', 'seguranca', 'sim_nao', 'sim', 'Itens obrigatórios de segurança para o turno 12H.'],
+            ['Lataria, para-brisa e retrovisores estão íntegros e sem novas avarias?', 'estetico', 'sim_nao', 'sim', 'Inspecionar visualmente toda a parte externa e cabine.'],
+        ]],
+        ['Checklist ADM Vale', [
+            ['Faróis, lanternas, setas, luz de freio e sirene/luz de ré estão funcionando?', 'eletrico', 'sim_nao', 'sim', 'Exigência padrão de sinalização operacional ADM Vale.'],
+            ['Cintos de segurança, extintor, cones e kit de emergência estão completos?', 'seguranca', 'sim_nao', 'sim', null],
+            ['Lataria, vidros, limpeza interna e identificação visual do veículo estão conformes?', 'estetico', 'sim_nao', 'sim', null],
+            ['CRLV do veículo e autorização de tráfego estão disponíveis no veículo?', 'pre_viagem', 'sim_nao', 'sim', null],
+        ]],
+        ['Checklist Operacional Frota Pesada / Utilitários', [
+            ['Pneus, estepe, suspensão e freios estão em condições seguras de rodagem?', 'mecanico', 'sim_nao', 'sim', null],
+            ['Travas do compartimento de carga, cintos e equipamentos de segurança estão operantes?', 'seguranca', 'sim_nao', 'sim', null],
+            ['Carroceria, portas traseiras/laterais e retrovisores estão sem avarias?', 'estetico', 'sim_nao', 'sim', null],
+        ]],
+        ['Checklist Pré-Turno Operacional (6H / 8H)', [
+            ['Motor, freios, pneus e nível de fluidos estão sem vazamentos ou anomalias?', 'mecanico', 'sim_nao', 'sim', null],
+            ['Faróis, setas, limpador de para-brisa e painel estão sem alertas?', 'eletrico', 'sim_nao', 'sim', null],
+            ['Lataria, vidros e conservação interna da cabine estão em bom estado?', 'estetico', 'sim_nao', 'sim', null],
+        ]],
+        ['Checklist de Liberação e Conservação Veicular', [
+            ['Pneus estão calibrados e o motor funciona sem ruídos ou vazamentos?', 'mecanico', 'sim_nao', 'sim', null],
+            ['Sistema elétrico (faróis, setas, buzina e painel) funciona normalmente?', 'eletrico', 'sim_nao', 'sim', null],
+            ['Itens de segurança obrigatórios (estepe, triângulo, macaco e cintos) estão presentes?', 'seguranca', 'sim_nao', 'sim', null],
+        ]],
+    ];
+    $stBuscaChk = $pdo->prepare("SELECT id_checklist FROM Checklists WHERE titulo = :t LIMIT 1");
+    $stExistePerg = $pdo->prepare("SELECT COUNT(*) FROM Checklist_Perguntas WHERE id_checklist = :id AND texto = :txt");
+    $stMaxOrdem = $pdo->prepare("SELECT COALESCE(MAX(ordem), 0) FROM Checklist_Perguntas WHERE id_checklist = :id");
+    $stInsPergExtra = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao)
+                                     VALUES (:id, :cat, NULL, NULL, :ordem, :txt, :tipo, 1, :esp, :ori)");
+    foreach ($perguntasExtrasMulticategoria as [$tituloChk, $novasPergs]) {
+        $stBuscaChk->execute([':t' => $tituloChk]);
+        $idC = (int)$stBuscaChk->fetchColumn();
+        if (!$idC) continue;
+        $stMaxOrdem->execute([':id' => $idC]);
+        $ord = (int)$stMaxOrdem->fetchColumn() + 1;
+        foreach ($novasPergs as [$txt, $cat, $tipo, $esp, $ori]) {
+            $stExistePerg->execute([':id' => $idC, ':txt' => $txt]);
+            if ((int)$stExistePerg->fetchColumn() === 0) {
+                $stInsPergExtra->execute([':id' => $idC, ':cat' => $cat, ':ordem' => $ord++, ':txt' => $txt, ':tipo' => $tipo, ':esp' => $esp, ':ori' => $ori]);
+            }
+        }
+    }
 }
 
 /** Adiciona colunas que ainda não existem (bancos criados por versões antigas do sistema). */
@@ -646,9 +734,9 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
 
     $stmtPergunta = $pdo->prepare("
         INSERT INTO Checklist_Perguntas (
-            id_checklist, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
+            id_checklist, categoria, id_pergunta_pai, condicao_pai, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao
         ) VALUES (
-            :id_checklist, :id_pai, :condicao, :ordem, :texto, :tipo, :obrigatorio, :esperada, :orientacao
+            :id_checklist, :categoria, :id_pai, :condicao, :ordem, :texto, :tipo, :obrigatorio, :esperada, :orientacao
         )
     ");
 
@@ -662,9 +750,10 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
         ]);
         $idCheck = (int)$pdo->lastInsertId();
 
-        // Pergunta 1 (Sim/Não com subpergunta condicional)
+        // Pergunta 1 (Categoria principal do modelo - Sim/Não com subpergunta condicional sem categoria própria)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => $mod[1],
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 1,
@@ -676,9 +765,10 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
         ]);
         $idPergPai = (int)$pdo->lastInsertId();
 
-        // Subpergunta 1.1 condicional
+        // Subpergunta 1.1 condicional (categoria NULL, pois pertence à Pergunta 1)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => null,
             ':id_pai'       => $idPergPai,
             ':condicao'     => 'nao',
             ':ordem'        => 1,
@@ -689,22 +779,24 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
             ':orientacao'   => 'Anexar foto da avaria na tela de detalhes de não conformidade.'
         ]);
 
-        // Pergunta 2 (Sim/Não)
+        // Pergunta 2 (Estético / Painel - Sim/Não)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'estetico',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 2,
-            ':texto'        => 'Há alguma avaria visual, vazamento ou alerta aceso no painel?',
+            ':texto'        => 'Há alguma avaria visual na lataria, vazamento ou alerta aceso no painel?',
             ':tipo'         => 'sim_nao',
             ':obrigatorio'  => 1,
             ':esperada'     => 'nao',
             ':orientacao'   => 'Registrar código de alerta do painel e comunicar o supervisor.'
         ]);
 
-        // Pergunta 3 (Número - Quilometragem)
+        // Pergunta 3 (Mecânico - Número - Quilometragem)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'mecanico',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 3,
@@ -715,9 +807,10 @@ function axion_popular_banco(PDO $pdo, bool $forcarReset = false): array {
             ':orientacao'   => null
         ]);
 
-        // Pergunta 4 (Texto - Observações gerais)
+        // Pergunta 4 (Segurança / Pré-viagem - Texto - Observações gerais)
         $stmtPergunta->execute([
             ':id_checklist' => $idCheck,
+            ':categoria'    => 'seguranca',
             ':id_pai'       => null,
             ':condicao'     => null,
             ':ordem'        => 4,

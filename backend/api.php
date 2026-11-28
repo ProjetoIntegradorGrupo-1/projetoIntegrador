@@ -179,17 +179,25 @@ if ($acao === 'buscar') {
     }
 
     if ($tipo === 'checklists') {
-        $sql = "SELECT c.id_checklist, c.titulo, c.categoria, c.descricao, c.ativo, c.criado_em, c.id_criador,
+        $sql = "SELECT c.id_checklist, c.titulo, c.categoria, c.descricao, c.ativo, c.criado_em, c.id_criador, c.id_veiculo,
+                       v.placa AS veiculo_placa, v.marca_modelo AS veiculo_modelo,
                        c.status_aprovacao, c.motivo_rejeicao, c.avaliado_em,
                        COALESCE(u.nome, 'Sistema Axion') AS criador_nome,
+                       (SELECT GROUP_CONCAT(DISTINCT p.categoria ORDER BY p.ordem SEPARATOR ',') FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist AND p.id_pergunta_pai IS NULL AND p.categoria IS NOT NULL) AS categorias_perguntas,
                        (SELECT COUNT(*) FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist) AS total_perguntas,
                        (SELECT COUNT(*) FROM Checklist_Execucoes e WHERE e.id_checklist = c.id_checklist) AS total_execucoes
                 FROM Checklists c
                 LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador
+                LEFT JOIN Veiculos v ON v.id_veiculo = c.id_veiculo
                 WHERE 1=1";
         $params = [];
+        $idVeiculoFiltro = (int)($_GET['id_veiculo'] ?? 0);
+        if ($idVeiculoFiltro > 0) {
+            $sql .= " AND (c.id_veiculo = :id_veic OR c.id_veiculo IS NULL)";
+            $params[':id_veic'] = $idVeiculoFiltro;
+        }
         if ($termo !== '') {
-            $sql .= " AND (c.titulo LIKE :q OR c.categoria LIKE :q OR c.descricao LIKE :q)";
+            $sql .= " AND (c.titulo LIKE :q OR c.categoria LIKE :q OR c.descricao LIKE :q OR EXISTS (SELECT 1 FROM Checklist_Perguntas pq WHERE pq.id_checklist = c.id_checklist AND pq.categoria LIKE :q))";
             $params[':q'] = "%$termo%";
         }
         if (in_array($filtroExtra, ['pendente', 'rejeitado', 'aprovado'], true)) {
@@ -199,8 +207,9 @@ if ($acao === 'buscar') {
             $sql .= " AND c.id_criador = :meu";
             $params[':meu'] = $u['id'];
         } elseif ($filtroExtra !== '') {
-            $sql .= " AND c.categoria = :cat";
+            $sql .= " AND (EXISTS (SELECT 1 FROM Checklist_Perguntas pf WHERE pf.id_checklist = c.id_checklist AND pf.id_pergunta_pai IS NULL AND pf.categoria = :cat) OR c.categoria = :cat2)";
             $params[':cat'] = $filtroExtra;
+            $params[':cat2'] = $filtroExtra;
         }
         // Quem não é admin só enxerga modelos aprovados (o supervisor vê também os que ele mesmo criou)
         if ($u['perfil'] === 'supervisor') {
@@ -212,7 +221,8 @@ if ($acao === 'buscar') {
         if (!empty($_GET['somente_ativos'])) {
             $sql .= " AND c.ativo = 1 AND c.status_aprovacao = 'aprovado' AND EXISTS (SELECT 1 FROM Checklist_Perguntas p2 WHERE p2.id_checklist = c.id_checklist)";
         }
-        $sql .= " ORDER BY FIELD(c.status_aprovacao, 'pendente', 'rejeitado', 'aprovado'), c.ativo DESC, c.id_checklist DESC LIMIT $limite";
+        $ordemVeiculo = $idVeiculoFiltro > 0 ? "(c.id_veiculo = $idVeiculoFiltro) DESC, " : "";
+        $sql .= " ORDER BY {$ordemVeiculo}FIELD(c.status_aprovacao, 'pendente', 'rejeitado', 'aprovado'), c.ativo DESC, c.id_checklist ASC LIMIT $limite";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         axion_json(['sucesso' => true, 'dados' => $stmt->fetchAll()]);
@@ -426,8 +436,13 @@ if ($acao === 'obter_checklist') {
         if (!(int)$stOk->fetchColumn()) axion_json(['sucesso' => false, 'erro' => 'Modelo indisponível.'], 403);
     }
     $id = (int)($_GET['id'] ?? 0);
-    $stmt = $pdo->prepare("SELECT c.*, COALESCE(u.nome, 'Sistema Axion') AS criador_nome, a.nome AS avaliador_nome
-                           FROM Checklists c LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador LEFT JOIN Usuarios a ON a.id_usuario = c.avaliado_por
+    $stmt = $pdo->prepare("SELECT c.*, v.placa AS veiculo_placa, v.marca_modelo AS veiculo_modelo,
+                                  COALESCE(u.nome, 'Sistema Axion') AS criador_nome, a.nome AS avaliador_nome,
+                                  (SELECT GROUP_CONCAT(DISTINCT p.categoria ORDER BY p.ordem SEPARATOR ',') FROM Checklist_Perguntas p WHERE p.id_checklist = c.id_checklist AND p.id_pergunta_pai IS NULL AND p.categoria IS NOT NULL) AS categorias_perguntas
+                           FROM Checklists c
+                           LEFT JOIN Usuarios u ON u.id_usuario = c.id_criador
+                           LEFT JOIN Usuarios a ON a.id_usuario = c.avaliado_por
+                           LEFT JOIN Veiculos v ON v.id_veiculo = c.id_veiculo
                            WHERE c.id_checklist = :id LIMIT 1");
     $stmt->execute([':id' => $id]);
     $chk = $stmt->fetch();
@@ -609,6 +624,9 @@ if ($acao === 'salvar_edicao_veiculo' && $ehPost) {
     $modelo      = trim($_POST['modelo'] ?? '');
     $marcaModelo = trim("$marca $modelo");
     $ano         = (int)($_POST['ano'] ?? date('Y'));
+    $anoAtual    = (int)date('Y');
+    if ($ano > $anoAtual) { header("Location: ../editarVeiculo.html?id=$id&erro=ano_futuro_invalido"); exit; }
+    if ($ano < 1980) { header("Location: ../editarVeiculo.html?id=$id&erro=ano_invalido"); exit; }
     $placa       = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $_POST['placa'] ?? ''));
     $cor         = trim($_POST['cor'] ?? '');
     $km          = max(0, (int)($_POST['kmrodado'] ?? 0));
@@ -688,39 +706,55 @@ function axion_pode_gerir_checklist(PDO $pdo, array $eu, int $id): bool {
     return (int)$st->fetchColumn() === $eu['id'];
 }
 
-// 7. SALVAR EDIÇÃO DE CHECKLIST
+// 7. SALVAR EDIÇÃO DE CHECKLIST (Categoria por Pergunta Principal)
 if ($acao === 'salvar_edicao_checklist' && $ehPost) {
     $eu = axion_exigir_perfil(['admin', 'supervisor']);
     axion_validar_csrf();
     $id        = (int)($_POST['id_checklist'] ?? 0);
     if ($id > 0 && !axion_pode_gerir_checklist($pdo, $eu, $id)) { header("Location: ../editarChecklist.html?id=$id&erro=checklist_de_outro"); exit; }
     $titulo    = trim($_POST['titulo'] ?? '');
-    $categoria = trim($_POST['categoria'] ?? 'outros');
-    if (!in_array($categoria, AXION_CATEGORIAS_CHECKLIST, true)) $categoria = 'outros';
     $descricao = trim($_POST['descricao'] ?? '');
+    $idVeiculo = !empty($_POST['id_veiculo']) ? (int)$_POST['id_veiculo'] : null;
 
     if ($id <= 0 || $titulo === '') { header("Location: ../editarChecklist.html?erro=checklist_nao_selecionado"); exit; }
+
+    // Preserva 'locacao' caso seja o modelo de locação do cliente; caso contrário usa a 1ª categoria das perguntas
+    $stCatAtual = $pdo->prepare("SELECT categoria FROM Checklists WHERE id_checklist = :id");
+    $stCatAtual->execute([':id' => $id]);
+    $catAtual = $stCatAtual->fetchColumn() ?: 'outros';
+
+    $catsPerg = [];
+    if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
+        foreach ($_POST['perguntas'] as $p) {
+            $cp = trim($p['categoria'] ?? '');
+            if (in_array($cp, AXION_CATEGORIAS_CHECKLIST, true)) $catsPerg[] = $cp;
+        }
+    }
+    $categoria = ($catAtual === 'locacao') ? 'locacao' : ($catsPerg[0] ?? $catAtual);
+
     $pdo->beginTransaction();
     // Salvar um modelo arquivado volta a deixá-lo disponível.
     // Alteração feita pelo supervisor volta para a aprovação do admin; a do admin já sai aprovada.
     $novoStatus = $eu['perfil'] === 'admin' ? 'aprovado' : 'pendente';
-    $pdo->prepare("UPDATE Checklists SET titulo = :titulo, categoria = :cat, descricao = :desc, ativo = 1,
+    $pdo->prepare("UPDATE Checklists SET id_veiculo = :id_veic, titulo = :titulo, categoria = :cat, descricao = :desc, ativo = 1,
                    status_aprovacao = :st, motivo_rejeicao = NULL,
                    avaliado_por = IF(:st2 = 'aprovado', :eu, NULL), avaliado_em = IF(:st3 = 'aprovado', NOW(), NULL)
                    WHERE id_checklist = :id")
-        ->execute([':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':st' => $novoStatus, ':st2' => $novoStatus, ':st3' => $novoStatus, ':eu' => $eu['id'], ':id' => $id]);
+        ->execute([':id_veic' => $idVeiculo, ':titulo' => $titulo, ':cat' => $categoria, ':desc' => $descricao, ':st' => $novoStatus, ':st2' => $novoStatus, ':st3' => $novoStatus, ':eu' => $eu['id'], ':id' => $id]);
 
     if (!empty($_POST['perguntas']) && is_array($_POST['perguntas'])) {
-        // Atualiza as perguntas principais preservando as subperguntas condicionais já cadastradas
+        // Atualiza as perguntas principais (com sua própria categoria) preservando as subperguntas condicionais já cadastradas
         $idsMantidos = [];
-        $stmtUpd = $pdo->prepare("UPDATE Checklist_Perguntas SET ordem = :ordem, texto = :texto, tipo = :tipo, obrigatorio = :obrig, resposta_esperada = :esp, orientacao = :ori WHERE id_pergunta = :idp AND id_checklist = :id_chk");
-        $stmtIns = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao) VALUES (:id_chk, :ordem, :texto, :tipo, :obrig, :esp, :ori)");
+        $stmtUpd = $pdo->prepare("UPDATE Checklist_Perguntas SET categoria = :cat, ordem = :ordem, texto = :texto, tipo = :tipo, obrigatorio = :obrig, resposta_esperada = :esp, orientacao = :ori WHERE id_pergunta = :idp AND id_checklist = :id_chk");
+        $stmtIns = $pdo->prepare("INSERT INTO Checklist_Perguntas (id_checklist, categoria, ordem, texto, tipo, obrigatorio, resposta_esperada, orientacao) VALUES (:id_chk, :cat, :ordem, :texto, :tipo, :obrig, :esp, :ori)");
         $ordem = 1;
         foreach ($_POST['perguntas'] as $p) {
             $texto = trim($p['texto'] ?? '');
             if ($texto === '') continue;
+            $catP = trim($p['categoria'] ?? 'mecanico');
+            if (!in_array($catP, AXION_CATEGORIAS_CHECKLIST, true)) $catP = 'outros';
             $dados = [
-                ':id_chk' => $id, ':ordem' => $ordem++, ':texto' => $texto, ':tipo' => $p['tipo'] ?? 'sim_nao',
+                ':id_chk' => $id, ':cat' => $catP, ':ordem' => $ordem++, ':texto' => $texto, ':tipo' => $p['tipo'] ?? 'sim_nao',
                 ':obrig' => isset($p['obrigatorio']) ? 1 : 0,
                 ':esp' => ($p['tipo'] ?? 'sim_nao') === 'sim_nao' ? ($p['resposta_esperada'] ?? 'sim') : null, ':ori' => trim($p['orientacao'] ?? '')
             ];
@@ -979,6 +1013,7 @@ function axion_vistoria_corrigivel(array $v, array $eu): bool {
 /** Carrega uma vistoria verificando se o usuário pode vê-la/alterá-la. */
 function axion_carregar_vistoria(PDO $pdo, array $eu, int $id): ?array {
     $st = $pdo->prepare("SELECT e.*, COALESCE(c.titulo, 'Checklist removido') AS checklist_titulo, c.categoria AS checklist_categoria,
+                                (SELECT GROUP_CONCAT(DISTINCT p.categoria ORDER BY p.ordem SEPARATOR ',') FROM Checklist_Perguntas p WHERE p.id_checklist = e.id_checklist AND p.id_pergunta_pai IS NULL AND p.categoria IS NOT NULL) AS checklist_categorias,
                                 v.marca_modelo, v.ano, v.cor
                          FROM Checklist_Execucoes e
                          LEFT JOIN Checklists c ON c.id_checklist = e.id_checklist
@@ -1098,7 +1133,11 @@ if ($acao === 'obter_vistoria') {
     $id = (int)($_GET['id'] ?? 0);
     $v = axion_carregar_vistoria($pdo, $eu, $id);
     if (!$v) axion_json(['sucesso' => false, 'erro' => 'Vistoria não encontrada ou sem permissão.'], 404);
-    $st = $pdo->prepare("SELECT id_pergunta, id_pergunta_pai, pergunta_texto, resposta, resposta_esperada, conforme FROM Checklist_Respostas WHERE id_execucao = :id ORDER BY id_resposta");
+    $st = $pdo->prepare("SELECT r.id_pergunta, r.id_pergunta_pai, r.pergunta_texto, r.resposta, r.resposta_esperada, r.conforme,
+                                CASE WHEN r.id_pergunta_pai IS NULL THEN p.categoria ELSE NULL END AS categoria
+                         FROM Checklist_Respostas r
+                         LEFT JOIN Checklist_Perguntas p ON p.id_pergunta = r.id_pergunta
+                         WHERE r.id_execucao = :id ORDER BY r.id_resposta");
     $st->execute([':id' => $id]);
     $v['respostas'] = $st->fetchAll();
     $v['foto_url'] = $v['foto_evidencia'] ? "backend/api.php?acao=foto_vistoria&id=$id" : null;

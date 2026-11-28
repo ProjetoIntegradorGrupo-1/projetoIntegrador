@@ -714,6 +714,10 @@ $mapaErros = [
         }
         const CATEGORIAS = { eletrico: 'Elétrico', mecanico: 'Mecânico', estetico: 'Estético', seguranca: 'Segurança', pre_viagem: 'Pré-viagem', locacao: 'Locação', outros: 'Outros' };
         const nomeCategoria = (c) => CATEGORIAS[c] || c || '-';
+        const nomesCategoriasChecklist = (c) => {
+            const lista = (c.categorias_perguntas || c.categoria || '').split(',').map(s => s.trim()).filter(Boolean);
+            return lista.length ? lista.map(k => CATEGORIAS[k] || k).join(', ') : '-';
+        };
         function badgeAprovacao(st) {
             return {
                 pendente: '<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Aguardando</span>',
@@ -730,7 +734,7 @@ $mapaErros = [
             tbody.innerHTML = dados.length ? dados.map(c => `
                 <tr>
                     <td><div class="fw-semibold">${esc(c.titulo)}</div><div class="small text-muted">${esc(c.descricao || '')}</div></td>
-                    <td>${esc(nomeCategoria(c.categoria))}</td>
+                    <td>${esc(nomesCategoriasChecklist(c))}</td>
                     <td>${c.total_perguntas}</td>
                     <td class="small">${esc(c.criador_nome)}</td>
                     <td class="text-end"><a href="verChecklist.html?id=${c.id_checklist}" class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-patch-check me-1"></i>Revisar</a></td>
@@ -739,7 +743,7 @@ $mapaErros = [
 
         function badgeSituacao(sit) {
             return {
-                concluida: '<span class="badge bg-success-subtle text-success">Concluída</span>',
+                concluida: '<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Concluída</span>',
                 aguardando_vistoriador: '<span class="badge bg-warning text-dark">Aguardando supervisor</span>',
                 aguardando_motorista: '<span class="badge bg-warning text-dark">Aguardando motorista</span>',
                 aguardando_assinaturas: '<span class="badge bg-secondary">Não assinada</span>',
@@ -778,8 +782,8 @@ $mapaErros = [
         const linhas = {
             vistorias: (v) => `
                 <tr>
-                    <td class="text-muted small">#${v.id_execucao}</td>
-                    <td class="small">${dataBR(v.data_vistoria)} <span class="text-muted">${esc((v.hora_vistoria || '').slice(0, 5))}</span></td>
+                    <td class="text-muted small font-monospace">#${v.id_execucao}</td>
+                    <td class="small">${dataBR(v.data_vistoria)} <span class="text-muted font-monospace">${esc((v.hora_vistoria || '').slice(0, 5))}</span></td>
                     <td><span class="badge bg-dark font-monospace">${esc(v.placa_veiculo)}</span></td>
                     <td class="small fw-semibold">${esc(v.checklist_titulo)}${v.id_locacao ? `<div><span class="badge bg-info-subtle text-info-emphasis"><i class="bi bi-key me-1"></i>Locação · ${v.tipo_locacao === 'retirada' ? 'retirada' : 'devolução'}</span></div>` : ''}</td>
                     <td class="small">${esc(v.nome_motorista)}${v.id_locacao ? ' <span class="text-muted">(cliente)</span>' : ''}</td>
@@ -801,9 +805,9 @@ $mapaErros = [
                                 : '<span class="badge bg-light text-secondary border"><i class="bi bi-building me-1"></i>Frota da empresa</span>'}</div>
                         </div>
                     </td>
-                    <td>${esc(v.ano)}</td>
+                    <td class="font-monospace">${esc(v.ano)}</td>
                     <td>${esc(v.cor || '-')}</td>
-                    <td>${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
+                    <td class="font-monospace">${Number(v.km_rodado || 0).toLocaleString('pt-BR')} km</td>
                     <td>${badgeStatusVeiculo(v.status)}</td>
                     <td class="text-end text-nowrap">
                         ${PODE_VISTORIAR ? `<a href="cadcheck.html?placa=${encodeURIComponent(v.placa)}" class="btn btn-sm btn-warning" title="Fazer vistoria deste veículo"><i class="bi bi-clipboard2-plus"></i></a>` : ''}
@@ -834,11 +838,12 @@ $mapaErros = [
                 </tr>`,
             checklists: (c) => {
                 const podeGerir = IS_ADMIN || Number(c.id_criador) === MEU_ID;
+                const infoVeic = c.veiculo_placa ? `<span class="badge bg-dark font-monospace me-1">${esc(c.veiculo_placa)}</span>` : '<span class="badge bg-light text-secondary border me-1">Frota Geral</span>';
                 return `
                 <tr>
                     <td>
                         <div class="fw-semibold">${esc(c.titulo)} ${Number(c.ativo) === 1 ? '' : '<span class="badge bg-secondary">Arquivado</span>'}</div>
-                        <div class="small text-muted">${esc(nomeCategoria(c.categoria))}${c.descricao ? ' · ' + esc(c.descricao) : ''}</div>
+                        <div class="small text-muted mt-1">${infoVeic}Categorias das perguntas: ${esc(nomesCategoriasChecklist(c))}${c.descricao ? ' · ' + esc(c.descricao) : ''}</div>
                     </td>
                     <td>${badgeAprovacao(c.status_aprovacao)}${c.status_aprovacao === 'rejeitado' && c.motivo_rejeicao ? `<div class="small text-danger mt-1">${esc(c.motivo_rejeicao)}</div>` : ''}</td>
                     <td>${c.total_perguntas}</td>
@@ -1055,7 +1060,7 @@ $mapaErros = [
                 const jc = await getJson('backend/api.php?acao=buscar&tipo=checklists&filtro=pendente&limite=20');
                 box.innerHTML = (jc.dados || []).map(c => `
                     <a href="verChecklist.html?id=${c.id_checklist}" class="list-group-item list-group-item-action d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <div><div class="fw-semibold">${esc(c.titulo)}</div><div class="small text-muted">${esc(nomeCategoria(c.categoria))} · ${c.total_perguntas} perguntas · enviado por ${esc(c.criador_nome)}</div></div>
+                        <div><div class="fw-semibold">${esc(c.titulo)}</div><div class="small text-muted">${esc(nomesCategoriasChecklist(c))} · ${c.total_perguntas} perguntas · enviado por ${esc(c.criador_nome)}</div></div>
                         <span class="btn btn-sm btn-warning fw-semibold"><i class="bi bi-patch-check me-1"></i>Revisar</span>
                     </a>`).join('') || '<div class="list-group-item text-muted small">Nenhuma pendência.</div>';
                 return;

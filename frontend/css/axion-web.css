@@ -364,7 +364,7 @@ body:not(.tema-admin) .painel-menu .menu-box { border-top: 3px solid #1f8ef1; }
     .btn-sm { min-height: 34px; }
 }
 
-/* Listas no celular: cada linha vira um cartão com rótulo à esquerda e valor à direita */
+    /* Listas no celular: cada linha vira um cartão com rótulo à esquerda e valor à direita */
 @media (max-width: 575.98px) {
     .axion-table-wrapper .table-responsive { overflow-x: visible; }
     .axion-table thead { display: none; }
@@ -379,4 +379,49 @@ body:not(.tema-admin) .painel-menu .menu-box { border-top: 3px solid #1f8ef1; }
     .axion-table tbody td:empty, .axion-table tbody td[data-label=""]::before { display: none; }
     .axion-table tbody td:last-child { padding-top: .5rem !important; justify-content: flex-end; flex-wrap: wrap; }
     .axion-table tbody td:last-child::before { display: none; }
+}
+
+/* ===== Botões Grandes de Escolha (Sim / Não) nos Checklists para uso Mobile / Campo ===== */
+.axion-choice-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.axion-choice-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    border-width: 2px;
+    background-color: #ffffff;
+    transition: all 0.15s ease;
+    user-select: none;
+    cursor: pointer;
+}
+
+.btn-check:checked + .axion-choice-sim {
+    background-color: #198754;
+    border-color: #198754;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.28);
+    transform: translateY(-1px);
+}
+
+.btn-check:checked + .axion-choice-nao {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.28);
+    transform: translateY(-1px);
+}
+
+.btn-check:focus-visible + .axion-choice-btn {
+    outline: 3px solid rgba(91, 33, 214, 0.35);
+    outline-offset: 2px;
 }
